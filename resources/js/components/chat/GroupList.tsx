@@ -62,7 +62,7 @@ export default function GroupList({
                 )}
             </div>
             <div className="flex-1 overflow-y-auto custom-scrollbar overflow-x-hidden">
-                <div className="flex flex-col items-center py-4 space-y-3">
+                <div className="flex flex-col items-center py-2 space-y-4">
                     {onSelectDirectMessage && (
                         <button
                             onClick={onSelectDirectMessage}
