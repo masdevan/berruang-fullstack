@@ -12,7 +12,7 @@
                 @for ($i = 0; $i < 6; $i++)
                     <input type="text" name="code[]" id="code-{{ $i }}" maxlength="1" inputmode="numeric"
                            autocomplete="one-time-code"
-                            class="w-10 sm:w-12 h-[3.25rem] text-center text-sm sm:text-base bg-white/3 border border-white/6 text-white focus:outline-none focus:border-[#E091A9]/50 focus:bg-white/5 transition-all duration-200"
+                            class="w-10 sm:w-12 h-[3.25rem] text-center text-sm sm:text-base bg-white/3 border border-white/6 text-white focus:outline-none focus:border-[#E091A9]/50 focus:bg-white/5 transition-all duration-200 rounded-lg"
                            oninput="handleCodeInput(this, {{ $i }})"
                            onkeydown="handleCodeKeydown(event, {{ $i }})">
                 @endfor
