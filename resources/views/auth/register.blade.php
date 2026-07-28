@@ -6,7 +6,10 @@
     <form method="POST" action="{{ route('register') }}" class="space-y-4">
         @csrf
 
-        <x-auth.input name="name" placeholder="Name" required autofocus />
+        <x-auth.input name="name" placeholder="Name" required autofocus oninput="generateUsername(this.value)" />
+
+        <x-auth.input name="username" placeholder="Username" required />
+        <p id="username-status" class="text-xs mt-1 hidden"></p>
 
         <x-auth.input name="email" type="email" placeholder="Email" required />
 
@@ -56,3 +59,45 @@
         <a href="{{ route('login') }}" class="text-white/50 hover:text-[#E091A9] transition-colors">Sign in</a>
     </p>
 @endsection
+
+<script>
+    let autoGen = true;
+
+    function generateUsername(name) {
+        if (!autoGen) return;
+        const slug = name.replace(/[^a-zA-Z0-9\s]/g, '').replace(/\s+/g, '_').replace(/_+/g, '_').replace(/^_|_$/g, '');
+        document.querySelector('[name="username"]').value = slug;
+        checkUsername(slug);
+    }
+
+    document.querySelector('[name="username"]').addEventListener('input', function () {
+        if (this.value === '') return;
+        autoGen = false;
+        checkUsername(this.value);
+    });
+
+    document.querySelector('[name="name"]').addEventListener('input', function () {
+        autoGen = true;
+    });
+
+    let timeout;
+    function checkUsername(val) {
+        clearTimeout(timeout);
+        const status = document.getElementById('username-status');
+        if (!val) { status.classList.add('hidden'); return; }
+        timeout = setTimeout(() => {
+            fetch('/check-username/' + encodeURIComponent(val))
+                .then(r => r.json())
+                .then(d => {
+                    status.classList.remove('hidden');
+                    if (d.taken) {
+                        status.className = 'text-xs mt-1 text-red-400/80';
+                        status.textContent = 'Username already taken';
+                    } else {
+                        status.className = 'text-xs mt-1 text-green-400/60';
+                        status.textContent = 'Username available';
+                    }
+                });
+        }, 300);
+    }
+</script>

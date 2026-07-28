@@ -4,9 +4,23 @@ use App\Http\Controllers\Auth\ForgotPasswordController;
 use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\Auth\RegisterController;
 use App\Http\Controllers\Auth\VerifyEmailController;
+use App\Models\User;
 use Illuminate\Support\Facades\Route;
 
-Route::redirect('/', '/login');
+Route::get('check-username/{username}', function ($username) {
+    return response()->json(['taken' => User::where('username', $username)->exists()]);
+});
+
+Route::get('/', function () {
+    if (auth()->check()) {
+        return redirect('/messages');
+    }
+    return view('auth.login');
+});
+
+Route::get('/messages', function () {
+    return view('chat.index');
+})->middleware('auth')->name('chat');
 
 Route::middleware('guest')->group(function () {
     Route::get('login', [LoginController::class, 'create'])->name('login');
