@@ -1,16 +1,16 @@
 <div class="flex-1 flex flex-col">
     <div class="flex items-center gap-2 px-4 py-3 border-b border-white/6 bg-[#0A0A0A]">
-        <button onclick="toggleLeft()" class="text-white/30 hover:text-white/60 transition-colors cursor-pointer flex-shrink-0" title="Toggle sidebar">
+        <button onclick="toggleLeft()" class="text-white/30 hover:text-white/60 transition-colors cursor-pointer shrink-0" title="Toggle sidebar">
             <x-icons.dots-grid />
         </button>
-        <div class="w-7 h-7 rounded-full bg-white/8 flex items-center justify-center text-[10px] font-medium text-white/60 flex-shrink-0">AP</div>
+        <div class="w-7 h-7 rounded-full bg-white/8 flex items-center justify-center text-[10px] font-medium text-white/60 shrink-0">AP</div>
         <p class="text-xs font-medium">Alya Putri</p>
         <div class="ml-auto flex items-center gap-3">
             <span class="flex items-center gap-1 text-[10px] text-green-400/70">
                 <span class="w-1.5 h-1.5 rounded-full bg-green-400"></span>
                 Online
             </span>
-            <button onclick="toggleRight()" class="text-white/30 hover:text-white/60 transition-colors cursor-pointer flex-shrink-0" title="Toggle profile">
+            <button onclick="toggleRight()" class="text-white/30 hover:text-white/60 transition-colors cursor-pointer shrink-0" title="Toggle profile">
                 <x-icons.info />
             </button>
         </div>

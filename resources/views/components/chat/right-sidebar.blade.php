@@ -41,7 +41,7 @@
         <p class="text-[10px] font-medium text-white/35 uppercase tracking-wider mb-2">Shared Files</p>
         <div class="space-y-1">
             <div class="flex items-center gap-2 p-1.5 rounded hover:bg-white/5 transition-colors cursor-pointer">
-                <div class="w-7 h-7 rounded bg-white/5 flex items-center justify-center flex-shrink-0">
+                <div class="w-7 h-7 rounded bg-white/5 flex items-center justify-center shrink-0">
                     <x-icons.file-doc class="w-3.5 h-3.5 text-white/35" />
                 </div>
                 <div class="min-w-0">
@@ -50,7 +50,7 @@
                 </div>
             </div>
             <div class="flex items-center gap-2 p-1.5 rounded hover:bg-white/5 transition-colors cursor-pointer">
-                <div class="w-7 h-7 rounded bg-white/5 flex items-center justify-center flex-shrink-0">
+                <div class="w-7 h-7 rounded bg-white/5 flex items-center justify-center shrink-0">
                     <x-icons.file-image class="w-3.5 h-3.5 text-white/35" />
                 </div>
                 <div class="min-w-0">
@@ -59,7 +59,7 @@
                 </div>
             </div>
             <div class="flex items-center gap-2 p-1.5 rounded hover:bg-white/5 transition-colors cursor-pointer">
-                <div class="w-7 h-7 rounded bg-white/5 flex items-center justify-center flex-shrink-0">
+                <div class="w-7 h-7 rounded bg-white/5 flex items-center justify-center shrink-0">
                     <x-icons.file-doc class="w-3.5 h-3.5 text-white/35" />
                 </div>
                 <div class="min-w-0">

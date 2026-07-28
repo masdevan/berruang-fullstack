@@ -1,7 +1,7 @@
 @props(['name', 'avatar', 'lastMessage' => '', 'time' => '', 'unread' => 0, 'online' => false, 'active' => false])
 
 <div data-conversation="{{ strtolower($name) }} {{ strtolower($lastMessage) }}" class="flex items-center gap-2.5 px-3 py-2.5 cursor-pointer transition-all duration-150 hover:bg-white/5 {{ $active ? 'bg-white/5 border-l-2 border-[#E091A9]' : 'border-l-2 border-transparent' }}">
-    <div class="relative flex-shrink-0">
+    <div class="relative shrink-0">
         <div class="w-9 h-9 rounded-full bg-white/8 flex items-center justify-center text-[10px] font-medium text-white/60">
             {{ $avatar }}
         </div>
@@ -13,12 +13,12 @@
     <div class="flex-1 min-w-0">
         <div class="flex items-center justify-between">
             <p class="text-xs font-medium truncate {{ $active ? 'text-white' : 'text-white/80' }}">{{ $name }}</p>
-            <p class="text-[10px] text-white/30 flex-shrink-0 ml-2">{{ $time }}</p>
+            <p class="text-[10px] text-white/30 shrink-0 ml-2">{{ $time }}</p>
         </div>
         <div class="flex items-center justify-between mt-0.5">
             <p class="text-[11px] text-white/35 truncate">{{ $lastMessage }}</p>
             @if ($unread)
-                <span class="flex-shrink-0 ml-2 min-w-[15px] h-[15px] rounded-full bg-[#E091A9] text-[#0A0A0A] text-[7px] font-semibold flex items-center justify-center px-1 leading-none">{{ $unread }}</span>
+                <span class="shrink-0 ml-2 min-w-[15px] h-[15px] rounded-full bg-[#E091A9] text-[#0A0A0A] text-[7px] font-semibold flex items-center justify-center px-1 leading-none">{{ $unread }}</span>
             @endif
         </div>
     </div>
