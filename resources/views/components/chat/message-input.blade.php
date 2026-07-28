@@ -11,13 +11,3 @@
         </button>
     </form>
 </div>
-<script>
-    document.addEventListener('DOMContentLoaded', function () {
-        const textarea = document.getElementById('message-input');
-        if (!textarea) return;
-        textarea.addEventListener('input', function () {
-            this.style.height = 'auto';
-            this.style.height = Math.min(this.scrollHeight, 120) + 'px';
-        });
-    });
-</script>

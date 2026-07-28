@@ -27,18 +27,4 @@
         <a href="{{ route('verification.resend') }}" class="text-white/50 hover:text-[#E091A9] transition-colors">Resend code</a>
     </p>
 
-    <script>
-        function handleCodeInput(input, index) {
-            input.value = input.value.replace(/\D/g, '');
-            if (input.value && index < 5) {
-                document.getElementById('code-' + (index + 1)).focus();
-            }
-        }
-
-        function handleCodeKeydown(event, index) {
-            if (event.key === 'Backspace' && !event.target.value && index > 0) {
-                document.getElementById('code-' + (index - 1)).focus();
-            }
-        }
-    </script>
 @endsection

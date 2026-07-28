@@ -1,3 +1,6 @@
+import './register.js';
+import './verify-email.js';
+
 window.togglePassword = function (id) {
     const input = document.getElementById(id);
     const eye = document.getElementById('eye-' + id);

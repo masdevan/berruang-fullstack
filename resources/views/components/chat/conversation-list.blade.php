@@ -18,31 +18,6 @@
             </button>
         </div>
     </div>
-    <script>
-        function toggleSearch() {
-            const bar = document.getElementById('search-bar');
-            const input = document.getElementById('search-input');
-            bar.classList.toggle('hidden');
-            if (!bar.classList.contains('hidden')) input.focus();
-        }
-        function searchConversations() {
-            const input = document.getElementById('search-input');
-            input.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter' }));
-        }
-        document.addEventListener('DOMContentLoaded', function () {
-            const input = document.getElementById('search-input');
-            if (!input) return;
-            input.addEventListener('keydown', function (e) {
-                if (e.key === 'Enter') {
-                    const val = this.value.toLowerCase().trim();
-                    document.querySelectorAll('[data-conversation]').forEach(el => {
-                        el.style.display = val ? (el.dataset.conversation.includes(val) ? '' : 'none') : '';
-                    });
-                }
-            });
-        });
-    </script>
-
     <div class="flex-1 overflow-y-auto">
         <x-chat.conversation-item
             name="Alya Putri"
