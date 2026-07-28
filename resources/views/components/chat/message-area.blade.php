@@ -1,11 +1,7 @@
 <div class="flex-1 flex flex-col">
     <div class="flex items-center gap-2 px-4 py-3 border-b border-white/6 bg-[#0A0A0A]">
         <button onclick="toggleLeft()" class="text-white/30 hover:text-white/60 transition-colors cursor-pointer flex-shrink-0" title="Toggle sidebar">
-            <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
-                <circle cx="9" cy="6" r="1.5"/><circle cx="15" cy="6" r="1.5"/>
-                <circle cx="9" cy="12" r="1.5"/><circle cx="15" cy="12" r="1.5"/>
-                <circle cx="9" cy="18" r="1.5"/><circle cx="15" cy="18" r="1.5"/>
-            </svg>
+            <x-icons.dots-grid />
         </button>
         <div class="w-7 h-7 rounded-full bg-white/8 flex items-center justify-center text-[10px] font-medium text-white/60 flex-shrink-0">AP</div>
         <p class="text-xs font-medium">Alya Putri</p>
@@ -15,9 +11,7 @@
                 Online
             </span>
             <button onclick="toggleRight()" class="text-white/30 hover:text-white/60 transition-colors cursor-pointer flex-shrink-0" title="Toggle profile">
-                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11.25 11.25l.041-.02a.75.75 0 011.063.852l-.708 2.836a.75.75 0 001.063.853l.041-.021M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-9-3.75h.008v.008H12V8.25z"/>
-                </svg>
+                <x-icons.info />
             </button>
         </div>
     </div>
