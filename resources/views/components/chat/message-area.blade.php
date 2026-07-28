@@ -4,16 +4,16 @@
             <x-icons.dots-grid />
         </button>
         <div class="w-7 h-7 rounded-full bg-white/8 flex items-center justify-center text-[10px] font-medium text-white/60 shrink-0">AP</div>
-        <p class="text-xs font-medium">Alya Putri</p>
-        <div class="ml-auto flex items-center gap-3">
-            <span class="flex items-center gap-1 text-[10px] text-green-400/70">
-                <span class="w-1.5 h-1.5 rounded-full bg-green-400"></span>
+        <div>
+            <p class="text-xs font-medium leading-none">Alya Putri</p>
+            <p class="flex items-center gap-1 text-[10px] leading-none text-green-400/70 mt-1">
+                <span class="w-1.5 h-1.5 rounded-full bg-green-400 inline-block -mt-0.5"></span>
                 Online
-            </span>
-            <button onclick="toggleRight()" class="text-white/30 hover:text-white/60 transition-colors cursor-pointer shrink-0" title="Toggle profile">
-                <x-icons.info />
-            </button>
+            </p>
         </div>
+        <button onclick="toggleRight()" class="text-white/30 hover:text-white/60 transition-colors cursor-pointer shrink-0 ml-auto" title="Toggle profile">
+            <x-icons.info />
+        </button>
     </div>
 
     <div class="flex-1 overflow-y-auto px-4 py-3 space-y-1" id="messages-container">
