@@ -2,13 +2,16 @@ let autoGen = true;
 
 window.generateUsername = function (name) {
     if (!autoGen) return;
-    const slug = name.replace(/[^a-zA-Z0-9\s]/g, '').replace(/\s+/g, '_').replace(/_+/g, '_').replace(/^_|_$/g, '');
+    const slug = name.replace(/[^a-zA-Z0-9\s]/g, '').replace(/\s+/g, '_').replace(/_+/g, '_').replace(/^_|_$/g, '').toLowerCase();
     document.querySelector('[name="username"]').value = slug;
     checkUsername(slug);
 };
 
 document.addEventListener('DOMContentLoaded', function () {
     document.querySelector('[name="username"]').addEventListener('input', function () {
+        if (this.value !== this.value.toLowerCase()) {
+            this.value = this.value.toLowerCase();
+        }
         autoGen = false;
         checkUsername(this.value);
     });
@@ -22,13 +25,20 @@ let timeout;
 function checkUsername(val) {
     clearTimeout(timeout);
     const check = document.getElementById('username-check');
+    const error = document.getElementById('username-error');
     const spinner = document.getElementById('username-spinner');
-    if (!val) {
-        check.classList.add('hidden');
-        spinner.classList.add('hidden');
+    const invalid = val && !/^[a-z0-9_]{5,}$/.test(val);
+    check.classList.add('hidden');
+    error.classList.add('hidden');
+    spinner.classList.add('hidden');
+    if (!val) return;
+    if (invalid) {
+        error.title = val.length < 5
+            ? 'Username must be at least 5 characters'
+            : 'Only lowercase letters, numbers, and underscores are allowed';
+        error.classList.remove('hidden');
         return;
     }
-    check.classList.add('hidden');
     spinner.classList.remove('hidden');
     timeout = setTimeout(() => {
         fetch('/check-username/' + encodeURIComponent(val))
@@ -36,7 +46,12 @@ function checkUsername(val) {
             .then(d => {
                 if (document.querySelector('[name="username"]').value !== val) return;
                 spinner.classList.add('hidden');
-                if (!d.taken) check.classList.remove('hidden');
+                if (d.taken) {
+                    error.title = 'Username already taken';
+                    error.classList.remove('hidden');
+                } else {
+                    check.classList.remove('hidden');
+                }
             })
             .catch(() => {
                 spinner.classList.add('hidden');

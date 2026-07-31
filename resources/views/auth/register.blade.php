@@ -13,6 +13,9 @@
             <svg id="username-check" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="hidden w-4 h-4 text-green-400/80 absolute right-3 top-1/2 -translate-y-1/2">
                 <path d="M4.5 12.75l6 6 9-13.5"/>
             </svg>
+            <svg id="username-error" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="hidden w-4 h-4 text-red-400/80 absolute right-3 top-1/2 -translate-y-1/2">
+                <path d="M6 18L18 6M6 6l12 12"/>
+            </svg>
             <svg id="username-spinner" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" class="hidden w-4 h-4 text-white/30 animate-spin absolute right-3 top-1/2 -translate-y-1/2">
                 <path d="M21 12a9 9 0 1 1-6.219-8.56"/>
             </svg>
@@ -42,4 +45,3 @@
         <a href="{{ route('login') }}" class="text-white/50 hover:text-[#E091A9] transition-colors">Sign in</a>
     </p>
 @endsection
-
