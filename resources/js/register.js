@@ -22,20 +22,24 @@ document.addEventListener('DOMContentLoaded', function () {
 let timeout;
 function checkUsername(val) {
     clearTimeout(timeout);
-    const status = document.getElementById('username-status');
-    if (!val) { status.classList.add('hidden'); return; }
+    const check = document.getElementById('username-check');
+    const spinner = document.getElementById('username-spinner');
+    if (!val) {
+        check.classList.add('hidden');
+        spinner.classList.add('hidden');
+        return;
+    }
+    check.classList.add('hidden');
+    spinner.classList.remove('hidden');
     timeout = setTimeout(() => {
         fetch('/check-username/' + encodeURIComponent(val))
             .then(r => r.json())
             .then(d => {
-                status.classList.remove('hidden');
-                if (d.taken) {
-                    status.className = 'text-xs mt-1 text-red-400/80';
-                    status.textContent = 'Username already taken';
-                } else {
-                    status.className = 'text-xs mt-1 text-green-400/60';
-                    status.textContent = 'Username available';
-                }
+                spinner.classList.add('hidden');
+                if (!d.taken) check.classList.remove('hidden');
+            })
+            .catch(() => {
+                spinner.classList.add('hidden');
             });
     }, 300);
 }
