@@ -3,6 +3,34 @@ import './chat-layout.js';
 
 import.meta.glob(['../images/**']);
 
+const loaderBar = document.getElementById('top-loader-bar');
+const loader = document.getElementById('top-loader');
+
+function finishLoadingBar() {
+    if (!loaderBar) return;
+    loaderBar.style.width = '100%';
+    setTimeout(function () {
+        if (!loader) return;
+        loader.animate([{ opacity: 1 }, { opacity: 0 }], { duration: 250, easing: 'ease-out' }).onfinish = function () {
+            loader.style.display = 'none';
+        };
+    }, 200);
+}
+
+if (loaderBar) {
+    if (document.readyState === 'complete') {
+        loader.style.display = 'none';
+    } else {
+        requestAnimationFrame(function () {
+            loaderBar.style.width = '30%';
+            setTimeout(function () {
+                loaderBar.style.width = '90%';
+            }, 600);
+        });
+        window.addEventListener('load', finishLoadingBar);
+    }
+}
+
 document.addEventListener('DOMContentLoaded', function () {
     const form = document.getElementById('chat-form');
     const input = document.getElementById('message-input');
@@ -22,7 +50,7 @@ document.addEventListener('DOMContentLoaded', function () {
         const bubble = document.createElement('div');
         bubble.className = 'flex justify-end mb-2';
         bubble.innerHTML = `
-            <div class="max-w-[70%] bg-[#E091A9]/15 border border-[#E091A9]/20 rounded-xl px-3 py-1.5">
+            <div class="max-w-[70%] bg-[#E091A9]/10 rounded-sm px-3 py-1.5">
                 <p class="text-xs text-white/85 leading-relaxed">${escapeHtml(text)}</p>
                 <p class="text-[9px] text-white/25 text-right mt-0.5">${now()}</p>
             </div>
@@ -37,6 +65,13 @@ document.addEventListener('DOMContentLoaded', function () {
     });
 
     if (input) {
+        input.addEventListener('keydown', function (e) {
+            if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                form.requestSubmit();
+            }
+        });
+
         input.addEventListener('input', function () {
             this.style.height = 'auto';
             this.style.height = Math.min(this.scrollHeight, 120) + 'px';
