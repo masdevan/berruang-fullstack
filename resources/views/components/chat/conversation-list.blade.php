@@ -100,7 +100,7 @@
     </div>
 
     <div id="tab-pane-workspace" class="hidden flex-1 flex-col min-h-0">
-        <div class="flex-1 overflow-y-auto py-1">
+        <div class="flex-1 overflow-y-auto">
             <x-chat.workspace-item name="BerRuang Design" avatar="BD" meta="4 members · 3 projects" />
             <x-chat.workspace-item name="Mobile App Dev" avatar="MA" meta="6 members · 5 projects" />
             <x-chat.workspace-item name="Marketing Q3" avatar="M3" meta="3 members · 2 projects" />
