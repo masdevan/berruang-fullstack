@@ -16,6 +16,19 @@
         </button>
     </div>
 
+    <div id="workspace-tabs" class="hidden items-stretch justify-between px-3 border-y border-white/10 bg-[#0A0A0A]">
+        <div class="flex items-stretch">
+            <button type="button" class="px-4 py-[9.5px] text-[11px] font-medium text-white border-r border-white/15 border-b-2 border-b-[#E091A9] cursor-pointer">Message</button>
+        </div>
+        <div class="flex items-center">
+            <button type="button" class="text-white/30 hover:text-white/60 transition-colors cursor-pointer" title="Add">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-4 h-4">
+                    <path d="M12 4.5v15m7.5-7.5h-15"/>
+                </svg>
+            </button>
+        </div>
+    </div>
+
     <div class="flex-1 overflow-y-auto px-4 py-3" id="messages-container"></div>
 
     <x-chat.message-input />

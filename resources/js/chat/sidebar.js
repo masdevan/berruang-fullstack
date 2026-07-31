@@ -107,14 +107,21 @@ window.openConversation = function (name, avatar, online) {
 
     const membersSection = document.getElementById('rightbar-members');
     const aboutSection = document.getElementById('rightbar-about');
+    const workspaceTabs = document.getElementById('workspace-tabs');
     if (chat.group) {
         aboutSection.classList.add('hidden');
         membersSection.classList.remove('hidden');
+        workspaceTabs.classList.remove('hidden');
+        workspaceTabs.classList.add('flex');
         document.getElementById('rightbar-members-list').innerHTML = chat.members.map(memberRow).join('');
+        setRightbarVisible(false);
     } else {
         membersSection.classList.add('hidden');
         aboutSection.classList.remove('hidden');
+        workspaceTabs.classList.add('hidden');
+        workspaceTabs.classList.remove('flex');
         document.getElementById('rightbar-about-text').textContent = chat.about || 'No bio yet.';
+        setRightbarVisible(true);
     }
 
     const container = document.getElementById('messages-container');
@@ -135,8 +142,21 @@ window.openConversation = function (name, avatar, online) {
     if (activeItem) activeItem.classList.add('bg-white/5');
 };
 
-function memberInitials(name) {
-    return name.split(' ').map(function (word) { return word[0]; }).join('');
+function setRightbarVisible(visible) {
+    const el = document.getElementById('sidebar-right');
+    if (!el) return;
+
+    if (window.innerWidth < MOBILE_BREAKPOINT) {
+        el.classList.toggle('translate-x-full', !visible);
+        return;
+    }
+
+    el.style.transition = 'width 0.2s';
+    el.style.width = visible ? '288px' : '0px';
+    setTimeout(function () { el.style.transition = ''; }, 200);
+}
+
+function memberInitials(name) {    return name.split(' ').map(function (word) { return word[0]; }).join('');
 }
 
 function memberRow(member) {
