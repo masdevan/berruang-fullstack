@@ -41,9 +41,7 @@
             <input type="text" id="search-input" placeholder="Search conversations..." class="w-full pl-2.5 pr-8 py-1.5 bg-white/3 border border-white/6 text-xs text-white placeholder-white/20 rounded-sm focus:outline-none focus:border-[#E091A9]/50 transition-all">
             <button type="button" onclick="searchConversations()" class="absolute right-1.5 top-1/2 -translate-y-1/2 text-white/20 hover:text-white/60 transition-colors cursor-pointer">
                 <x-icons.search class="w-3.5 h-3.5" id="search-icon" />
-                <svg id="search-spinner" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" class="hidden w-3.5 h-3.5 animate-spin">
-                    <path d="M21 12a9 9 0 1 1-6.219-8.56"/>
-                </svg>
+                <x-icons.spinner id="search-spinner" class="hidden w-3.5 h-3.5 animate-spin" />
             </button>
         </div>
     </div>

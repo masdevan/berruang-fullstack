@@ -1,4 +1,4 @@
-<div id="rightbar-root" class="h-full border-l border-white/6 bg-[#0F0F0F] relative overflow-hidden flex flex-col">
+﻿<div id="rightbar-root" class="h-full border-l border-white/6 bg-[#0F0F0F] relative overflow-hidden flex flex-col">
     <div class="flex-1 overflow-hidden flex flex-col">
         <div class="p-4 text-center border-b border-white/6">
             <div class="w-12 h-12 rounded-full bg-white/8 mx-auto flex items-center justify-center text-sm font-medium text-white/60"><span id="rightbar-avatar">AP</span></div>
@@ -76,9 +76,7 @@
         <div class="flex items-center gap-2 px-4 h-13.25 border-b border-white/6">
             <button type="button" onclick="closeMediaGallery()"
                     class="text-white/40 hover:text-white transition-colors cursor-pointer shrink-0" title="Back">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-4 h-4">
-                    <path d="M15 18l-6-6 6-6"/>
-                </svg>
+                <x-icons.chevron-left class="w-4 h-4" />
             </button>
             <p class="text-xs font-medium">Shared Media</p>
             <span id="media-count" class="text-[10px] text-white/25 ml-auto">30 files</span>
@@ -196,9 +194,7 @@
         <div class="flex items-center gap-2 px-4 h-13.25 border-b border-white/6">
             <button type="button" onclick="closeFilesGallery()"
                     class="text-white/40 hover:text-white transition-colors cursor-pointer shrink-0" title="Back">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-4 h-4">
-                    <path d="M15 18l-6-6 6-6"/>
-                </svg>
+                <x-icons.chevron-left class="w-4 h-4" />
             </button>
             <p class="text-xs font-medium">Shared Files</p>
             <span id="files-count" class="text-[10px] text-white/25 ml-auto">26 files</span>
@@ -238,9 +234,7 @@
             <div class="flex items-center gap-2 px-4 h-13.25 border-b border-white/6">
                 <button type="button" onclick="closeMembersGallery()"
                         class="text-white/40 hover:text-white transition-colors cursor-pointer shrink-0" title="Back">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-4 h-4">
-                        <path d="M15 18l-6-6 6-6"/>
-                    </svg>
+                    <x-icons.chevron-left class="w-4 h-4" />
                 </button>
                 <p class="text-xs font-medium">Members</p>
             </div>

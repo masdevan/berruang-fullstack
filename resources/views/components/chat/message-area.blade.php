@@ -23,9 +23,7 @@
         </div>
         <div class="flex items-center">
             <button type="button" class="text-white/30 hover:text-white/60 transition-colors cursor-pointer" title="Add">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-4 h-4">
-                    <path d="M12 4.5v15m7.5-7.5h-15"/>
-                </svg>
+                <x-icons.plus class="w-4 h-4" />
             </button>
         </div>
     </div>
@@ -36,11 +34,7 @@
     </div>
 
     <div id="no-chat" class="flex-1 min-w-0 flex flex-col items-center justify-center gap-2.5">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="w-10 h-10 text-white/10 shrink-0">
-            <path d="M9 9h.01"/>
-            <path d="M15 9h.01"/>
-            <path d="M12 1a8 8 0 0 0-8 8v12l3-3 2.5 2.5L12 17.5l2.5 2.5L17 18l3 3V9a8 8 0 0 0-8-8z"/>
-        </svg>
+        <x-icons.ghost class="w-10 h-10 text-white/10 shrink-0" />
         <p class="text-xs font-medium text-white/40">Select a conversation</p>
         <p class="text-[10px] text-white/20">Pick a chat or workspace to start messaging</p>
     </div>
