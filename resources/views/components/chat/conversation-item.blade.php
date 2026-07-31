@@ -16,7 +16,7 @@
             <p class="text-[10px] text-white/30 shrink-0 ml-2">{{ $time }}</p>
         </div>
         <div class="flex items-center justify-between mt-0.5">
-            <p class="text-[11px] text-white/35 truncate">{{ $lastMessage }}</p>
+            <p class="conversation-last text-[11px] text-white/35 truncate">{{ $lastMessage }}</p>
             @if ($unread)
                 <span class="shrink-0 ml-2 min-w-3.75 h-3.75 rounded-full bg-[#E091A9] text-[#0A0A0A] text-[7px] font-semibold flex items-center justify-center px-1 leading-none">{{ $unread }}</span>
             @endif

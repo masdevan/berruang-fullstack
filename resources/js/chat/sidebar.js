@@ -1,5 +1,6 @@
-import { MOBILE_BREAKPOINT, TAB_BASE, TAB_ACTIVE, TAB_INACTIVE, BUBBLE_ME, BUBBLE_OTHER } from './constants.js';
+import { MOBILE_BREAKPOINT, TAB_BASE, TAB_ACTIVE, TAB_INACTIVE } from './constants.js';
 import { DEMO_CONVERSATIONS } from './demo-data.js';
+import { messageHtml, setCurrentChat } from './bubbles.js';
 
 window.switchTab = function (tab) {
     const isChat = tab === 'chat';
@@ -89,18 +90,10 @@ window.openConversation = function (name, avatar, online) {
         : '<span class="w-1.5 h-1.5 rounded-full bg-white/20 inline-block -mt-0.5"></span> Offline';
 
     const container = document.getElementById('messages-container');
-    container.innerHTML = '';
-    chat.messages.forEach(function (message) {
-        const row = document.createElement('div');
-        row.className = message.from === 'me' ? 'flex justify-end mb-2' : 'flex justify-start mb-2';
-        row.innerHTML = `
-            <div class="${message.from === 'me' ? BUBBLE_ME : BUBBLE_OTHER}">
-                <p class="text-xs text-white/85 leading-relaxed">${message.text}</p>
-                <p class="text-[9px] text-white/25 text-right mt-0.5">${message.time}</p>
-            </div>
-        `;
-        container.appendChild(row);
-    });
+    setCurrentChat(name);
+    container.innerHTML = chat.messages.map(function (message, index) {
+        return messageHtml(message, name, index);
+    }).join('');
     container.scrollTop = container.scrollHeight;
     container.animate(
         [{ opacity: 0, transform: 'translateY(6px)' }, { opacity: 1, transform: 'translateY(0)' }],

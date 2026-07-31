@@ -17,6 +17,11 @@ document.addEventListener('DOMContentLoaded', function () {
         if (chat) openConversation(chatParam, chat.avatar, chat.online);
     }
 
+    const messagesContainer = document.getElementById('messages-container');
+    if (messagesContainer && !messagesContainer.children.length) {
+        openConversation('Alya Putri', 'AP', true);
+    }
+
     makeResizable('sidebar-left', 'resize-left', 200, 500);
     makeResizable('sidebar-right', 'resize-right', 200, 400);
 
