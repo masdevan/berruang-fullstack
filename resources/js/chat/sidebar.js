@@ -202,6 +202,27 @@ window.closeMembersGallery = function () {
     closeOverlay('members-gallery');
 };
 
+window.toggleFabMenu = function (event) {
+    if (event) event.stopPropagation();
+    const menu = document.getElementById('fab-menu');
+    const isHidden = menu.classList.contains('hidden');
+    document.getElementById('fab-btn').classList.toggle('rotate-45', isHidden);
+    if (isHidden) {
+        menu.classList.remove('hidden');
+        menu.animate(
+            [{ opacity: 0, transform: 'translateY(6px) scale(0.95)' }, { opacity: 1, transform: 'translateY(0) scale(1)' }],
+            { duration: 150, easing: 'ease-out' }
+        );
+    } else {
+        menu.animate(
+            [{ opacity: 1, transform: 'translateY(0) scale(1)' }, { opacity: 0, transform: 'translateY(6px) scale(0.95)' }],
+            { duration: 120, easing: 'ease-in' }
+        ).addEventListener('finish', function () {
+            menu.classList.add('hidden');
+        });
+    }
+};
+
 export function makeResizable(id, handleId, minWidth, maxWidth) {
     const el = document.getElementById(id);
     const handle = document.getElementById(handleId);

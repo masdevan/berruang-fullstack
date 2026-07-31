@@ -30,9 +30,16 @@ document.addEventListener('DOMContentLoaded', function () {
         btn.addEventListener('mouseleave', hideSectionInfo);
     });
 
-    document.addEventListener('click', function () {
+    document.addEventListener('click', function (e) {
         const menu = document.getElementById('attach-menu');
         if (menu) menu.classList.add('hidden');
+
+        const fabMenu = document.getElementById('fab-menu');
+        if (fabMenu && !fabMenu.classList.contains('hidden') && !e.target.closest('#fab-btn, #fab-menu')) {
+            fabMenu.classList.add('hidden');
+            const fabBtn = document.getElementById('fab-btn');
+            if (fabBtn) fabBtn.classList.remove('rotate-45');
+        }
     });
 
     document.addEventListener('keydown', function (e) {
