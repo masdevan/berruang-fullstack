@@ -21,6 +21,7 @@ window.openMediaModal = function (src, type = 'image') {
     const wasHidden = modal.classList.contains('hidden');
 
     modal.classList.remove('hidden');
+    modal.classList.add('flex');
     if (wasHidden) {
         content.animate(
             [{ opacity: 0, transform: 'scale(0.96)' }, { opacity: 1, transform: 'scale(1)' }],
@@ -41,6 +42,7 @@ window.closeMediaModal = function () {
         { duration: 150, easing: 'ease-in' }
     ).addEventListener('finish', () => {
         modal.classList.add('hidden');
+        modal.classList.remove('flex');
         video.pause();
         video.src = '';
     });
@@ -50,6 +52,7 @@ window.openOverlay = function (id) {
     const overlay = document.getElementById(id);
 
     overlay.classList.remove('hidden');
+    overlay.classList.add('flex');
     overlay.animate(
         [{ transform: 'translateX(100%)' }, { transform: 'translateX(0)' }],
         { duration: 220, easing: 'ease-out' }
@@ -64,7 +67,10 @@ window.closeOverlay = function (id) {
     overlay.animate(
         [{ transform: 'translateX(0)' }, { transform: 'translateX(100%)' }],
         { duration: 180, easing: 'ease-in' }
-    ).addEventListener('finish', () => overlay.classList.add('hidden'));
+    ).addEventListener('finish', () => {
+        overlay.classList.add('hidden');
+        overlay.classList.remove('flex');
+    });
 };
 
 window.openMediaGallery = function () {
@@ -85,9 +91,13 @@ window.closeFilesGallery = function () {
 
 window.switchTab = function (tab) {
     const isChat = tab === 'chat';
+    const chatPane = document.getElementById('tab-pane-chat');
+    const workspacePane = document.getElementById('tab-pane-workspace');
 
-    document.getElementById('tab-pane-chat').classList.toggle('hidden', !isChat);
-    document.getElementById('tab-pane-workspace').classList.toggle('hidden', isChat);
+    chatPane.classList.toggle('hidden', !isChat);
+    chatPane.classList.toggle('flex', isChat);
+    workspacePane.classList.toggle('hidden', isChat);
+    workspacePane.classList.toggle('flex', !isChat);
 
     document.getElementById('tab-btn-chat').className = TAB_BASE + ' ' + (isChat ? TAB_ACTIVE : TAB_INACTIVE);
     document.getElementById('tab-btn-workspace').className = TAB_BASE + ' ' + (isChat ? TAB_INACTIVE : TAB_ACTIVE);

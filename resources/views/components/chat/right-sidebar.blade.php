@@ -65,7 +65,7 @@
         </div>
     </div>
 
-    <div id="media-gallery" class="hidden absolute inset-0 z-10 bg-[#0F0F0F] flex flex-col">
+    <div id="media-gallery" class="hidden absolute inset-0 z-10 bg-[#0F0F0F] flex-col">
         <div class="flex items-center gap-2 px-4 h-13.25 border-b border-white/6">
             <button type="button" onclick="closeMediaGallery()"
                     class="text-white/40 hover:text-white transition-colors cursor-pointer shrink-0" title="Back">
@@ -185,7 +185,7 @@
         </div>
     </div>
 
-    <div id="files-gallery" class="hidden absolute inset-0 z-10 bg-[#0F0F0F] flex flex-col">
+    <div id="files-gallery" class="hidden absolute inset-0 z-10 bg-[#0F0F0F] flex-col">
         <div class="flex items-center gap-2 px-4 h-13.25 border-b border-white/6">
             <button type="button" onclick="closeFilesGallery()"
                     class="text-white/40 hover:text-white transition-colors cursor-pointer shrink-0" title="Back">
