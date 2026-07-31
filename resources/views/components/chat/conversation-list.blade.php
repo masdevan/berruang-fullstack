@@ -7,8 +7,8 @@
             <button onclick="toggleSearch()" class="text-white/30 hover:text-white/60 transition-colors cursor-pointer" title="Search">
                 <x-icons.search class="w-5 h-5" />
             </button>
-            <a href="#" class="block w-7 h-7 rounded-full overflow-hidden hover:ring-2 hover:ring-[#E091A9]/50 transition-all" title="Profile">
-                <img src="https://ui-avatars.com/api/?name=D&background=E091A9&color=0A0A0A&size=28" alt="Profile" class="w-full h-full object-cover">
+            <a href="{{ route('profile') }}" class="block w-7 h-7 rounded-full overflow-hidden hover:ring-2 hover:ring-[#E091A9]/50 transition-all" title="Profile">
+                <img src="{{ auth()->user()->avatar ? asset('storage/' . auth()->user()->avatar) : 'https://ui-avatars.com/api/?name=D&background=2A2A2A&color=FFFFFF&size=28' }}" alt="Profile" class="w-full h-full object-cover">
             </a>
         </div>
     </div>

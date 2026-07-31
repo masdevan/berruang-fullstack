@@ -3,6 +3,13 @@
 @section('title', 'Reset Password')
 
 @section('content')
+    @if (session('status'))
+        <p class="text-xs text-green-400 text-center mb-4">{{ session('status') }}</p>
+    @endif
+    @if (session('error'))
+        <p class="text-xs text-red-400 text-center mb-4">{{ session('error') }}</p>
+    @endif
+
     @if (! session('reset_code_verified'))
         <div class="text-center mb-6">
             <p class="text-sm text-white/35">Enter the 6-digit code sent to</p>
@@ -36,15 +43,8 @@
             @csrf
 
             <div>
-                <div class="relative">
-                    <x-auth.input name="password" type="password" placeholder="New password" required class="pr-10"
-                                  oninput="checkPasswordStrength(this.value)" />
-                    <button type="button" onclick="togglePassword('password')"
-                            class="absolute right-3 top-1/2 -translate-y-1/2 text-white/25 hover:text-white/50 transition-colors cursor-pointer">
-                        <x-icons.eye id="eye-password" />
-                        <x-icons.eye-off id="eye-off-password" class="w-4 h-4 hidden" />
-                    </button>
-                </div>
+                <x-auth.input name="password" type="password" placeholder="New password" required
+                              oninput="checkPasswordStrength(this.value)" />
                 <div id="password-strength" class="mt-3 hidden">
                     <div class="flex gap-1 mb-1.5">
                         <div id="str-0" class="h-0.5 flex-1 bg-white/6 transition-all duration-300"></div>
@@ -55,14 +55,7 @@
                 </div>
             </div>
 
-            <div class="relative">
-                <x-auth.input name="password_confirmation" type="password" placeholder="Confirm new password" required class="pr-10" />
-                <button type="button" onclick="togglePassword('password_confirmation')"
-                        class="absolute right-3 top-1/2 -translate-y-1/2 text-white/25 hover:text-white/50 transition-colors cursor-pointer">
-                    <x-icons.eye id="eye-password_confirmation" />
-                    <x-icons.eye-off id="eye-off-password_confirmation" class="w-4 h-4 hidden" />
-                </button>
-            </div>
+            <x-auth.input name="password_confirmation" type="password" placeholder="Confirm new password" required />
 
             <x-auth.button>Reset password</x-auth.button>
         </form>

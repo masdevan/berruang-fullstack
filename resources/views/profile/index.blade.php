@@ -1,0 +1,234 @@
+@extends('layouts.app')
+
+@section('title', 'Profile')
+
+@section('content')
+    <div id="sidebar-left" class="shrink-0 overflow-hidden w-full md:w-[320px] md:block">
+        <x-chat.conversation-list />
+    </div>
+    <div class="hidden md:block w-1 shrink-0 cursor-col-resize bg-transparent hover:bg-[#E091A9]/20 transition-colors" id="resize-left" title="Drag to resize"></div>
+    <div class="flex-1 flex-col hidden md:flex min-w-0">
+        <div class="flex items-center gap-2 px-4 h-13.25 border-b border-white/6 bg-[#0A0A0A]">
+            <button onclick="toggleLeft()" class="text-white/30 hover:text-white/60 transition-colors cursor-pointer shrink-0" title="Toggle sidebar">
+                <x-icons.dots-grid />
+            </button>
+            <p class="text-xs font-medium">Profile</p>
+        </div>
+        <div class="flex-1 overflow-y-auto">
+            <div class="max-w-md mx-auto w-full px-6 py-10">
+                <form method="POST" action="{{ route('profile.avatar') }}" enctype="multipart/form-data" class="flex items-center gap-4" id="avatar-form">
+                    @csrf
+                    <div class="relative shrink-0">
+                        <div class="w-16 h-16 rounded-full overflow-hidden ring-2 ring-white/10">
+                            <img id="avatar-preview" src="{{ auth()->user()->avatar ? asset('storage/' . auth()->user()->avatar) : 'https://ui-avatars.com/api/?name=D&background=2A2A2A&color=FFFFFF&size=64' }}" alt="Profile" class="w-full h-full object-cover">
+                        </div>
+                        <button type="button" onclick="openAvatarModal()" class="absolute -bottom-1 -right-1 w-6 h-6 rounded-full bg-[#E091A9] flex items-center justify-center cursor-pointer hover:bg-[#E8A8BC] transition-colors" title="Change picture">
+                            <x-icons.camera class="w-3 h-3 text-[#0A0A0A]" />
+                        </button>
+                    </div>
+                    <div class="min-w-0">
+                        <p class="text-sm font-medium truncate">{{ auth()->user()->name }}</p>
+                        <p class="text-[11px] text-white/40 mt-0.5">@<span>{{ auth()->user()->username }}</span></p>
+                        @if (session('avatar_status'))
+                            <p class="text-[10px] text-green-400 mt-1">{{ session('avatar_status') }}</p>
+                        @endif
+                        @error('avatar')
+                            <p class="text-[10px] text-red-400 mt-1">{{ $message }}</p>
+                        @enderror
+                    </div>
+                </form>
+                @php
+                    $lastChange = auth()->user()->username_changed_at;
+                    $daysLeft = $lastChange ? now()->diffInDays($lastChange->copy()->addDays(7), false) : null;
+                @endphp
+
+                <form method="POST" action="{{ route('profile.account') }}" class="mt-8" id="account-form" data-original-username="{{ auth()->user()->username }}">
+                    @csrf
+                    <p class="text-xs font-medium mb-3">Account</p>
+                    <div class="space-y-3">
+                        <div>
+                            <x-text-input name="name" value="{{ old('name', auth()->user()->name) }}" placeholder="Name" required />
+                            @error('name')
+                                <p class="text-[10px] text-red-400 mt-1">{{ $message }}</p>
+                            @enderror
+                        </div>
+                        <div>
+                            <div class="relative">
+                                <span class="absolute left-3 top-1/2 -translate-y-1/2 text-white/25 text-xs pointer-events-none">@</span>
+                                <x-text-input name="username" value="{{ old('username', auth()->user()->username) }}" required class="pl-7" />
+                            </div>
+                            @error('username')
+                                <p class="text-[10px] text-red-400 mt-1">{{ $message }}</p>
+                            @enderror
+                            @if ($daysLeft && $daysLeft > 0)
+                                <p class="text-[10px] text-yellow-400/70 mt-1">You can change your username again in {{ $daysLeft }} day(s).</p>
+                            @else
+                                <p class="text-[10px] text-white/25 mt-1">Username can only be changed once every 7 days.</p>
+                            @endif
+                        </div>
+                        @if (session('account_status'))
+                            <div id="account-status" class="relative overflow-hidden rounded-sm bg-green-500/10 border border-green-500/20 px-3 py-2">
+                                <p class="text-[10px] text-green-400">{{ session('account_status') }}</p>
+                                <div id="account-status-bar" class="absolute bottom-0 left-0 h-0.5 bg-green-400" style="width: 100%"></div>
+                            </div>
+                        @endif
+                        <button type="submit" class="w-full py-2 rounded-sm bg-[#E091A9] text-[#0A0A0A] text-xs font-medium hover:bg-[#E8A8BC] transition-colors cursor-pointer">
+                            Save changes
+                        </button>
+                    </div>
+                </form>
+
+                <x-avatar-picker />
+
+                <div id="username-confirm" class="hidden fixed inset-0 z-[60] items-center justify-center bg-black/70 p-4" onclick="hideUsernameConfirm()">
+                    <div class="w-full max-w-xs bg-[#1A1A1A] border border-white/10 rounded-sm p-4" onclick="event.stopPropagation()">
+                        <p class="text-xs font-medium">Change username?</p>
+                        <p class="text-[11px] text-white/50 mt-1 leading-relaxed">Your username will be locked for 7 days after this change.</p>
+                        <div class="flex gap-2 mt-4">
+                            <button type="button" onclick="hideUsernameConfirm()" class="flex-1 py-1.5 rounded-sm border border-white/6 text-[11px] text-white/60 hover:text-white hover:bg-white/5 transition-colors cursor-pointer">Cancel</button>
+                            <button type="button" onclick="confirmUsernameChange()" class="flex-1 py-1.5 rounded-sm bg-[#E091A9] text-[#0A0A0A] text-[11px] font-medium hover:bg-[#E8A8BC] transition-colors cursor-pointer">Continue</button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="mt-8 space-y-2">
+                    <div class="flex items-center justify-between px-4 py-3 bg-white/3 rounded-sm">
+                        <span class="text-[11px] text-white/40">Email</span>
+                        <span class="text-xs text-white/80 truncate ml-4">{{ auth()->user()->email }}</span>
+                    </div>
+                    <div class="flex items-center justify-between px-4 py-3 bg-white/3 rounded-sm">
+                        <span class="text-[11px] text-white/40">Member since</span>
+                        <span class="text-xs text-white/80">{{ auth()->user()->created_at->format('d M Y') }}</span>
+                    </div>
+                </div>
+
+                <div class="mt-8">
+                    <p class="text-xs font-medium mb-3">Change Password</p>
+                    <form method="POST" action="{{ route('profile.password') }}" class="space-y-3">
+                        @csrf
+                        <div>
+                            <x-password-input name="current_password" placeholder="Current password" required />
+                            @error('current_password')
+                                <p class="text-[10px] text-red-400 mt-1">{{ $message }}</p>
+                            @enderror
+                        </div>
+                        <div>
+                            <x-password-input name="password" placeholder="New password (min 8 characters)" required oninput="checkPasswordStrength(this.value)" />
+                            <div id="password-strength" class="mt-3 hidden">
+                                <div class="flex gap-1 mb-1.5">
+                                    <div id="str-0" class="h-0.5 flex-1 bg-white/6 transition-all duration-300"></div>
+                                    <div id="str-1" class="h-0.5 flex-1 bg-white/6 transition-all duration-300"></div>
+                                    <div id="str-2" class="h-0.5 flex-1 bg-white/6 transition-all duration-300"></div>
+                                </div>
+                                <p id="strength-label" class="text-xs text-white/30"></p>
+                            </div>
+                            @error('password')
+                                <p class="text-[10px] text-red-400 mt-1">{{ $message }}</p>
+                            @enderror
+                        </div>
+                        <x-password-input name="password_confirmation" placeholder="Confirm new password" required />
+                        @if (session('status'))
+                            <p class="text-[10px] text-green-400">{{ session('status') }}</p>
+                        @endif
+                        <button type="submit" class="w-full py-2 rounded-sm bg-[#E091A9] text-[#0A0A0A] text-xs font-medium hover:bg-[#E8A8BC] transition-colors cursor-pointer">
+                            Update Password
+                        </button>
+                    </form>
+                </div>
+
+                <div class="mt-4">
+                    <form method="POST" action="{{ route('password.email') }}">
+                        @csrf
+                        <input type="hidden" name="email" value="{{ auth()->user()->email }}">
+                        <button type="submit" class="w-full py-2 rounded-sm border border-white/6 text-xs text-white/60 hover:text-white hover:bg-white/5 transition-colors cursor-pointer">
+                            Reset Password via Email
+                        </button>
+                    </form>
+                </div>
+
+                <div class="mt-4 pb-6">
+                    <form method="POST" action="{{ route('logout') }}">
+                        @csrf
+                        <button type="submit" class="w-full py-2 rounded-sm border border-white/6 text-xs text-white/60 hover:text-white hover:bg-white/5 transition-colors cursor-pointer">
+                            Logout
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+    <script>
+        function previewAvatar(input) {
+            const file = input.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = function (e) {
+                document.getElementById('avatar-preview').src = e.target.result;
+            };
+            reader.readAsDataURL(file);
+            input.form.requestSubmit();
+        }
+
+        const avatarModal = document.getElementById('avatar-modal');
+
+        function openAvatarModal() {
+            avatarModal.classList.remove('hidden');
+            avatarModal.classList.add('flex');
+            avatarModal.animate([{ opacity: 0 }, { opacity: 1 }], { duration: 150, easing: 'ease-out' });
+        }
+
+        function hideAvatarModal() {
+            avatarModal.classList.add('hidden');
+            avatarModal.classList.remove('flex');
+        }
+
+        const statusEl = document.getElementById('account-status');
+        if (statusEl) {
+            document.getElementById('account-status-bar').animate(
+                [{ width: '100%' }, { width: '0%' }],
+                { duration: 3000, easing: 'linear' }
+            );
+            setTimeout(function () {
+                statusEl.animate(
+                    [{ opacity: 1, transform: 'translateY(0)' }, { opacity: 0, transform: 'translateY(-4px)' }],
+                    { duration: 250, easing: 'ease-in' }
+                ).onfinish = function () {
+                    statusEl.remove();
+                };
+            }, 3000);
+        }
+
+        const accountForm = document.getElementById('account-form');
+        const confirmBox = document.getElementById('username-confirm');
+        let usernameConfirmed = false;
+
+        accountForm.addEventListener('submit', function (e) {
+            if (usernameConfirmed) return;
+            const username = accountForm.querySelector('[name="username"]').value.trim();
+            if (username !== accountForm.dataset.originalUsername) {
+                e.preventDefault();
+                showUsernameConfirm();
+            }
+        });
+
+        function showUsernameConfirm() {
+            confirmBox.classList.remove('hidden');
+            confirmBox.classList.add('flex');
+            confirmBox.animate(
+                [{ opacity: 0 }, { opacity: 1 }],
+                { duration: 150, easing: 'ease-out' }
+            );
+        }
+
+        function hideUsernameConfirm() {
+            confirmBox.classList.add('hidden');
+            confirmBox.classList.remove('flex');
+        }
+
+        function confirmUsernameChange() {
+            usernameConfirmed = true;
+            hideUsernameConfirm();
+            accountForm.requestSubmit();
+        }
+    </script>
+@endsection

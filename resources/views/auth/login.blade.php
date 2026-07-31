@@ -8,14 +8,7 @@
 
         <x-auth.input name="email" type="email" placeholder="Email" required autofocus />
 
-        <div class="relative">
-            <x-auth.input name="password" type="password" placeholder="Password" required class="pr-10" />
-            <button type="button" onclick="togglePassword('password')"
-                    class="absolute right-3 top-1/2 -translate-y-1/2 text-white/25 hover:text-white/50 transition-colors cursor-pointer">
-                <x-icons.eye id="eye-password" />
-                <x-icons.eye-off id="eye-off-password" class="w-4 h-4 hidden" />
-            </button>
-        </div>
+        <x-auth.input name="password" type="password" placeholder="Password" required />
 
         <div class="flex items-center justify-between flex-wrap gap-y-1">
             <label class="flex items-center gap-2 cursor-pointer group">

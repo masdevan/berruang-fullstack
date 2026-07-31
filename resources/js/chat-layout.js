@@ -3,11 +3,18 @@ import './chat/search.js';
 import { loadMoreMedia, loadMoreFiles, watchLoadMore } from './chat/galleries.js';
 import { makeResizable } from './chat/sidebar.js';
 import { showSectionInfo, hideSectionInfo } from './chat/overlays.js';
+import { DEMO_CONVERSATIONS } from './chat/demo-data.js';
 
 document.addEventListener('DOMContentLoaded', function () {
     const input = document.getElementById('search-input');
     if (input) {
         input.addEventListener('input', window.filterLists);
+    }
+
+    const chatParam = new URLSearchParams(window.location.search).get('chat');
+    if (chatParam) {
+        const chat = DEMO_CONVERSATIONS[chatParam];
+        if (chat) openConversation(chatParam, chat.avatar, chat.online);
     }
 
     makeResizable('sidebar-left', 'resize-left', 200, 500);

@@ -32,6 +32,7 @@ window.toggleLeft = function () {
 
 window.toggleRight = function () {
     const el = document.getElementById('sidebar-right');
+    if (!el) return;
 
     if (window.innerWidth < MOBILE_BREAKPOINT) {
         el.style.width = '';
@@ -59,6 +60,14 @@ window.backToConversations = function () {
 };
 
 window.openConversation = function (name, avatar, online) {
+    const chat = DEMO_CONVERSATIONS[name] || { avatar, online, messages: [] };
+
+    const headerAvatar = document.getElementById('chat-header-avatar');
+    if (!headerAvatar) {
+        window.location.href = '/messages?chat=' + encodeURIComponent(name);
+        return;
+    }
+
     if (window.innerWidth < MOBILE_BREAKPOINT) {
         const list = document.getElementById('sidebar-left');
         const area = document.getElementById('message-area');
@@ -69,9 +78,7 @@ window.openConversation = function (name, avatar, online) {
         area.classList.add('flex');
     }
 
-    const chat = DEMO_CONVERSATIONS[name] || { avatar, online, messages: [] };
-
-    document.getElementById('chat-header-avatar').textContent = chat.avatar;
+    headerAvatar.textContent = chat.avatar;
     document.getElementById('chat-header-name').textContent = name;
 
     const status = document.getElementById('chat-header-status');

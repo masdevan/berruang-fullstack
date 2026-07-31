@@ -20,12 +20,19 @@ class ForgotPasswordController extends Controller
 
         $user = User::where('email', $request->email)->first();
 
+        $sent = false;
         if ($user) {
-            app(EmailCodeService::class)->sendPasswordResetCode($user->email);
+            $sent = app(EmailCodeService::class)->sendPasswordResetCode($user->email);
         }
 
         $request->session()->put('reset_email', $request->email);
         $request->session()->forget('reset_code_verified');
+
+        if ($sent) {
+            $request->session()->flash('status', 'A reset code has been sent to your email.');
+        } elseif ($user) {
+            $request->session()->flash('error', 'A code was already sent recently. Please wait a minute before requesting another.');
+        }
 
         return redirect()->route('password.reset');
     }

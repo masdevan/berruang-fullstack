@@ -28,10 +28,10 @@ window.openMediaModal = function (src, type = 'image') {
 
 window.closeMediaModal = function () {
     const modal = document.getElementById('media-modal');
+    if (!modal || modal.classList.contains('hidden')) return;
+
     const content = document.getElementById('media-modal-content');
     const video = document.getElementById('media-modal-video');
-
-    if (modal.classList.contains('hidden')) return;
 
     content.animate(
         [{ opacity: 1, transform: 'scale(1)' }, { opacity: 0, transform: 'scale(0.96)' }],

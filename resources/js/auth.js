@@ -8,20 +8,24 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 });
 
-window.togglePassword = function (id) {
-    const input = document.getElementById(id);
-    const eye = document.getElementById('eye-' + id);
-    const eyeOff = document.getElementById('eye-off-' + id);
+document.addEventListener('click', function (e) {
+    const btn = e.target.closest('.password-toggle');
+    if (!btn) return;
+
+    const input = btn.parentElement.querySelector('input');
+    const eye = btn.querySelector('.icon-eye');
+    const eyeOff = btn.querySelector('.icon-eye-off');
+
     if (input.type === 'password') {
         input.type = 'text';
-        if (eye) eye.classList.add('hidden');
-        if (eyeOff) eyeOff.classList.remove('hidden');
+        eye.classList.add('hidden');
+        eyeOff.classList.remove('hidden');
     } else {
         input.type = 'password';
-        if (eye) eye.classList.remove('hidden');
-        if (eyeOff) eyeOff.classList.add('hidden');
+        eye.classList.remove('hidden');
+        eyeOff.classList.add('hidden');
     }
-};
+});
 
 window.checkPasswordStrength = function (password) {
     const container = document.getElementById('password-strength');
