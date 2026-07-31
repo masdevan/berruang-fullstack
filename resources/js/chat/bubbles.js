@@ -46,7 +46,7 @@ function bubbleInnerHtml(msg, chatName, index) {
         <div class="relative ${isMe ? BUBBLE_ME : BUBBLE_OTHER}">
             ${actions}
             ${senderLine}
-            <p class="bubble-text text-xs text-white/85 leading-relaxed break-words">${escapeHtml(text)}</p>
+            <p class="bubble-text text-xs text-white/85 leading-relaxed wrap-break-word">${escapeHtml(text)}</p>
             ${truncated ? `<button type="button" class="bubble-expand cursor-pointer mt-1 text-[10px] text-[#E091A9] hover:text-[#E8A8BC] transition-colors">Lihat selengkapnya</button>` : ''}
             <p class="text-[9px] text-white/25 text-right mt-0.5">${msg.time}</p>
             ${reaction}
