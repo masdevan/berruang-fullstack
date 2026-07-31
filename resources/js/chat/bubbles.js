@@ -22,6 +22,17 @@ function bubbleInnerHtml(msg, chatName, index) {
     const isMe = msg.from === 'me';
     const truncated = msg.text.length > 1000;
     const text = truncated ? msg.text.slice(0, 1000) + '…' : msg.text;
+    const sender = msg.sender;
+    const senderLine = sender
+        ? (function () {
+            const member = DEMO_CONVERSATIONS[chatName] && DEMO_CONVERSATIONS[chatName].members
+                ? DEMO_CONVERSATIONS[chatName].members.find(function (m) { return m.name === sender; })
+                : null;
+            if (!member) return '';
+            const roleClass = member.role === 'Admin' ? 'text-yellow-400/90 font-medium' : 'text-white/25 font-normal';
+            return `<p class="text-[10px] font-medium text-[#E091A9]/80 mb-0.5">${escapeHtml(sender)} <span class="${roleClass}">· ${escapeHtml(member.role)}</span></p>`;
+        })()
+        : '';
     const reaction = msg.reaction
         ? `<button type="button" class="bubble-react-toggle cursor-pointer absolute -bottom-2 ${isMe ? 'right-2' : 'left-2'} bg-[#1A1A1A] border border-white/10 rounded-full px-1.5 py-0.5 text-[10px] leading-none hover:scale-110 transition-transform">${msg.reaction}</button>`
         : '';
@@ -34,6 +45,7 @@ function bubbleInnerHtml(msg, chatName, index) {
     return `
         <div class="relative ${isMe ? BUBBLE_ME : BUBBLE_OTHER}">
             ${actions}
+            ${senderLine}
             <p class="bubble-text text-xs text-white/85 leading-relaxed break-words">${escapeHtml(text)}</p>
             ${truncated ? `<button type="button" class="bubble-expand cursor-pointer mt-1 text-[10px] text-[#E091A9] hover:text-[#E8A8BC] transition-colors">Lihat selengkapnya</button>` : ''}
             <p class="text-[9px] text-white/25 text-right mt-0.5">${msg.time}</p>

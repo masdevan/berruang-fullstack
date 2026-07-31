@@ -1,6 +1,6 @@
 export const DEMO_CONVERSATIONS = {
     'Alya Putri': {
-        avatar: 'AP', online: true,
+        avatar: 'AP', online: true, about: 'Senior UI/UX Designer passionate about creating meaningful digital experiences.',
         messages: [
             { from: 'other', text: "Hey! How's the design coming along?", time: '10:32 AM' },
             { from: 'me', text: 'Almost done! Just polishing the icons.', time: '10:33 AM' },
@@ -13,7 +13,7 @@ export const DEMO_CONVERSATIONS = {
         ]
     },
     'Design Team': {
-        avatar: 'DT', online: false,
+        avatar: 'DT', online: false, about: 'The crew behind every pixel of this product.',
         messages: [
             { from: 'other', text: 'Rama: New mockups are ready for feedback', time: '1:15 PM' },
             { from: 'me', text: 'Nice, I will check them right away.', time: '1:20 PM' },
@@ -21,7 +21,7 @@ export const DEMO_CONVERSATIONS = {
         ]
     },
     'Rama Wijaya': {
-        avatar: 'RW', online: true,
+        avatar: 'RW', online: true, about: 'Product Manager focused on shipping things that matter.',
         messages: [
             { from: 'other', text: 'Sounds good, let\'s finalize it by Friday', time: '9:02 AM' },
             { from: 'me', text: 'Deal. I will send the updated pricing page today.', time: '9:05 AM' },
@@ -29,7 +29,7 @@ export const DEMO_CONVERSATIONS = {
         ]
     },
     'Sari Dewi': {
-        avatar: 'SD', online: false,
+        avatar: 'SD', online: false, about: 'Marketing specialist who loves data-driven storytelling.',
         messages: [
             { from: 'me', text: 'The report looks great, thanks!', time: '8:40 AM' },
             { from: 'other', text: 'Thank you for the quick response!', time: '8:42 AM' },
@@ -37,7 +37,7 @@ export const DEMO_CONVERSATIONS = {
         ]
     },
     'Budi Santoso': {
-        avatar: 'BS', online: false,
+        avatar: 'BS', online: false, about: 'Backend engineer keeping the servers happy.',
         messages: [
             { from: 'other', text: 'Can you send me the file?', time: 'Yesterday' },
             { from: 'me', text: 'Sure, I will share it in a moment.', time: 'Yesterday' },
@@ -45,7 +45,7 @@ export const DEMO_CONVERSATIONS = {
         ]
     },
     'Marketing Team': {
-        avatar: 'MT', online: false,
+        avatar: 'MT', online: false, about: 'Cross-functional team running campaigns end to end.',
         messages: [
             { from: 'other', text: 'Doni: Campaign results are in', time: 'Yesterday' },
             { from: 'other', text: 'Sari: CTR is up 12% week over week', time: 'Yesterday' },
@@ -53,11 +53,79 @@ export const DEMO_CONVERSATIONS = {
         ]
     },
     'Doni Prasetyo': {
-        avatar: 'DP', online: false,
+        avatar: 'DP', online: false, about: 'Growth hacker experimenting with everything, twice.',
         messages: [
             { from: 'other', text: "Let's discuss this in the meeting", time: '2d' },
             { from: 'me', text: 'Sure, I will be there.', time: '2d' },
             { from: 'other', text: 'Bring the numbers with you.', time: '2d' }
+        ]
+    },
+    'BerRuang Design': {
+        avatar: 'BD', group: '4 members',
+        members: [
+            { name: 'Rama Wijaya', role: 'Admin' },
+            { name: 'Alya Putri', role: 'Designer' },
+            { name: 'Budi Santoso', role: 'Developer' },
+            { name: 'Sari Dewi', role: 'Researcher' }
+        ],
+        messages: [
+            { from: 'other', sender: 'Rama Wijaya', text: 'New mockups are ready for feedback', time: '9:15 AM' },
+            { from: 'me', text: 'Nice, I will check them right away.', time: '9:20 AM' },
+            { from: 'other', sender: 'Alya Putri', text: 'The client loved the new hero section', time: '9:45 AM' },
+            { from: 'other', sender: 'Rama Wijaya', text: "Let's finalize the color palette today", time: '10:02 AM' }
+        ]
+    },
+    'Mobile App Dev': {
+        avatar: 'MA', group: '6 members',
+        members: [
+            { name: 'Budi Santoso', role: 'Admin' },
+            { name: 'Doni Prasetyo', role: 'Developer' },
+            { name: 'Rama Wijaya', role: 'Product Manager' },
+            { name: 'Alya Putri', role: 'Designer' }
+        ],
+        messages: [
+            { from: 'other', sender: 'Budi Santoso', text: 'Sprint review moved to Thursday', time: 'Yesterday' },
+            { from: 'me', text: 'Noted, I will update the release plan.', time: 'Yesterday' },
+            { from: 'other', sender: 'Doni Prasetyo', text: 'The API is ready for integration testing', time: 'Yesterday' }
+        ]
+    },
+    'Marketing Q3': {
+        avatar: 'M3', group: '3 members',
+        members: [
+            { name: 'Sari Dewi', role: 'Admin' },
+            { name: 'Doni Prasetyo', role: 'Strategist' },
+            { name: 'Alya Putri', role: 'Designer' }
+        ],
+        messages: [
+            { from: 'other', sender: 'Sari Dewi', text: 'CTR is up 12% week over week', time: 'Yesterday' },
+            { from: 'other', sender: 'Doni Prasetyo', text: 'Campaign results are in', time: 'Yesterday' },
+            { from: 'me', text: "Great numbers, let's keep the momentum.", time: 'Yesterday' }
+        ]
+    },
+    'Content Team': {
+        avatar: 'CT', group: '5 members',
+        members: [
+            { name: 'Alya Putri', role: 'Admin' },
+            { name: 'Sari Dewi', role: 'Writer' },
+            { name: 'Rama Wijaya', role: 'Reviewer' },
+            { name: 'Budi Santoso', role: 'Developer' }
+        ],
+        messages: [
+            { from: 'other', sender: 'Alya Putri', text: 'The blog outline for next week is ready', time: '2d' },
+            { from: 'me', text: 'I will review it and add my notes.', time: '2d' },
+            { from: 'other', sender: 'Sari Dewi', text: 'Video script draft is on the drive', time: '2d' }
+        ]
+    },
+    'Research & Insights': {
+        avatar: 'RI', group: '2 members',
+        members: [
+            { name: 'Budi Santoso', role: 'Admin' },
+            { name: 'Sari Dewi', role: 'Researcher' }
+        ],
+        messages: [
+            { from: 'other', sender: 'Budi Santoso', text: 'Survey results are in the shared folder', time: '3d' },
+            { from: 'me', text: 'Will do a summary by Friday.', time: '3d' },
+            { from: 'other', sender: 'Budi Santoso', text: 'The user interviews confirmed the onboarding gap', time: '3d' }
         ]
     }
 };
