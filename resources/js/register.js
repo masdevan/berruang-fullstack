@@ -9,7 +9,6 @@ window.generateUsername = function (name) {
 
 document.addEventListener('DOMContentLoaded', function () {
     document.querySelector('[name="username"]').addEventListener('input', function () {
-        if (this.value === '') return;
         autoGen = false;
         checkUsername(this.value);
     });
