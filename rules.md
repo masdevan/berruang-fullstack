@@ -1,8 +1,8 @@
-- Kamu harus memahami struktur project ini
-- Kode harus rapi dan manusiawi
-- Variable harus jelas
-- Kode harus standar QA
-- Arsitektur harus bersih dan modular
-- Tidak boleh ada error apapun saat development atau penambahan / pembuatan kode
-- Tidak boleh ada komen apapun yang tertinggal di dalam kode
-- Tidak boleh menjalankan command tanpa ujung seperti npm run build dan sebangsanya
+- You must understand the project structure first
+- Code must be clean and human-readable
+- Variables must have clear names
+- Code must meet QA standards
+- Architecture must be clean and modular
+- No errors allowed during development or when adding/creating code
+- No comments may be left behind in the code
+- Never run endless commands like npm run build and the like
