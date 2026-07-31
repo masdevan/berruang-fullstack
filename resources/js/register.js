@@ -34,6 +34,7 @@ function checkUsername(val) {
         fetch('/check-username/' + encodeURIComponent(val))
             .then(r => r.json())
             .then(d => {
+                if (document.querySelector('[name="username"]').value !== val) return;
                 spinner.classList.add('hidden');
                 if (!d.taken) check.classList.remove('hidden');
             })
