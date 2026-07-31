@@ -1,4 +1,4 @@
-﻿<div id="rightbar-root" class="h-full border-l border-white/6 bg-[#0F0F0F] relative overflow-hidden flex flex-col">
+<div id="rightbar-root" class="h-full border-l border-white/6 bg-[#0F0F0F] relative overflow-hidden flex flex-col">
     <div class="flex-1 overflow-hidden flex flex-col">
         <div class="p-4 text-center border-b border-white/6">
             <div class="w-12 h-12 rounded-full bg-white/8 mx-auto flex items-center justify-center text-sm font-medium text-white/60"><span id="rightbar-avatar">AP</span></div>
