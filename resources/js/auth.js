@@ -1,6 +1,13 @@
 import './register.js';
 import './verify-email.js';
 
+document.addEventListener('DOMContentLoaded', function () {
+    const alert = document.getElementById('auth-alert');
+    if (alert) {
+        setTimeout(() => alert.remove(), 3000);
+    }
+});
+
 window.togglePassword = function (id) {
     const input = document.getElementById(id);
     const eye = document.getElementById('eye-' + id);

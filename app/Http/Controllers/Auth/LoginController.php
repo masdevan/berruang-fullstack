@@ -22,6 +22,13 @@ class LoginController extends Controller
 
         if (Auth::attempt($credentials, $request->boolean('remember'))) {
             $request->session()->regenerate();
+
+            if (! $request->user()->hasVerifiedEmail()) {
+                $request->user()->sendEmailVerificationNotification();
+
+                return redirect()->route('verification.notice');
+            }
+
             return redirect()->intended('/messages');
         }
 
@@ -35,6 +42,7 @@ class LoginController extends Controller
         Auth::logout();
         $request->session()->invalidate();
         $request->session()->regenerateToken();
+
         return redirect('/');
     }
 }
