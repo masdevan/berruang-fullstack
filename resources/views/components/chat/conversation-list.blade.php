@@ -115,6 +115,10 @@
             <x-icons.workspace class="w-3.5 h-3.5 text-[#E091A9]/70 shrink-0" />
             Create workspace
         </button>
+        <button type="button" class="w-full flex items-center gap-2 px-2.5 py-2 rounded hover:bg-white/5 transition-colors cursor-pointer text-xs text-white/80">
+            <x-icons.join class="w-3.5 h-3.5 text-[#E091A9]/70 shrink-0" />
+            Join workspace
+        </button>
     </div>
     <button id="fab-btn" type="button" onclick="toggleFabMenu(event)" class="absolute bottom-4 left-4 z-20 w-10 h-10 rounded-full bg-[#E091A9] text-[#0A0A0A] flex items-center justify-center shadow-lg hover:bg-[#E8A8BC] transition-all duration-200 cursor-pointer" title="Add">
         <x-icons.plus class="w-4 h-4 transition-transform duration-200" />
