@@ -1,4 +1,4 @@
-<div class="flex-1 flex flex-col">
+<div class="flex-1 flex-col hidden md:flex" id="message-area">
     <div class="flex items-center gap-2 px-4 py-3 border-b border-white/6 bg-[#0A0A0A]">
         <button onclick="toggleLeft()" class="text-white/30 hover:text-white/60 transition-colors cursor-pointer shrink-0" title="Toggle sidebar">
             <x-icons.dots-grid />

@@ -1,6 +1,6 @@
 @props(['name', 'avatar', 'lastMessage' => '', 'time' => '', 'unread' => 0, 'online' => false, 'active' => false])
 
-<div data-conversation="{{ strtolower($name) }} {{ strtolower($lastMessage) }}" class="flex items-center gap-2.5 px-3 py-2.5 cursor-pointer transition-all duration-150 hover:bg-white/5 {{ $active ? 'bg-white/5 border-l-2 border-[#E091A9]' : 'border-l-2 border-transparent' }}">
+<div data-conversation="{{ strtolower($name) }} {{ strtolower($lastMessage) }}" onclick="openConversation()" class="flex items-center gap-2.5 px-3 py-2.5 cursor-pointer transition-all duration-150 hover:bg-white/5 {{ $active ? 'bg-white/5' : '' }}">
     <div class="relative shrink-0">
         <div class="w-9 h-9 rounded-full bg-white/8 flex items-center justify-center text-[10px] font-medium text-white/60">
             {{ $avatar }}

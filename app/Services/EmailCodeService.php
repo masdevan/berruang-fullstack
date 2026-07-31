@@ -38,9 +38,6 @@ class EmailCodeService
         return $this->send($email, self::PURPOSE_RESET_PASSWORD);
     }
 
-    /**
-     * Check the submitted 6-digit code and consume it when valid.
-     */
     public function attemptVerify(string $email, string $purpose, array $codeDigits): string
     {
         $attemptKey = "email_code_attempts:{$purpose}:{$email}";
