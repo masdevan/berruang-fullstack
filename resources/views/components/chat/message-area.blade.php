@@ -17,9 +17,9 @@
         </button>
     </div>
 
-    <div id="workspace-tabs" class="hidden items-stretch justify-between px-3 border-y border-white/10 bg-[#0A0A0A]">
+    <div id="workspace-tabs" class="hidden items-stretch justify-between px-3 border-b border-white/6 bg-[#0A0A0A]">
         <div class="flex items-stretch">
-            <button type="button" class="px-4 py-[9.5px] text-[11px] font-medium text-white border-r border-white/15 border-b-2 border-b-[#E091A9] cursor-pointer">Message</button>
+            <button type="button" class="px-4 py-[9.5px] text-[11px] font-medium text-white border-r border-white/6 border-b-2 border-b-[#E091A9] cursor-pointer">Message</button>
         </div>
         <div class="flex items-center">
             <button type="button" class="text-white/30 hover:text-white/60 transition-colors cursor-pointer" title="Add">
