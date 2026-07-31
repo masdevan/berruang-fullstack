@@ -23,4 +23,13 @@
             <video id="media-modal-video" src="" controls class="hidden w-full max-h-[90vh] rounded-lg bg-black"></video>
         </div>
     </div>
+    <x-modal id="add-user-modal" title="Add user">
+        <input type="text" id="add-user-input" placeholder="Username" autocomplete="off" data-autofocus
+               class="w-full px-3 py-2 bg-white/3 border border-white/6 text-sm text-white placeholder-white/20 focus:outline-none focus:border-[#E091A9]/50 rounded-lg">
+        <div class="flex justify-end gap-2 mt-3">
+            <button type="button" onclick="closeModal('add-user-modal')" class="px-2.5 py-1.5 text-xs font-medium text-white/60 hover:text-white transition-colors cursor-pointer">Cancel</button>
+            <button type="button" onclick="submitAddUser()" class="px-2.5 py-1.5 text-xs font-medium bg-[#E091A9] text-[#0A0A0A] rounded-lg hover:bg-[#E8A8BC] transition-colors cursor-pointer">Add</button>
+        </div>
+    </x-modal>
+</div>
 @endsection

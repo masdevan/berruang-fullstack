@@ -107,7 +107,7 @@
     </div>
 
     <div id="fab-menu" class="hidden absolute bottom-16 left-4 z-20 w-44 bg-[#1A1A1A] border border-white/10 rounded-lg p-1 shadow-xl">
-        <button type="button" class="w-full flex items-center gap-2 px-2.5 py-2 rounded hover:bg-white/5 transition-colors cursor-pointer text-xs text-white/80">
+        <button type="button" onclick="openModal('add-user-modal')" class="w-full flex items-center gap-2 px-2.5 py-2 rounded hover:bg-white/5 transition-colors cursor-pointer text-xs text-white/80">
             <x-icons.contact class="w-3.5 h-3.5 text-[#E091A9]/70 shrink-0" />
             Add user
         </button>
