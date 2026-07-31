@@ -1,7 +1,7 @@
 import './chat/overlays.js';
 import './chat/search.js';
 import { loadMoreMedia, loadMoreFiles, watchLoadMore } from './chat/galleries.js';
-import { makeResizable } from './chat/sidebar.js';
+import { makeResizable, setRightbarVisible } from './chat/sidebar.js';
 import { showSectionInfo, hideSectionInfo } from './chat/overlays.js';
 import { DEMO_CONVERSATIONS } from './chat/demo-data.js';
 
@@ -15,11 +15,8 @@ document.addEventListener('DOMContentLoaded', function () {
     if (chatParam) {
         const chat = DEMO_CONVERSATIONS[chatParam];
         if (chat) openConversation(chatParam, chat.avatar, chat.online);
-    }
-
-    const messagesContainer = document.getElementById('messages-container');
-    if (messagesContainer && !messagesContainer.children.length) {
-        openConversation('Alya Putri', 'AP', true);
+    } else {
+        setRightbarVisible(false);
     }
 
     makeResizable('sidebar-left', 'resize-left', 200, 500);

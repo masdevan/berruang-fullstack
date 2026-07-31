@@ -1,5 +1,6 @@
 <div class="flex-1 min-w-0 flex-col hidden md:flex" id="message-area">
-    <div class="flex items-center gap-2 px-4 py-3 border-b border-white/6 bg-[#0A0A0A]">
+    <div id="chat-workspace" class="flex-1 min-w-0 flex-col hidden">
+        <div class="flex items-center gap-2 px-4 py-3 border-b border-white/6 bg-[#0A0A0A]">
         <button onclick="toggleLeft()" class="text-white/30 hover:text-white/60 transition-colors cursor-pointer shrink-0" title="Toggle sidebar">
             <x-icons.dots-grid />
         </button>
@@ -32,4 +33,15 @@
     <div class="flex-1 overflow-y-auto px-4 py-3" id="messages-container"></div>
 
     <x-chat.message-input />
+    </div>
+
+    <div id="no-chat" class="flex-1 min-w-0 flex flex-col items-center justify-center gap-2.5">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="w-10 h-10 text-white/10 shrink-0">
+            <path d="M9 9h.01"/>
+            <path d="M15 9h.01"/>
+            <path d="M12 1a8 8 0 0 0-8 8v12l3-3 2.5 2.5L12 17.5l2.5 2.5L17 18l3 3V9a8 8 0 0 0-8-8z"/>
+        </svg>
+        <p class="text-xs font-medium text-white/40">Select a conversation</p>
+        <p class="text-[10px] text-white/20">Pick a chat or workspace to start messaging</p>
+    </div>
 </div>

@@ -55,8 +55,7 @@
                 avatar="AP"
                 last-message="Okay, I'll review the design first thing tomorrow!"
                 time="5m"
-                online="true"
-                active="true" />
+                online="true" />
 
             <x-chat.conversation-item
                 name="Design Team"

@@ -77,6 +77,13 @@ window.openConversation = function (name, avatar, online) {
         return;
     }
 
+    const workspace = document.getElementById('chat-workspace');
+    const noChat = document.getElementById('no-chat');
+    workspace.classList.remove('hidden');
+    workspace.classList.add('flex');
+    noChat.classList.add('hidden');
+    noChat.classList.remove('flex');
+
     if (window.innerWidth < MOBILE_BREAKPOINT) {
         const list = document.getElementById('sidebar-left');
         const area = document.getElementById('message-area');
@@ -142,7 +149,7 @@ window.openConversation = function (name, avatar, online) {
     if (activeItem) activeItem.classList.add('bg-white/5');
 };
 
-function setRightbarVisible(visible) {
+export function setRightbarVisible(visible) {
     const el = document.getElementById('sidebar-right');
     if (!el) return;
 

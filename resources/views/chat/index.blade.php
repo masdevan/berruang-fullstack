@@ -9,7 +9,7 @@
     <div class="hidden md:block w-1 shrink-0 cursor-col-resize bg-transparent hover:bg-[#E091A9]/20 transition-colors" id="resize-left" title="Drag to resize"></div>
     <x-chat.message-area />
     <div class="hidden md:block w-1 shrink-0 cursor-col-resize bg-transparent hover:bg-[#E091A9]/20 transition-colors" id="resize-right" title="Drag to resize"></div>
-    <div id="sidebar-right" class="shrink-0 overflow-hidden fixed inset-y-0 right-0 z-40 w-72 translate-x-full transition-transform duration-200 md:static md:w-[288px] md:translate-x-0 md:transition-none">
+    <div id="sidebar-right" class="shrink-0 overflow-hidden fixed inset-y-0 right-0 z-40 w-72 translate-x-full transition-transform duration-200 md:static md:translate-x-0 md:transition-none {{ request('chat') ? 'md:w-[288px]' : 'md:w-0' }}">
         <x-chat.right-sidebar />
     </div>
 
