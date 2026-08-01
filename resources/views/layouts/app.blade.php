@@ -6,6 +6,11 @@
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <title>@yield('title', config('app.name'))</title>
 
+    @foreach (['400', '500', '600', '700'] as $weight)
+        <link rel="preload" as="font" type="font/woff2" crossorigin
+              href="{{ Vite::asset('node_modules/@fontsource/inter/files/inter-latin-'.$weight.'-normal.woff2') }}">
+    @endforeach
+
     <link rel="icon" type="image/svg+xml" href="{{ asset('favicon/favicon.svg') }}">
     <link rel="icon" type="image/x-icon" href="{{ asset('favicon/favicon.ico') }}">
     <link rel="apple-touch-icon" href="{{ asset('favicon/apple-touch-icon.png') }}">
