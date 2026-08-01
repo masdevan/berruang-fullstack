@@ -70,7 +70,7 @@ window.backToConversations = function () {
     document.getElementById('sidebar-right').classList.add('translate-x-full');
 };
 
-window.openConversation = function (name, avatar, online, about, customName, realName, username) {
+window.openConversation = function (name, avatar, online, about, customName, realName, username, hasAvatar) {
 
     ['media-gallery', 'files-gallery'].forEach(function (id) {
         const overlay = document.getElementById(id);
@@ -103,7 +103,10 @@ window.openConversation = function (name, avatar, online, about, customName, rea
         area.classList.add('flex');
     }
 
-    headerAvatar.textContent = avatar;
+    const AVATAR_IMG = hasAvatar
+        ? '<img src="' + avatar + '" class="w-full h-full object-cover rounded-full">'
+        : avatar;
+    headerAvatar.innerHTML = AVATAR_IMG;
     document.getElementById('chat-header-name').textContent = name;
 
     const status = document.getElementById('chat-header-status');
@@ -122,7 +125,7 @@ window.openConversation = function (name, avatar, online, about, customName, rea
     realNameEl.classList.toggle('hidden', !realName);
     usernameEl.textContent = '@' + username;
     usernameEl.classList.toggle('hidden', !username);
-    document.getElementById('rightbar-avatar').textContent = avatar;
+    document.getElementById('rightbar-avatar').innerHTML = AVATAR_IMG;
     const rightbarDot = document.getElementById('rightbar-online-dot');
     rightbarDot.classList.toggle('bg-green-500', online);
     rightbarDot.classList.toggle('bg-white/20', !online);

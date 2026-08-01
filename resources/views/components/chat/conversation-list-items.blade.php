@@ -8,7 +8,8 @@
     @endphp
     <x-chat.conversation-item
         :name="$customName ?: $user->name"
-        :avatar="$user->initials()"
+        :avatar="$user->avatar ? $user->avatarUrl(36) : $user->initials()"
+        :has-avatar="$user->avatar ? '1' : '0'"
         :last-message="$user->bio ?: '@'.$user->username"
         :about="$user->bio"
         :real-name="$user->name"

@@ -108,16 +108,6 @@ window.submitAddUser = function () {
                 addUserPending = false;
                 return;
             }
-            const list = document.querySelector('#tab-pane-chat .flex-1.overflow-y-auto');
-            list.insertAdjacentHTML('afterbegin', data.html);
-            const added = list.firstElementChild;
-            if (added) {
-                added.animate(
-                    [{ opacity: 0, transform: 'translateY(-8px)' }, { opacity: 1, transform: 'translateY(0)' }],
-                    { duration: 250, easing: 'ease-out' }
-                );
-                if (added.dataset.name) added.click();
-            }
             document.getElementById('add-user-error').classList.add('hidden');
             input.value = '';
             addUserPending = false;
