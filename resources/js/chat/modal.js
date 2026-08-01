@@ -45,7 +45,22 @@ window.closeMediaModal = function () {
 
 window.toggleAttachMenu = function (event) {
     if (event) event.stopPropagation();
-    document.getElementById('attach-menu').classList.toggle('hidden');
+    const menu = document.getElementById('attach-menu');
+    const isHidden = menu.classList.contains('hidden');
+    if (isHidden) {
+        menu.classList.remove('hidden');
+        menu.animate(
+            [{ opacity: 0, transform: 'translateY(6px) scale(0.95)' }, { opacity: 1, transform: 'translateY(0) scale(1)' }],
+            { duration: 150, easing: 'ease-out' }
+        );
+    } else {
+        menu.animate(
+            [{ opacity: 1, transform: 'translateY(0) scale(1)' }, { opacity: 0, transform: 'translateY(6px) scale(0.95)' }],
+            { duration: 120, easing: 'ease-in' }
+        ).addEventListener('finish', function () {
+            menu.classList.add('hidden');
+        });
+    }
 };
 
 export function openModal(id) {

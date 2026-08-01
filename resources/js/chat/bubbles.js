@@ -55,6 +55,11 @@ export function appendMessage(text, time) {
     const messages = localMessages[currentChatName];
     messages.push({ from: 'me', text, time });
     container.insertAdjacentHTML('beforeend', messageHtml(messages[messages.length - 1], currentChatName, messages.length - 1));
+    const bubble = container.lastElementChild;
+    bubble.animate(
+        [{ opacity: 0, transform: 'translateY(10px) scale(0.96)' }, { opacity: 1, transform: 'translateY(0) scale(1)' }],
+        { duration: 180, easing: 'ease-out' }
+    );
     container.scrollTop = container.scrollHeight;
     updateConversationPreview(currentChatName, text);
 }
@@ -87,14 +92,21 @@ function enterEdit(row) {
     const width = bubble.offsetWidth;
     bubble.innerHTML = `
         <div class="bubble-edit-mode">
-            <textarea class="bubble-edit-input w-full bg-white/5 rounded-sm px-2 py-1 text-xs text-white outline-none focus:border focus:border-[#E091A9]/50 resize-none" rows="2">${escapeHtml(message.text)}</textarea>
-            <div class="flex justify-end gap-1 mt-1.5">
+            <textarea class="bubble-edit-input w-full bg-white/5 rounded-sm px-3 py-1 text-xs text-white outline-none focus:border focus:border-[#E091A9]/50 resize-none leading-relaxed" rows="1">${escapeHtml(message.text)}</textarea>
+            <div class="flex justify-end gap-1">
                 <button type="button" class="bubble-cancel cursor-pointer text-[10px] px-2 py-1 rounded-sm bg-white/5 text-white/50 hover:text-white hover:bg-white/10 transition-colors">Cancel</button>
                 <button type="button" class="bubble-save cursor-pointer text-[10px] px-2 py-1 rounded-sm bg-[#E091A9] text-[#0A0A0A] font-medium hover:bg-[#E8A8BC] transition-colors">Save</button>
             </div>
         </div>`;
     bubble.style.width = width + 'px';
-    bubble.querySelector('textarea').focus();
+    const textarea = bubble.querySelector('textarea');
+    textarea.style.height = 'auto';
+    textarea.style.height = textarea.scrollHeight + 'px';
+    textarea.addEventListener('input', function () {
+        this.style.height = 'auto';
+        this.style.height = this.scrollHeight + 'px';
+    });
+    textarea.focus();
 }
 
 function saveEdit(row) {
