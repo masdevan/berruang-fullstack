@@ -43,42 +43,6 @@ window.closeMediaModal = function () {
     });
 };
 
-window.openOverlay = function (id) {
-    animateIn(document.getElementById(id), [
-        { transform: 'translateX(100%)' },
-        { transform: 'translateX(0)' },
-    ], 220);
-};
-
-window.closeOverlay = function (id) {
-    const overlay = document.getElementById(id);
-    if (!overlay || overlay.classList.contains('hidden')) return;
-
-    animateOut(overlay, [
-        { transform: 'translateX(0)' },
-        { transform: 'translateX(100%)' },
-    ], 180, function () {
-        overlay.classList.add('hidden');
-        overlay.classList.remove('flex');
-    });
-};
-
-window.openMediaGallery = function () {
-    openOverlay('media-gallery');
-};
-
-window.closeMediaGallery = function () {
-    closeOverlay('media-gallery');
-};
-
-window.openFilesGallery = function () {
-    openOverlay('files-gallery');
-};
-
-window.closeFilesGallery = function () {
-    closeOverlay('files-gallery');
-};
-
 window.toggleAttachMenu = function (event) {
     if (event) event.stopPropagation();
     document.getElementById('attach-menu').classList.toggle('hidden');

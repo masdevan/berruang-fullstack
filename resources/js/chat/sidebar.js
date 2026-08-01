@@ -72,14 +72,6 @@ window.backToConversations = function () {
 
 window.openConversation = function (name, avatar, online, about, customName, realName, username, hasAvatar) {
 
-    ['media-gallery', 'files-gallery'].forEach(function (id) {
-        const overlay = document.getElementById(id);
-        if (overlay) {
-            overlay.classList.add('hidden');
-            overlay.classList.remove('flex');
-        }
-    });
-
     const headerAvatar = document.getElementById('chat-header-avatar');
     if (!headerAvatar) {
         window.location.href = '/messages?chat=' + encodeURIComponent(name);

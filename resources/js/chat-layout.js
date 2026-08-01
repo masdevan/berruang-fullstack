@@ -1,7 +1,6 @@
 import './chat/modal.js';
 import './chat/add-user.js';
 import './chat/search.js';
-import { loadMoreMedia, loadMoreFiles, watchLoadMore } from './chat/galleries.js';
 import { makeResizable, setRightbarVisible } from './chat/sidebar.js';
 import { showSectionInfo, hideSectionInfo } from './chat/section-info.js';
 
@@ -40,9 +39,6 @@ document.addEventListener('DOMContentLoaded', function () {
                 .catch(function () { contactsPage--; contactsLoading = false; });
         }, { root: contactsSentinel.parentElement }).observe(contactsSentinel);
     }
-
-    watchLoadMore('media-gallery-sentinel', loadMoreMedia);
-    watchLoadMore('files-gallery-sentinel', loadMoreFiles);
 
     document.querySelectorAll('.section-info-btn').forEach(function (btn) {
         btn.addEventListener('mouseenter', function () { showSectionInfo(this); });
