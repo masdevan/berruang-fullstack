@@ -16,13 +16,28 @@ class User extends Authenticatable implements MustVerifyEmail
 
     protected $fillable = [
         'name',
+        'first_name',
+        'last_name',
         'username',
         'email',
         'password',
         'avatar',
         'username_changed_at',
         'bio',
+        'onboarded_at',
     ];
+
+    protected function getNameAttribute(): string
+    {
+        return trim(($this->attributes['first_name'] ?? '').' '.($this->attributes['last_name'] ?? ''));
+    }
+
+    protected function setNameAttribute($value): void
+    {
+        $parts = preg_split('/\s+/', trim((string) $value), 2);
+        $this->attributes['first_name'] = $parts[0] ?? null;
+        $this->attributes['last_name'] = $parts[1] ?? null;
+    }
 
     protected $hidden = [
         'password',
@@ -34,6 +49,7 @@ class User extends Authenticatable implements MustVerifyEmail
         return [
             'email_verified_at' => 'datetime',
             'username_changed_at' => 'datetime',
+            'onboarded_at' => 'datetime',
             'password' => 'hashed',
         ];
     }

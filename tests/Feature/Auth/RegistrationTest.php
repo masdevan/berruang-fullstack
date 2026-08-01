@@ -14,7 +14,8 @@ beforeEach(function () {
 
 test('register creates an unverified user and sends a verification code', function () {
     $response = $this->post('/register', [
-        'name' => 'Budi Santoso',
+        'first_name' => 'Budi',
+        'last_name' => 'Santoso',
         'username' => 'budi_santoso',
         'email' => 'budi@example.com',
         'password' => 'rahasia123',
@@ -41,7 +42,8 @@ test('register rejects a duplicate email without sending a code', function () {
     User::factory()->create(['email' => 'budi@example.com']);
 
     $this->post('/register', [
-        'name' => 'Budi Lain',
+        'first_name' => 'Budi',
+        'last_name' => 'Lain',
         'username' => 'budi_lain',
         'email' => 'budi@example.com',
         'password' => 'rahasia123',

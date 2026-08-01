@@ -8,12 +8,23 @@ use Illuminate\Support\Facades\Mail;
 uses(RefreshDatabase::class);
 
 test('a verified user can sign in', function () {
-    $user = User::factory()->create();
+    $user = User::factory()->create(['onboarded_at' => now()]);
 
     $this->post('/login', [
         'email' => $user->email,
         'password' => 'password',
     ])->assertRedirect('/messages');
+
+    $this->assertAuthenticatedAs($user);
+});
+
+test('an unconfigured user is sent to the setup profile page after sign in', function () {
+    $user = User::factory()->create(['onboarded_at' => null]);
+
+    $this->post('/login', [
+        'email' => $user->email,
+        'password' => 'password',
+    ])->assertRedirect('/setup-profile');
 
     $this->assertAuthenticatedAs($user);
 });
@@ -45,7 +56,7 @@ test('an unverified user is sent to the verification page and gets a fresh code 
 });
 
 test('remember me issues a recaller cookie and persists the token', function () {
-    $user = User::factory()->create(['remember_token' => null]);
+    $user = User::factory()->create(['remember_token' => null, 'onboarded_at' => now()]);
 
     $response = $this->post('/login', [
         'email' => $user->email,
@@ -65,7 +76,7 @@ test('remember me issues a recaller cookie and persists the token', function () 
 });
 
 test('remember me unchecked does not issue a recaller cookie', function () {
-    $user = User::factory()->create(['remember_token' => null]);
+    $user = User::factory()->create(['remember_token' => null, 'onboarded_at' => now()]);
 
     $this->post('/login', [
         'email' => $user->email,

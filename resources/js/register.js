@@ -1,13 +1,16 @@
 let autoGen = true;
 
-window.generateUsername = function (name) {
+window.generateUsername = function () {
     if (!autoGen) return;
-    const slug = name.replace(/[^a-zA-Z0-9\s]/g, '').replace(/\s+/g, '_').replace(/_+/g, '_').replace(/^_|_$/g, '').toLowerCase();
+    const first = document.querySelector('[name="first_name"]').value;
+    const last = document.querySelector('[name="last_name"]').value;
+    const slug = (first + ' ' + last).replace(/[^a-zA-Z0-9\s]/g, '').replace(/\s+/g, '_').replace(/_+/g, '_').replace(/^_|_$/g, '').toLowerCase();
     document.querySelector('[name="username"]').value = slug;
     checkUsername(slug);
 };
 
 document.addEventListener('DOMContentLoaded', function () {
+    if (!document.querySelector('[name="username"]')) return;
     document.querySelector('[name="username"]').addEventListener('input', function () {
         if (this.value !== this.value.toLowerCase()) {
             this.value = this.value.toLowerCase();
@@ -16,8 +19,11 @@ document.addEventListener('DOMContentLoaded', function () {
         checkUsername(this.value);
     });
 
-    document.querySelector('[name="name"]').addEventListener('input', function () {
-        autoGen = true;
+    document.querySelectorAll('[name="first_name"], [name="last_name"]').forEach(function (input) {
+        input.addEventListener('input', function () {
+            autoGen = true;
+            generateUsername();
+        });
     });
 });
 

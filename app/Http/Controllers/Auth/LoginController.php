@@ -29,6 +29,10 @@ class LoginController extends Controller
                 return redirect()->route('verification.notice');
             }
 
+            if (! $request->user()->onboarded_at) {
+                return redirect()->route('setup-profile');
+            }
+
             return redirect()->intended('/messages');
         }
 

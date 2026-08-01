@@ -16,7 +16,7 @@ class ContactController extends Controller
     public function index(Request $request): JsonResponse
     {
         $contacts = $request->user()->contacts()
-            ->orderBy('name')
+            ->orderBy('first_name')
             ->paginate(self::PER_PAGE);
 
         $html = view('components.chat.conversation-list-items', [

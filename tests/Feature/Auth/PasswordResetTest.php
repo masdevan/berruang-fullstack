@@ -105,7 +105,7 @@ test('reset password is blocked before the code is verified', function () {
 });
 
 test('a verified flow resets the password and invalidates the remember token', function () {
-    $user = User::factory()->create(['remember_token' => 'old-remember-token']);
+    $user = User::factory()->create(['remember_token' => 'old-remember-token', 'onboarded_at' => now()]);
     $this->post('/forgot-password', ['email' => $user->email]);
 
     $code = EmailCode::where('email', $user->email)

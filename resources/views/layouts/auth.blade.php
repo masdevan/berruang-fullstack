@@ -11,12 +11,18 @@
     <link rel="manifest" href="{{ asset('favicon/site.webmanifest') }}">
 
     @vite(['resources/css/app.css', 'resources/js/auth.js'])
+
+    @stack('scripts')
 </head>
 <body class="font-sans antialiased bg-[#0A0A0A] text-white">
     <div class="min-h-screen flex items-center justify-center px-4 py-12">
         <div class="w-full max-w-sm">
             <div class="text-center mb-8">
-                <img src="{{ asset('logo.png') }}" alt="BerRuang" class="h-20 mx-auto">
+                @if ($__env->hasSection('brand'))
+                    @yield('brand')
+                @else
+                    <img src="{{ asset('logo.png') }}" alt="BerRuang" class="h-20 mx-auto">
+                @endif
             </div>
 
             <x-auth.alert />

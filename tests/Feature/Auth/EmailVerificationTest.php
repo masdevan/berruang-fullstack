@@ -31,22 +31,43 @@ test('unverified user is blocked from the chat page', function () {
 });
 
 test('verified user can open the chat page', function () {
-    $user = User::factory()->create();
+    $user = User::factory()->create(['onboarded_at' => now()]);
 
     $this->actingAs($user)
         ->get('/messages')
         ->assertOk();
 });
 
+test('an unconfigured user is blocked from the chat page', function () {
+    $user = User::factory()->create(['onboarded_at' => null]);
+
+    $this->actingAs($user)
+        ->get('/messages')
+        ->assertRedirect('/setup-profile');
+
+    $this->actingAs($user)
+        ->get('/')
+        ->assertRedirect('/messages');
+});
+
 test('a valid code verifies the email address', function () {
-    $user = User::factory()->unverified()->create();
+    $user = User::factory()->unverified()->create(['onboarded_at' => null]);
+    $code = createVerifyCode($user);
+
+    $this->actingAs($user)
+        ->post('/verify-email', ['code' => str_split($code->code)])
+        ->assertRedirect('/setup-profile');
+
+    expect($user->fresh()->email_verified_at)->not->toBeNull();
+});
+
+test('a verified user is sent to the chat page', function () {
+    $user = User::factory()->unverified()->create(['onboarded_at' => now()]);
     $code = createVerifyCode($user);
 
     $this->actingAs($user)
         ->post('/verify-email', ['code' => str_split($code->code)])
         ->assertRedirect('/messages');
-
-    expect($user->fresh()->email_verified_at)->not->toBeNull();
 });
 
 test('a consumed code cannot be used twice', function () {

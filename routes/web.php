@@ -4,6 +4,7 @@ use App\Http\Controllers\Auth\ForgotPasswordController;
 use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\Auth\RegisterController;
 use App\Http\Controllers\Auth\ResetPasswordController;
+use App\Http\Controllers\Auth\SetupProfileController;
 use App\Http\Controllers\Auth\VerifyEmailController;
 use App\Http\Controllers\Chat\ContactController;
 use App\Http\Controllers\Profile\AccountController;
@@ -25,17 +26,17 @@ Route::get('/', function () {
     return view('auth.login');
 });
 
-Route::middleware(['auth', 'verified'])->group(function () {
+Route::middleware(['auth', 'verified', 'onboarded'])->group(function () {
     Route::get('/messages', function () {
         return view('chat.index', [
-            'users' => auth()->user()->contacts()->orderBy('name')->limit(20)->get(),
+            'users' => auth()->user()->contacts()->orderBy('first_name')->limit(20)->get(),
             'onlineIds' => DB::table('sessions')->whereNotNull('user_id')->pluck('user_id')->all(),
         ]);
     })->name('chat');
 
     Route::get('/profile', function () {
         return view('profile.index', [
-            'users' => auth()->user()->contacts()->orderBy('name')->limit(20)->get(),
+            'users' => auth()->user()->contacts()->orderBy('first_name')->limit(20)->get(),
             'onlineIds' => DB::table('sessions')->whereNotNull('user_id')->pluck('user_id')->all(),
         ]);
     })->name('profile');
@@ -47,6 +48,11 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::post('/profile/password', [PasswordController::class, 'update'])->name('profile.password');
     Route::post('/profile/avatar', [AvatarController::class, 'update'])->name('profile.avatar');
     Route::post('/profile/account', [AccountController::class, 'update'])->name('profile.account');
+});
+
+Route::middleware(['auth', 'verified'])->group(function () {
+    Route::get('/setup-profile', [SetupProfileController::class, 'create'])->name('setup-profile');
+    Route::post('/setup-profile', [SetupProfileController::class, 'store'])->name('setup-profile.store');
 });
 
 Route::middleware('auth')->group(function () {

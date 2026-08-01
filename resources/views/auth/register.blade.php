@@ -6,7 +6,8 @@
     <form method="POST" action="{{ route('register') }}" class="space-y-4">
         @csrf
 
-        <x-auth.input name="name" placeholder="Name" required autofocus oninput="generateUsername(this.value)" />
+        <x-auth.input name="first_name" placeholder="First name" required autofocus oninput="generateUsername()" />
+        <x-auth.input name="last_name" placeholder="Last name" oninput="generateUsername()" />
 
         <div class="relative">
             <x-auth.input name="username" placeholder="Username" required class="pr-10" />

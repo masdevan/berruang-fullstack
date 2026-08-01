@@ -50,6 +50,8 @@ class VerifyEmailController extends Controller
     {
         $user->markEmailAsVerified();
 
-        return redirect()->intended('/messages');
+        return $user->onboarded_at
+            ? redirect()->intended('/messages')
+            : redirect()->route('setup-profile');
     }
 }
