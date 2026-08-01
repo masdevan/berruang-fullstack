@@ -228,6 +228,7 @@ export function makeResizable(id, handleId, minWidth, maxWidth) {
     const handle = document.getElementById(handleId);
     if (!el || !handle) return;
     let startX, startWidth;
+    const STICKY = 32;
 
     handle.addEventListener('mousedown', function (e) {
         startX = e.clientX;
@@ -241,7 +242,13 @@ export function makeResizable(id, handleId, minWidth, maxWidth) {
     function onMove(e) {
         const delta = e.clientX - startX;
         let newWidth = id === 'sidebar-left' ? startWidth + delta : startWidth - delta;
-        newWidth = Math.max(minWidth, Math.min(maxWidth, newWidth));
+        if (newWidth < minWidth - STICKY) {
+            newWidth = 0;
+        } else if (newWidth < minWidth) {
+            newWidth = minWidth;
+        } else {
+            newWidth = Math.min(maxWidth, newWidth);
+        }
         el.style.width = newWidth + 'px';
     }
 
