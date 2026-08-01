@@ -7,7 +7,7 @@
         <x-chat.conversation-list :users="$users" :online-ids="$onlineIds" />
     </div>
     <div class="hidden md:block w-1 shrink-0 cursor-col-resize bg-transparent hover:bg-[#E091A9]/20 transition-colors" id="resize-left" title="Drag to resize"></div>
-    <div class="flex-1 flex-col hidden md:flex min-w-0">
+    <div class="flex-1 flex-col hidden md:flex min-w-0 min-h-0">
         <div class="flex items-center gap-2 px-4 h-13.25 border-b border-white/6 bg-[#0A0A0A]">
             <button onclick="toggleLeft()" class="text-white/30 hover:text-white/60 transition-colors cursor-pointer shrink-0" title="Toggle sidebar">
                 <x-icons.dots-grid />

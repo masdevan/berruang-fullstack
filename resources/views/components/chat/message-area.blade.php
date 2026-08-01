@@ -1,5 +1,5 @@
-<div class="flex-1 min-w-0 flex-col hidden md:flex" id="message-area">
-    <div id="chat-workspace" class="flex-1 min-w-0 flex-col hidden">
+<div class="flex-1 min-w-0 flex-col hidden md:flex min-h-0" id="message-area">
+    <div id="chat-workspace" class="flex-1 min-w-0 flex-col hidden min-h-0">
         <div class="flex items-center gap-2 px-4 py-3 border-b border-white/6 bg-[#0A0A0A]">
         <button onclick="toggleLeft()" class="text-white/30 hover:text-white/60 transition-colors cursor-pointer shrink-0" title="Toggle sidebar">
             <x-icons.dots-grid />
