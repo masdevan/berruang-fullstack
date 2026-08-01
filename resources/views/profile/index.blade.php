@@ -16,27 +16,26 @@
         </div>
         <div class="flex-1 overflow-y-auto">
             <div class="max-w-md mx-auto w-full px-6 py-10">
-                <form method="POST" action="{{ route('profile.avatar') }}" enctype="multipart/form-data" class="flex items-center gap-4" id="avatar-form">
+                <form method="POST" action="{{ route('profile.account') }}" enctype="multipart/form-data" class="mt-8" id="account-form" data-original-username="{{ auth()->user()->username }}">
                     @csrf
-                    <div class="relative shrink-0">
-                        <div class="w-16 h-16 rounded-full overflow-hidden ring-2 ring-white/10">
-                            <img id="avatar-preview" src="{{ auth()->user()->avatarUrl(64) }}" alt="Profile" class="w-full h-full object-cover">
+                    <div class="flex items-center gap-4">
+                        <div class="relative shrink-0">
+                            <div class="w-16 h-16 rounded-full overflow-hidden ring-2 ring-white/10">
+                                <img id="avatar-preview" src="{{ auth()->user()->avatarUrl(64) }}" alt="Profile" class="w-full h-full object-cover">
+                            </div>
+                            <button type="button" onclick="openAvatarModal()" class="absolute -bottom-1 -right-1 w-6 h-6 rounded-full bg-[#E091A9] flex items-center justify-center cursor-pointer hover:bg-[#E8A8BC] transition-colors" title="Change picture">
+                                <x-icons.camera class="w-3 h-3 text-[#0A0A0A]" />
+                            </button>
                         </div>
-                        <button type="button" onclick="openAvatarModal()" class="absolute -bottom-1 -right-1 w-6 h-6 rounded-full bg-[#E091A9] flex items-center justify-center cursor-pointer hover:bg-[#E8A8BC] transition-colors" title="Change picture">
-                            <x-icons.camera class="w-3 h-3 text-[#0A0A0A]" />
-                        </button>
+                        <div class="min-w-0">
+                            <p class="text-sm font-medium truncate">{{ auth()->user()->name }}</p>
+                            <p class="text-[11px] text-white/40 mt-0.5">@<span>{{ auth()->user()->username }}</span></p>
+                            @error('avatar')
+                                <p class="text-[10px] text-red-400 mt-1">{{ $message }}</p>
+                            @enderror
+                        </div>
                     </div>
-                    <div class="min-w-0">
-                        <p class="text-sm font-medium truncate">{{ auth()->user()->name }}</p>
-                        <p class="text-[11px] text-white/40 mt-0.5">@<span>{{ auth()->user()->username }}</span></p>
-                        @if (session('avatar_status'))
-                            <p class="text-[10px] text-green-400 mt-1">{{ session('avatar_status') }}</p>
-                        @endif
-                        @error('avatar')
-                            <p class="text-[10px] text-red-400 mt-1">{{ $message }}</p>
-                        @enderror
-                    </div>
-                </form>
+                    <input type="file" name="avatar" id="profile-avatar-input" class="hidden" accept="image/*">
                 @php
                     $lastChange = auth()->user()->username_changed_at;
                     $daysLeft = $lastChange ? (int) ceil(now()->diffInDays($lastChange->copy()->addDays(7), false)) : null;
@@ -46,7 +45,7 @@
 
                 <form method="POST" action="{{ route('profile.account') }}" class="mt-8" id="account-form" data-original-username="{{ auth()->user()->username }}">
                     @csrf
-                    <p class="text-xs font-medium mb-3">Account</p>
+                    <p class="text-xs font-medium mb-3 mt-8">Account</p>
                     <div class="space-y-3">
                         <div>
                             <x-text-input name="name" value="{{ old('name', auth()->user()->name) }}" placeholder="Name" required />

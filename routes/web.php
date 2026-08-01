@@ -8,7 +8,6 @@ use App\Http\Controllers\Auth\SetupProfileController;
 use App\Http\Controllers\Auth\VerifyEmailController;
 use App\Http\Controllers\Chat\ContactController;
 use App\Http\Controllers\Profile\AccountController;
-use App\Http\Controllers\Profile\AvatarController;
 use App\Http\Controllers\Profile\PasswordController;
 use App\Models\User;
 use Illuminate\Support\Facades\DB;
@@ -46,7 +45,6 @@ Route::middleware(['auth', 'verified', 'onboarded'])->group(function () {
     Route::patch('/contacts/{id}', [ContactController::class, 'updateNames'])->name('contacts.update-names');
 
     Route::post('/profile/password', [PasswordController::class, 'update'])->name('profile.password');
-    Route::post('/profile/avatar', [AvatarController::class, 'update'])->name('profile.avatar');
     Route::post('/profile/account', [AccountController::class, 'update'])->name('profile.account');
 });
 

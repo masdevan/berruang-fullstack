@@ -95,13 +95,15 @@ test('bio rejects control characters', function () {
     ])->assertSessionHasErrors('bio');
 });
 
-test('avatar can be uploaded', function () {
+test('avatar can be uploaded with the account details', function () {
     Storage::fake('public');
     $user = User::factory()->create();
 
-    $this->actingAs($user)->post('/profile/avatar', [
+    $this->actingAs($user)->post('/profile/account', [
+        'name' => $user->name,
+        'username' => $user->username,
         'avatar' => UploadedFile::fake()->image('avatar.jpg', 200, 200),
-    ])->assertRedirect()->assertSessionHas('avatar_status');
+    ])->assertRedirect()->assertSessionHas('account_status');
 
     expect($user->refresh()->avatar)->not->toBeNull();
     Storage::disk('public')->assertExists($user->avatar);

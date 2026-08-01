@@ -1,8 +1,9 @@
 import { fadeIn, initAvatarPicker, setModalVisible } from './avatar-picker.js';
 
 document.addEventListener('DOMContentLoaded', function () {
-    const avatarFormToken = document.querySelector('#avatar-form input[name="_token"]');
     const accountForm = document.getElementById('account-form');
+    const avatarInput = document.getElementById('profile-avatar-input');
+    const avatarPreview = document.getElementById('avatar-preview');
     const usernameConfirm = document.getElementById('username-confirm');
     const logoutForm = document.getElementById('logout-form');
     const logoutConfirm = document.getElementById('logout-confirm');
@@ -12,17 +13,11 @@ document.addEventListener('DOMContentLoaded', function () {
 
     initAvatarPicker({
         onUpload: function (blob) {
-            const formData = new FormData();
-            formData.append('_token', avatarFormToken.value);
-            formData.append('avatar', blob, 'avatar.jpg');
+            avatarPreview.src = URL.createObjectURL(blob);
 
-            fetch('/profile/avatar', { method: 'POST', body: formData })
-                .then(function (response) {
-                    if (response.redirected) {
-                        window.location.href = response.url;
-                    }
-                })
-                .catch(function () {});
+            const transfer = new DataTransfer();
+            transfer.items.add(new File([blob], 'avatar.jpg', { type: 'image/jpeg' }));
+            avatarInput.files = transfer.files;
         },
     });
 
