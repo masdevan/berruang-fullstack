@@ -7,6 +7,7 @@ use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
+use Illuminate\Support\Str;
 
 class User extends Authenticatable implements MustVerifyEmail
 {
@@ -18,6 +19,8 @@ class User extends Authenticatable implements MustVerifyEmail
         'email',
         'password',
         'avatar',
+        'username_changed_at',
+        'bio',
     ];
 
     protected $hidden = [
@@ -29,6 +32,7 @@ class User extends Authenticatable implements MustVerifyEmail
     {
         return [
             'email_verified_at' => 'datetime',
+            'username_changed_at' => 'datetime',
             'password' => 'hashed',
         ];
     }
@@ -36,5 +40,14 @@ class User extends Authenticatable implements MustVerifyEmail
     public function sendEmailVerificationNotification(): bool
     {
         return app(EmailCodeService::class)->sendVerificationCode($this->email);
+    }
+
+    public function avatarUrl(int $size = 64): string
+    {
+        if ($this->avatar) {
+            return asset('storage/'.$this->avatar);
+        }
+
+        return 'https://ui-avatars.com/api/?name='.rawurlencode(Str::substr($this->name, 0, 1))."&background=2A2A2A&color=FFFFFF&size={$size}";
     }
 }

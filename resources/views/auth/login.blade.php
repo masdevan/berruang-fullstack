@@ -24,7 +24,7 @@
 
     <div class="mt-4">
         <a href="{{ route('auth.google') }}"
-           class="w-full flex items-center justify-center gap-2.5 py-2.5 px-4 bg-white/3 border border-white/6 text-sm text-white/70 font-medium hover:bg-white/6 hover:text-white active:scale-[0.98] transition-all duration-150 cursor-pointer rounded-lg">
+           class="w-full flex items-center justify-center gap-2.5 py-2.5 px-4 bg-white/3 border border-white/6 text-sm text-white/70 font-medium hover:bg-white/6 hover:text-white active:scale-98 transition-all duration-150 cursor-pointer rounded-lg">
             <x-icons.google />
             Google
         </a>

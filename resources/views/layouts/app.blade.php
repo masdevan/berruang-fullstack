@@ -13,11 +13,12 @@
     @vite(['resources/css/app.css', 'resources/js/chat.js'])
 </head>
 <body class="font-sans antialiased bg-[#0A0A0A] text-white h-screen overflow-hidden">
-    <div id="top-loader" class="fixed top-0 left-0 right-0 h-0.5 z-[100] pointer-events-none overflow-hidden">
+    <div id="top-loader" class="fixed top-0 left-0 right-0 h-0.5 z-100 pointer-events-none overflow-hidden">
         <div id="top-loader-bar" class="h-full bg-[#E091A9] rounded-r-full transition-[width] duration-700 ease-out" style="width: 0%"></div>
     </div>
     <div class="flex h-screen">
         @yield('content')
     </div>
+    @stack('scripts')
 </body>
 </html>

@@ -3,9 +3,6 @@
 @section('title', 'Reset Password')
 
 @section('content')
-    @if (session('status'))
-        <p class="text-xs text-green-400 text-center mb-4">{{ session('status') }}</p>
-    @endif
     @if (session('error'))
         <p class="text-xs text-red-400 text-center mb-4">{{ session('error') }}</p>
     @endif
@@ -62,6 +59,10 @@
     @endif
 
     <p class="text-sm text-white/25 text-center mt-5">
-        <a href="{{ route('login') }}" class="text-white/50 hover:text-[#E091A9] transition-colors">Back to sign in</a>
+        @auth
+            <a href="{{ route('profile') }}" class="text-white/50 hover:text-[#E091A9] transition-colors">Back to profile</a>
+        @else
+            <a href="{{ route('login') }}" class="text-white/50 hover:text-[#E091A9] transition-colors">Back to sign in</a>
+        @endauth
     </p>
 @endsection

@@ -22,6 +22,6 @@ class AvatarController extends Controller
             'avatar' => $request->file('avatar')->store('avatars', 'public'),
         ]);
 
-        return back()->with('status', 'Profile picture has been updated.');
+        return back()->with('avatar_status', 'Profile picture has been updated.');
     }
 }
