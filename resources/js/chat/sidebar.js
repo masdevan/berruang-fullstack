@@ -100,7 +100,6 @@ window.openConversation = function (name, avatar, online, about, customName, rea
         : avatar;
     headerAvatar.innerHTML = AVATAR_IMG;
     document.getElementById('chat-header-name').textContent = name;
-
     const status = document.getElementById('chat-header-status');
     status.classList.toggle('text-green-400/70', online);
     status.classList.toggle('text-white/30', !online);
@@ -125,6 +124,13 @@ window.openConversation = function (name, avatar, online, about, customName, rea
     rightbarHasChat = true;
     showRightbarEmptyState(false);
     setRightbarVisible(true);
+
+    const SWITCH_FADE = [{ opacity: 0, transform: 'translateY(-4px)' }, { opacity: 1, transform: 'translateY(0)' }];
+    document.getElementById('chat-header-info').animate(SWITCH_FADE, { duration: 150, easing: 'ease-out' });
+    const rightbarProfile = document.getElementById('rightbar-profile');
+    if (rightbarProfile) {
+        rightbarProfile.animate(SWITCH_FADE, { duration: 150, easing: 'ease-out' });
+    }
 
     const container = document.getElementById('messages-container');
     setCurrentChat(name);

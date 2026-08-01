@@ -5,7 +5,7 @@
         <p class="text-[10px] text-white/10 leading-relaxed">Profile, shared media<br>and files will appear here</p>
     </div>
     <div class="flex-1 overflow-hidden flex flex-col">
-        <div class="p-4 text-center border-b border-white/6">
+        <div id="rightbar-profile" class="p-4 text-center border-b border-white/6">
             <div class="relative w-12 h-12 mx-auto">
                 <span id="rightbar-avatar" class="w-full h-full rounded-full bg-white/8 flex items-center justify-center text-sm font-medium text-white/60 block">AP</span>
                 <div id="rightbar-online-dot" class="absolute -top-0.5 -right-0.5 w-3 h-3 rounded-full border-2 border-[#0F0F0F] bg-white/20"></div>

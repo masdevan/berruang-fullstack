@@ -4,13 +4,15 @@
         <button onclick="toggleLeft()" class="text-white/30 hover:text-white/60 transition-colors cursor-pointer shrink-0" title="Toggle sidebar">
             <x-icons.dots-grid />
         </button>
-        <div class="w-7 h-7 rounded-full bg-white/8 flex items-center justify-center text-[10px] font-medium text-white/60 shrink-0" id="chat-header-avatar"></div>
-        <div>
-            <p class="text-xs font-medium leading-none" id="chat-header-name"></p>
-            <p class="flex items-center gap-1 text-[10px] leading-none text-green-400/70 mt-1" id="chat-header-status">
-                <span class="w-1.5 h-1.5 rounded-full bg-green-400 inline-block -mt-0.5"></span>
-                Online
-            </p>
+        <div id="chat-header-info" class="flex items-center gap-2 min-w-0">
+            <div class="w-7 h-7 rounded-full bg-white/8 flex items-center justify-center text-[10px] font-medium text-white/60 shrink-0" id="chat-header-avatar"></div>
+            <div class="min-w-0">
+                <p class="text-xs font-medium leading-none truncate" id="chat-header-name"></p>
+                <p class="flex items-center gap-1 text-[10px] leading-none text-green-400/70 mt-1" id="chat-header-status">
+                    <span class="w-1.5 h-1.5 rounded-full bg-green-400 inline-block -mt-0.5"></span>
+                    Online
+                </p>
+            </div>
         </div>
         <button onclick="toggleRight()" class="text-white/30 hover:text-white/60 transition-colors cursor-pointer shrink-0 ml-auto" title="Toggle profile">
             <x-icons.info />
