@@ -24,8 +24,11 @@
         </div>
     </div>
     <x-modal id="add-user-modal" title="Add user">
-        <input type="text" id="add-user-input" placeholder="Username" autocomplete="off" data-autofocus
-               class="w-full px-3 py-2 bg-white/3 border border-white/6 text-sm text-white placeholder-white/20 focus:outline-none focus:border-[#E091A9]/50 rounded-lg">
+        <div class="relative">
+            <input type="text" id="add-user-input" placeholder="Username" autocomplete="off" data-autofocus
+                   class="w-full px-3 py-2 pr-8 bg-white/3 border border-white/6 text-sm text-white placeholder-white/20 focus:outline-none focus:border-[#E091A9]/50 rounded-lg">
+            <span id="add-user-status" class="absolute right-2.5 top-1/2 -translate-y-1/2 hidden text-white/25"></span>
+        </div>
         <p id="add-user-error" class="hidden text-[10px] text-red-400 mt-2"></p>
         <div class="flex justify-end gap-2 mt-3">
             <button type="button" onclick="closeModal('add-user-modal')" class="px-2.5 py-1.5 text-xs font-medium text-white/60 hover:text-white transition-colors cursor-pointer">Cancel</button>

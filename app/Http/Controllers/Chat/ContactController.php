@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Chat;
 
 use App\Http\Controllers\Controller;
 use App\Models\User;
+use Illuminate\Database\QueryException;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -50,7 +51,11 @@ class ContactController extends Controller
             return response()->json(['message' => 'This user is already in your contacts.'], 422);
         }
 
-        $request->user()->contacts()->attach($target->id);
+        try {
+            $request->user()->contacts()->attach($target->id);
+        } catch (QueryException) {
+            return response()->json(['message' => 'This user is already in your contacts.'], 422);
+        }
 
         $html = view('components.chat.conversation-list-items', [
             'users' => collect([$target]),

@@ -120,11 +120,80 @@ window.closeModal = function (id) {
     });
 };
 
+let addUserPending = false;
+let checkTimer = null;
+let addUserErrorTimer = null;
+
+function showAddUserError(message) {
+    const error = document.getElementById('add-user-error');
+    error.textContent = message;
+    error.classList.remove('hidden');
+    clearTimeout(addUserErrorTimer);
+    addUserErrorTimer = setTimeout(function () {
+        error.classList.add('hidden');
+    }, 3000);
+}
+
+function setTopLoader(active) {
+    const loader = document.getElementById('top-loader');
+    const bar = document.getElementById('top-loader-bar');
+    if (!loader || !bar) return;
+
+    if (active) {
+        loader.style.display = '';
+        bar.style.width = '30%';
+        requestAnimationFrame(function () { bar.style.width = '90%'; });
+    } else {
+        bar.style.width = '100%';
+        setTimeout(function () {
+            loader.animate([{ opacity: 1 }, { opacity: 0 }], { duration: 250, easing: 'ease-out' }).onfinish = function () {
+                loader.style.display = 'none';
+            };
+        }, 200);
+    }
+}
+
+const STATUS_SPINNER = '<svg class="w-3.5 h-3.5 animate-spin" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path></svg>';
+const STATUS_CHECK = '<svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.5 12.75l6 6 9-13.5"/></svg>';
+const STATUS_X = '<svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>';
+
+function setAddUserStatus(html, className) {
+    const status = document.getElementById('add-user-status');
+    status.innerHTML = html;
+    status.className = 'absolute right-2.5 top-1/2 -translate-y-1/2 ' + className;
+}
+
+function checkUsernameLive() {
+    const input = document.getElementById('add-user-input');
+    const status = document.getElementById('add-user-status');
+    const username = input.value.trim();
+    clearTimeout(checkTimer);
+
+    if (!username) {
+        status.classList.add('hidden');
+        return;
+    }
+
+    setAddUserStatus(STATUS_SPINNER, 'text-white/25');
+    status.classList.remove('hidden');
+
+    checkTimer = setTimeout(function () {
+        fetch('/check-username/' + encodeURIComponent(username))
+            .then(function (response) { return response.json(); })
+            .then(function (data) {
+                if (document.getElementById('add-user-input').value.trim() !== username) return;
+                setAddUserStatus(data.taken ? STATUS_CHECK : STATUS_X, data.taken ? 'text-green-400' : 'text-red-400');
+            })
+            .catch(function () { status.classList.add('hidden'); });
+    }, 300);
+}
+
 window.submitAddUser = function () {
     const input = document.getElementById('add-user-input');
-    const error = document.getElementById('add-user-error');
     const username = input.value.trim();
-    if (!username) return;
+    if (!username || addUserPending) return;
+    addUserPending = true;
+    setTopLoader(true);
 
     const token = document.querySelector('meta[name="csrf-token"]').content;
 
@@ -137,22 +206,31 @@ window.submitAddUser = function () {
             return response.json().then(function (data) { return { ok: response.ok, data: data }; });
         })
         .then(function ({ ok, data }) {
+            setTopLoader(false);
             if (!ok) {
-                error.textContent = data.message || 'Failed to add user.';
-                error.classList.remove('hidden');
+                showAddUserError(data.message || 'Failed to add user.');
+                addUserPending = false;
                 return;
             }
             const list = document.querySelector('#tab-pane-chat .flex-1.overflow-y-auto');
             list.insertAdjacentHTML('afterbegin', data.html);
             const added = list.firstElementChild;
-            if (added && added.dataset.name) added.click();
-            error.classList.add('hidden');
+            if (added) {
+                added.animate(
+                    [{ opacity: 0, transform: 'translateY(-8px)' }, { opacity: 1, transform: 'translateY(0)' }],
+                    { duration: 250, easing: 'ease-out' }
+                );
+                if (added.dataset.name) added.click();
+            }
+            document.getElementById('add-user-error').classList.add('hidden');
             input.value = '';
+            addUserPending = false;
             closeModal('add-user-modal');
         })
         .catch(function () {
-            error.textContent = 'Failed to add user.';
-            error.classList.remove('hidden');
+            setTopLoader(false);
+            showAddUserError('Failed to add user.');
+            addUserPending = false;
         });
 };
 
@@ -163,6 +241,11 @@ document.addEventListener('keydown', function (e) {
     if (document.activeElement === document.getElementById('add-user-input')) {
         submitAddUser();
     }
+});
+
+document.addEventListener('DOMContentLoaded', function () {
+    const input = document.getElementById('add-user-input');
+    if (input) input.addEventListener('input', checkUsernameLive);
 });
 
 function getSectionTip(rootId) {

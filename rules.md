@@ -6,3 +6,5 @@
 - No errors allowed during development or when adding/creating code
 - No comments may be left behind in the code
 - Never run endless commands like npm run build and the like
+- Never push to git unless explicitly asked
+- When running tests, keep output short so the terminal never looks frozen: run only the relevant file (php artisan test --filter=...), never pipe output through Select-String (it buffers everything until the process ends), and avoid commands that dump large HTML into the console; if a run gets huge, redirect output to a file instead

@@ -22,6 +22,7 @@ class ChatTest extends TestCase
         $this->actingAs($me)->get('/messages')
             ->assertOk()
             ->assertSee('Alice Wonder')
+            ->assertSee('add-user-status')
             ->assertDontSee('Bob Builder')
             ->assertDontSee('Me Person');
 
