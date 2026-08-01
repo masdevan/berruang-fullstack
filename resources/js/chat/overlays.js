@@ -103,6 +103,10 @@ window.openModal = function (id) {
 
     const input = modal.querySelector('input[data-autofocus]');
     if (input) {
+        if (!input.value.trim()) {
+            const status = modal.querySelector('#add-user-status');
+            if (status) status.classList.add('hidden');
+        }
         setTimeout(function () { input.focus(); }, 100);
     }
 };
