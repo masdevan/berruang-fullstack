@@ -1,8 +1,9 @@
-import './chat/overlays.js';
+import './chat/modal.js';
+import './chat/add-user.js';
 import './chat/search.js';
 import { loadMoreMedia, loadMoreFiles, watchLoadMore } from './chat/galleries.js';
 import { makeResizable, setRightbarVisible } from './chat/sidebar.js';
-import { showSectionInfo, hideSectionInfo } from './chat/overlays.js';
+import { showSectionInfo, hideSectionInfo } from './chat/section-info.js';
 
 document.addEventListener('DOMContentLoaded', function () {
     const input = document.getElementById('search-input');

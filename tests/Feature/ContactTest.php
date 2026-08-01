@@ -78,4 +78,20 @@ class ContactTest extends TestCase
         $this->assertStringContainsString('data-name="Alice" data-avatar="A" data-online="1"', $html);
         $this->assertStringContainsString('data-name="Bob" data-avatar="B" data-online="0"', $html);
     }
+
+    public function test_update_names_sets_custom_contact_name_in_html(): void
+    {
+        $me = $this->actingUser();
+        $target = User::factory()->create(['name' => 'Alice Wonder', 'username' => 'alice']);
+        $me->contacts()->attach($target->id);
+
+        $response = $this->actingAs($me)->patchJson("/contacts/{$target->id}", [
+            'first_name' => 'Ayu',
+            'last_name' => 'Lestari',
+        ]);
+
+        $response->assertOk()
+            ->assertJsonPath('html', fn ($html) => str_contains($html, 'data-name="Ayu Lestari"'));
+        $this->assertSame('Ayu', DB::table('contacts')->where('contact_user_id', $target->id)->value('first_name'));
+    }
 }

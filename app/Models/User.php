@@ -63,6 +63,7 @@ class User extends Authenticatable implements MustVerifyEmail
     public function contacts(): BelongsToMany
     {
         return $this->belongsToMany(User::class, 'contacts', 'user_id', 'contact_user_id')
+            ->withPivot(['first_name', 'last_name'])
             ->withTimestamps();
     }
 }

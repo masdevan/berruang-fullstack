@@ -42,6 +42,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
     Route::get('/contacts', [ContactController::class, 'index'])->name('contacts.index');
     Route::post('/contacts', [ContactController::class, 'store'])->name('contacts.store');
+    Route::patch('/contacts/{id}', [ContactController::class, 'updateNames'])->name('contacts.update-names');
 
     Route::post('/profile/password', [PasswordController::class, 'update'])->name('profile.password');
     Route::post('/profile/avatar', [AvatarController::class, 'update'])->name('profile.avatar');

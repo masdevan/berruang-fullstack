@@ -62,6 +62,35 @@ class ContactController extends Controller
             'onlineIds' => $this->onlineIds(),
         ])->render();
 
+        return response()->json([
+            'id' => $target->id,
+            'html' => $html,
+        ]);
+    }
+
+    public function updateNames(Request $request, int $id): JsonResponse
+    {
+        $first = trim((string) $request->input('first_name'));
+        $last = trim((string) $request->input('last_name'));
+
+        $contact = $request->user()->contacts()
+            ->where('contact_user_id', $id)
+            ->first();
+
+        if (! $contact) {
+            return response()->json(['message' => 'Contact not found.'], 404);
+        }
+
+        $contact->pivot->update([
+            'first_name' => $first !== '' ? $first : null,
+            'last_name' => $last !== '' ? $last : null,
+        ]);
+
+        $html = view('components.chat.conversation-list-items', [
+            'users' => collect([$contact]),
+            'onlineIds' => $this->onlineIds(),
+        ])->render();
+
         return response()->json(['html' => $html]);
     }
 

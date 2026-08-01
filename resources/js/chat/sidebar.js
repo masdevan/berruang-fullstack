@@ -59,7 +59,7 @@ window.backToConversations = function () {
     document.getElementById('sidebar-right').classList.add('translate-x-full');
 };
 
-window.openConversation = function (name, avatar, online, about) {
+window.openConversation = function (name, avatar, online, about, customName, realName, username) {
 
     ['media-gallery', 'files-gallery'].forEach(function (id) {
         const overlay = document.getElementById(id);
@@ -102,12 +102,20 @@ window.openConversation = function (name, avatar, online, about) {
         ? '<span class="w-1.5 h-1.5 rounded-full bg-green-400 inline-block -mt-0.5"></span> Online'
         : '<span class="w-1.5 h-1.5 rounded-full bg-white/20 inline-block -mt-0.5"></span> Offline';
 
-    document.getElementById('rightbar-name').textContent = name;
+    const customNameEl = document.getElementById('rightbar-custom-name');
+    const realNameEl = document.getElementById('rightbar-real-name');
+    const usernameEl = document.getElementById('rightbar-username');
+    customNameEl.textContent = name;
+    customNameEl.classList.toggle('hidden', !customName);
+    realNameEl.textContent = realName;
+    realNameEl.classList.toggle('hidden', !realName);
+    usernameEl.textContent = '@' + username;
+    usernameEl.classList.toggle('hidden', !username);
     document.getElementById('rightbar-avatar').textContent = avatar;
-    const rightbarStatus = document.getElementById('rightbar-status');
-    rightbarStatus.className = 'text-[10px] mt-0.5 ' + (online ? 'text-green-400/70' : 'text-white/30');
-    rightbarStatus.textContent = online ? 'Online' : 'Offline';
-    document.getElementById('rightbar-about-text').textContent = about || 'No bio yet.';
+    const rightbarDot = document.getElementById('rightbar-online-dot');
+    rightbarDot.classList.toggle('bg-green-500', online);
+    rightbarDot.classList.toggle('bg-white/20', !online);
+    document.getElementById('rightbar-about-text').textContent = about;
     setRightbarVisible(true);
 
     const container = document.getElementById('messages-container');

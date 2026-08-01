@@ -1,14 +1,17 @@
 <div id="rightbar-root" class="h-full border-l border-white/6 bg-[#0F0F0F] relative overflow-hidden flex flex-col">
     <div class="flex-1 overflow-hidden flex flex-col">
         <div class="p-4 text-center border-b border-white/6">
-            <div class="w-12 h-12 rounded-full bg-white/8 mx-auto flex items-center justify-center text-sm font-medium text-white/60"><span id="rightbar-avatar">AP</span></div>
-            <p id="rightbar-name" class="text-xs font-medium mt-1.5"></p>
-            <p id="rightbar-status" class="text-[10px] text-green-400/70 mt-0.5">Online</p>
+            <div class="relative w-12 h-12 rounded-full bg-white/8 mx-auto flex items-center justify-center text-sm font-medium text-white/60"><span id="rightbar-avatar">AP</span>
+                <div id="rightbar-online-dot" class="absolute -top-0.5 -right-0.5 w-3 h-3 rounded-full border-2 border-[#0F0F0F] bg-white/20"></div>
+            </div>
+            <p id="rightbar-custom-name" class="text-xs font-medium mt-1.5 text-[#E091A9] hidden"></p>
+            <p id="rightbar-real-name" class="text-xs font-medium mt-1.5 text-white/80 hidden"></p>
+            <p id="rightbar-username" class="text-[10px] text-white/40 mt-0.5 hidden"></p>
         </div>
 
         <div id="rightbar-about" class="p-3 border-b border-white/6">
             <x-chat.section-label title="About" info="Personal information of this contact." />
-            <p id="rightbar-about-text" class="text-[11px] text-white/60 leading-relaxed"></p>
+            <p id="rightbar-about-text" onclick="openBioModal()" title="Click to read more" class="text-[11px] text-white/60 leading-relaxed cursor-pointer hover:text-white/80 transition-colors" style="display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden"></p>
         </div>
 
         <div class="p-3 border-b border-white/6">
