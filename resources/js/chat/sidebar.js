@@ -34,6 +34,8 @@ window.toggleRight = function () {
     const el = document.getElementById('sidebar-right');
     if (!el) return;
 
+    showRightbarEmptyState(!rightbarHasChat);
+
     if (window.innerWidth < MOBILE_BREAKPOINT) {
         el.style.width = '';
         el.classList.toggle('translate-x-full');
@@ -44,6 +46,15 @@ window.toggleRight = function () {
     el.style.width = el.style.width === '0px' ? '288px' : '0px';
     setTimeout(() => el.style.transition = '', 200);
 };
+
+let rightbarHasChat = false;
+
+function showRightbarEmptyState(empty) {
+    const el = document.getElementById('rightbar-empty');
+    if (!el) return;
+    el.classList.toggle('hidden', !empty);
+    el.classList.toggle('flex', empty);
+}
 
 window.backToConversations = function () {
     if (window.innerWidth >= MOBILE_BREAKPOINT) return;
@@ -116,6 +127,8 @@ window.openConversation = function (name, avatar, online, about, customName, rea
     rightbarDot.classList.toggle('bg-green-500', online);
     rightbarDot.classList.toggle('bg-white/20', !online);
     document.getElementById('rightbar-about-text').textContent = about;
+    rightbarHasChat = true;
+    showRightbarEmptyState(false);
     setRightbarVisible(true);
 
     const container = document.getElementById('messages-container');
@@ -196,6 +209,7 @@ export function makeResizable(id, handleId, minWidth, maxWidth) {
             newWidth = Math.min(maxWidth, newWidth);
         }
         el.style.width = newWidth + 'px';
+        if (id === 'sidebar-right') showRightbarEmptyState(!rightbarHasChat);
     }
 
     function onUp() {

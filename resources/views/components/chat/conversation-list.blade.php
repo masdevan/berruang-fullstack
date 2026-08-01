@@ -50,11 +50,23 @@
         <div class="flex-1 overflow-y-auto">
             <x-chat.conversation-list-items :users="$users" :online-ids="$onlineIds" />
             <div id="contacts-sentinel" class="h-2"></div>
+            @if ($users->isEmpty())
+                <div class="empty-state flex flex-col items-center justify-center h-full gap-2 px-8 text-center">
+                    <x-icons.ghost class="w-9 h-9 text-white/15" />
+                    <p class="text-[11px] text-white/20">No conversations yet</p>
+                    <p class="text-[10px] text-white/10 leading-relaxed">Tap + to add a user<br>and start chatting</p>
+                </div>
+            @endif
         </div>
     </div>
 
     <div id="tab-pane-workspace" class="hidden flex-1 flex-col min-h-0">
         <div class="flex-1 overflow-y-auto">
+            <div class="empty-state flex flex-col items-center justify-center h-full gap-2 px-8 text-center">
+                <x-icons.ghost class="w-9 h-9 text-white/15" />
+                <p class="text-[11px] text-white/20">No workspaces yet</p>
+                <p class="text-[10px] text-white/10 leading-relaxed">Create or join a workspace<br>to collaborate with your team</p>
+            </div>
         </div>
     </div>
 

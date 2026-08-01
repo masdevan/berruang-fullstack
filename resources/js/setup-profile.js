@@ -11,7 +11,9 @@ function readDraft() {
 }
 
 function saveDraft(patch) {
-    sessionStorage.setItem(DRAFT_KEY, JSON.stringify({ ...readDraft(), ...patch }));
+    try {
+        sessionStorage.setItem(DRAFT_KEY, JSON.stringify({ ...readDraft(), ...patch }));
+    } catch {}
 }
 
 function blobToDataUrl(blob) {
@@ -43,6 +45,7 @@ document.addEventListener('DOMContentLoaded', function () {
     const continueBtn = document.getElementById('setup-continue-btn');
 
     const draft = readDraft();
+    const hasAvatar = document.getElementById('setup-profile-form').dataset.hasAvatar === '1';
 
     if (draft.avatar) {
         const file = dataUrlToFile(draft.avatar);
@@ -65,7 +68,7 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
     function updateContinue() {
-        continueBtn.disabled = !(bio.value.trim() && avatarInput.files.length);
+        continueBtn.disabled = !(bio.value.trim() && (avatarInput.files.length || hasAvatar));
     }
 
     bio.addEventListener('input', function () {

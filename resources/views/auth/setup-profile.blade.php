@@ -5,7 +5,7 @@
 @section('brand')@endsection
 
 @section('content')
-    <form method="POST" action="{{ route('setup-profile.store') }}" enctype="multipart/form-data" class="space-y-5" id="setup-profile-form">
+    <form method="POST" action="{{ route('setup-profile.store') }}" enctype="multipart/form-data" class="space-y-5" id="setup-profile-form" data-has-avatar="{{ auth()->user()->avatar ? '1' : '0' }}">
         @csrf
         <div class="flex flex-col items-center gap-3">
             <div class="relative">

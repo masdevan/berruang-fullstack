@@ -8,6 +8,7 @@ let addUserErrorTimer = null;
 
 function prependContact(html) {
     const list = document.querySelector('#tab-pane-chat .flex-1.overflow-y-auto');
+    list.querySelector('.empty-state')?.remove();
     list.insertAdjacentHTML('afterbegin', html);
     const added = list.firstElementChild;
     if (added) {
