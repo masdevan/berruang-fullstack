@@ -122,10 +122,38 @@ window.closeModal = function (id) {
 
 window.submitAddUser = function () {
     const input = document.getElementById('add-user-input');
-    if (!input.value.trim()) return;
+    const error = document.getElementById('add-user-error');
+    const username = input.value.trim();
+    if (!username) return;
 
-    input.value = '';
-    closeModal('add-user-modal');
+    const token = document.querySelector('meta[name="csrf-token"]').content;
+
+    fetch('/contacts', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': token },
+        body: JSON.stringify({ username: username })
+    })
+        .then(function (response) {
+            return response.json().then(function (data) { return { ok: response.ok, data: data }; });
+        })
+        .then(function ({ ok, data }) {
+            if (!ok) {
+                error.textContent = data.message || 'Failed to add user.';
+                error.classList.remove('hidden');
+                return;
+            }
+            const list = document.querySelector('#tab-pane-chat .flex-1.overflow-y-auto');
+            list.insertAdjacentHTML('afterbegin', data.html);
+            const added = list.firstElementChild;
+            if (added && added.dataset.name) added.click();
+            error.classList.add('hidden');
+            input.value = '';
+            closeModal('add-user-modal');
+        })
+        .catch(function () {
+            error.textContent = 'Failed to add user.';
+            error.classList.remove('hidden');
+        });
 };
 
 document.addEventListener('keydown', function (e) {

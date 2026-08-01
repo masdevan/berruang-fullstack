@@ -2,20 +2,13 @@
     <div class="flex-1 overflow-hidden flex flex-col">
         <div class="p-4 text-center border-b border-white/6">
             <div class="w-12 h-12 rounded-full bg-white/8 mx-auto flex items-center justify-center text-sm font-medium text-white/60"><span id="rightbar-avatar">AP</span></div>
-            <p id="rightbar-name" class="text-xs font-medium mt-1.5">Alya Putri</p>
+            <p id="rightbar-name" class="text-xs font-medium mt-1.5"></p>
             <p id="rightbar-status" class="text-[10px] text-green-400/70 mt-0.5">Online</p>
-        </div>
-
-        <div id="rightbar-members" class="p-3 border-b border-white/6 hidden">
-            <x-chat.section-label title="Members" info="People in this workspace.">
-                <button type="button" onclick="openMembersGallery()" class="text-[10px] font-medium text-[#E091A9]/70 hover:text-[#E091A9] transition-colors cursor-pointer">View all</button>
-            </x-chat.section-label>
-            <div id="rightbar-members-list" class="space-y-1"></div>
         </div>
 
         <div id="rightbar-about" class="p-3 border-b border-white/6">
             <x-chat.section-label title="About" info="Personal information of this contact." />
-            <p id="rightbar-about-text" class="text-[11px] text-white/60 leading-relaxed">Senior UI/UX Designer passionate about creating meaningful digital experiences.</p>
+            <p id="rightbar-about-text" class="text-[11px] text-white/60 leading-relaxed"></p>
         </div>
 
         <div class="p-3 border-b border-white/6">
@@ -229,17 +222,4 @@
             </div>
         </div>
     </div>
-
-    <div id="members-gallery" class="hidden absolute inset-0 z-10 bg-[#0F0F0F] flex-col">
-            <div class="flex items-center gap-2 px-4 h-13.25 border-b border-white/6">
-                <button type="button" onclick="closeMembersGallery()"
-                        class="text-white/40 hover:text-white transition-colors cursor-pointer shrink-0" title="Back">
-                    <x-icons.chevron-left class="w-4 h-4" />
-                </button>
-                <p class="text-xs font-medium">Members</p>
-            </div>
-            <div class="flex-1 overflow-y-auto p-2">
-                <div id="members-gallery-list" class="space-y-0.5"></div>
-            </div>
-        </div>
 </div>

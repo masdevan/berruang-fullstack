@@ -3,7 +3,6 @@ import './chat/search.js';
 import { loadMoreMedia, loadMoreFiles, watchLoadMore } from './chat/galleries.js';
 import { makeResizable, setRightbarVisible } from './chat/sidebar.js';
 import { showSectionInfo, hideSectionInfo } from './chat/overlays.js';
-import { DEMO_CONVERSATIONS } from './chat/demo-data.js';
 
 document.addEventListener('DOMContentLoaded', function () {
     const input = document.getElementById('search-input');
@@ -12,15 +11,34 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
     const chatParam = new URLSearchParams(window.location.search).get('chat');
-    if (chatParam) {
-        const chat = DEMO_CONVERSATIONS[chatParam];
-        if (chat) openConversation(chatParam, chat.avatar, chat.online);
+    const item = chatParam ? document.querySelector('[data-name="' + chatParam + '"]') : null;
+    if (item) {
+        item.click();
     } else {
         setRightbarVisible(false);
     }
 
     makeResizable('sidebar-left', 'resize-left', 200, 500);
     makeResizable('sidebar-right', 'resize-right', 200, 400);
+
+    let contactsPage = 1;
+    let contactsLoading = false;
+    const contactsSentinel = document.getElementById('contacts-sentinel');
+    if (contactsSentinel) {
+        new IntersectionObserver(function (entries) {
+            if (!entries[0].isIntersecting || contactsLoading) return;
+            contactsLoading = true;
+            contactsPage++;
+            fetch('/contacts?page=' + contactsPage)
+                .then(function (response) { return response.json(); })
+                .then(function (data) {
+                    contactsSentinel.insertAdjacentHTML('beforebegin', data.html);
+                    if (!data.has_more) contactsSentinel.remove();
+                    contactsLoading = false;
+                })
+                .catch(function () { contactsPage--; contactsLoading = false; });
+        }, { root: contactsSentinel.parentElement }).observe(contactsSentinel);
+    }
 
     watchLoadMore('media-gallery-sentinel', loadMoreMedia);
     watchLoadMore('files-gallery-sentinel', loadMoreFiles);

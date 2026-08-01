@@ -1,5 +1,4 @@
 import { MOBILE_BREAKPOINT, TAB_BASE, TAB_ACTIVE, TAB_INACTIVE } from './constants.js';
-import { DEMO_CONVERSATIONS } from './demo-data.js';
 import { messageHtml, setCurrentChat } from './bubbles.js';
 
 window.switchTab = function (tab) {
@@ -60,10 +59,9 @@ window.backToConversations = function () {
     document.getElementById('sidebar-right').classList.add('translate-x-full');
 };
 
-window.openConversation = function (name, avatar, online) {
-    const chat = DEMO_CONVERSATIONS[name] || { avatar, online, messages: [] };
+window.openConversation = function (name, avatar, online, about) {
 
-    ['media-gallery', 'files-gallery', 'members-gallery'].forEach(function (id) {
+    ['media-gallery', 'files-gallery'].forEach(function (id) {
         const overlay = document.getElementById(id);
         if (overlay) {
             overlay.classList.add('hidden');
@@ -94,48 +92,27 @@ window.openConversation = function (name, avatar, online) {
         area.classList.add('flex');
     }
 
-    headerAvatar.textContent = chat.avatar;
+    headerAvatar.textContent = avatar;
     document.getElementById('chat-header-name').textContent = name;
 
     const status = document.getElementById('chat-header-status');
-    status.classList.toggle('text-green-400/70', chat.online);
-    status.classList.toggle('text-white/30', !chat.online);
-    status.innerHTML = chat.group
-        ? '<span class="w-1.5 h-1.5 rounded-full bg-white/20 inline-block -mt-0.5"></span> ' + chat.group
-        : chat.online
-            ? '<span class="w-1.5 h-1.5 rounded-full bg-green-400 inline-block -mt-0.5"></span> Online'
-            : '<span class="w-1.5 h-1.5 rounded-full bg-white/20 inline-block -mt-0.5"></span> Offline';
+    status.classList.toggle('text-green-400/70', online);
+    status.classList.toggle('text-white/30', !online);
+    status.innerHTML = online
+        ? '<span class="w-1.5 h-1.5 rounded-full bg-green-400 inline-block -mt-0.5"></span> Online'
+        : '<span class="w-1.5 h-1.5 rounded-full bg-white/20 inline-block -mt-0.5"></span> Offline';
 
     document.getElementById('rightbar-name').textContent = name;
-    document.getElementById('rightbar-avatar').textContent = chat.avatar;
+    document.getElementById('rightbar-avatar').textContent = avatar;
     const rightbarStatus = document.getElementById('rightbar-status');
-    rightbarStatus.className = 'text-[10px] mt-0.5 ' + (chat.online ? 'text-green-400/70' : 'text-white/30');
-    rightbarStatus.textContent = chat.online ? 'Online' : (chat.group || 'Offline');
-
-    const membersSection = document.getElementById('rightbar-members');
-    const aboutSection = document.getElementById('rightbar-about');
-    const workspaceTabs = document.getElementById('workspace-tabs');
-    if (chat.group) {
-        aboutSection.classList.add('hidden');
-        membersSection.classList.remove('hidden');
-        workspaceTabs.classList.remove('hidden');
-        workspaceTabs.classList.add('flex');
-        document.getElementById('rightbar-members-list').innerHTML = chat.members.map(memberRow).join('');
-        setRightbarVisible(false);
-    } else {
-        membersSection.classList.add('hidden');
-        aboutSection.classList.remove('hidden');
-        workspaceTabs.classList.add('hidden');
-        workspaceTabs.classList.remove('flex');
-        document.getElementById('rightbar-about-text').textContent = chat.about || 'No bio yet.';
-        setRightbarVisible(true);
-    }
+    rightbarStatus.className = 'text-[10px] mt-0.5 ' + (online ? 'text-green-400/70' : 'text-white/30');
+    rightbarStatus.textContent = online ? 'Online' : 'Offline';
+    document.getElementById('rightbar-about-text').textContent = about || 'No bio yet.';
+    setRightbarVisible(true);
 
     const container = document.getElementById('messages-container');
     setCurrentChat(name);
-    container.innerHTML = chat.messages.map(function (message, index) {
-        return messageHtml(message, name, index);
-    }).join('');
+    container.innerHTML = '';
     container.scrollTop = container.scrollHeight;
     container.animate(
         [{ opacity: 0, transform: 'translateY(6px)' }, { opacity: 1, transform: 'translateY(0)' }],
@@ -154,7 +131,7 @@ export function setRightbarVisible(visible) {
     if (!el) return;
 
     if (window.innerWidth < MOBILE_BREAKPOINT) {
-        el.classList.toggle('translate-x-full', !visible);
+        el.classList.add('translate-x-full');
         return;
     }
 
@@ -162,45 +139,6 @@ export function setRightbarVisible(visible) {
     el.style.width = visible ? '288px' : '0px';
     setTimeout(function () { el.style.transition = ''; }, 200);
 }
-
-function memberInitials(name) {    return name.split(' ').map(function (word) { return word[0]; }).join('');
-}
-
-function memberRow(member) {
-    const online = DEMO_CONVERSATIONS[member.name] && DEMO_CONVERSATIONS[member.name].online;
-    return `
-        <div class="flex items-center gap-2 px-1 py-1.5 rounded cursor-pointer hover:bg-white/5 transition-colors" onclick="openConversation('${member.name}', '${memberInitials(member.name)}', ${online})">
-            <div class="relative shrink-0">
-                <div class="w-7 h-7 rounded-full bg-white/8 flex items-center justify-center text-[9px] font-medium text-white/60">${memberInitials(member.name)}</div>
-                ${online ? '<div class="absolute -bottom-0.5 -right-0.5 w-2 h-2 bg-green-500 rounded-full border-2 border-[#0F0F0F]"></div>' : ''}
-            </div>
-            <div class="min-w-0 flex-1">
-                <p class="text-[11px] font-medium text-white/80 truncate">${member.name}</p>
-                <p class="text-[9px] text-white/30 truncate">${member.role}</p>
-            </div>
-        </div>`;
-}
-
-window.openMembersGallery = function () {
-    const seen = {};
-    const all = [];
-    Object.keys(DEMO_CONVERSATIONS).forEach(function (key) {
-        const chat = DEMO_CONVERSATIONS[key];
-        if (!chat.group) return;
-        chat.members.forEach(function (member) {
-            if (!seen[member.name]) {
-                seen[member.name] = true;
-                all.push(member);
-            }
-        });
-    });
-    document.getElementById('members-gallery-list').innerHTML = all.map(memberRow).join('');
-    openOverlay('members-gallery');
-};
-
-window.closeMembersGallery = function () {
-    closeOverlay('members-gallery');
-};
 
 window.toggleFabMenu = function (event) {
     if (event) event.stopPropagation();

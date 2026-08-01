@@ -48,61 +48,13 @@
 
     <div id="tab-pane-chat" class="flex flex-col flex-1 min-h-0">
         <div class="flex-1 overflow-y-auto">
-            <x-chat.conversation-item
-                name="Alya Putri"
-                avatar="AP"
-                last-message="Okay, I'll review the design first thing tomorrow!"
-                time="5m"
-                online="true" />
-
-            <x-chat.conversation-item
-                name="Design Team"
-                avatar="DT"
-                last-message="Rama: New mockups are ready for feedback"
-                time="1h"
-                unread="3" />
-
-            <x-chat.conversation-item
-                name="Rama Wijaya"
-                avatar="RW"
-                last-message="Sounds good, let's finalize it by Friday"
-                time="2h"
-                online="true" />
-
-            <x-chat.conversation-item
-                name="Sari Dewi"
-                avatar="SD"
-                last-message="Thank you for the quick response!"
-                time="3h" />
-
-            <x-chat.conversation-item
-                name="Budi Santoso"
-                avatar="BS"
-                last-message="Can you send me the file?"
-                time="Yesterday" />
-
-            <x-chat.conversation-item
-                name="Marketing Team"
-                avatar="MT"
-                last-message="Doni: Campaign results are in"
-                time="Yesterday"
-                unread="7" />
-
-            <x-chat.conversation-item
-                name="Doni Prasetyo"
-                avatar="DP"
-                last-message="Let's discuss this in the meeting"
-                time="2d" />
+            <x-chat.conversation-list-items :users="$users" :online-ids="$onlineIds" />
+            <div id="contacts-sentinel" class="h-2"></div>
         </div>
     </div>
 
     <div id="tab-pane-workspace" class="hidden flex-1 flex-col min-h-0">
         <div class="flex-1 overflow-y-auto">
-            <x-chat.workspace-item name="BerRuang Design" avatar="BD" meta="4 members" />
-            <x-chat.workspace-item name="Mobile App Dev" avatar="MA" meta="6 members" />
-            <x-chat.workspace-item name="Marketing Q3" avatar="M3" meta="3 members" />
-            <x-chat.workspace-item name="Content Team" avatar="CT" meta="5 members" />
-            <x-chat.workspace-item name="Research & Insights" avatar="RI" meta="2 members" />
         </div>
     </div>
 

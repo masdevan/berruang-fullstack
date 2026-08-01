@@ -5,10 +5,12 @@ use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\Auth\RegisterController;
 use App\Http\Controllers\Auth\ResetPasswordController;
 use App\Http\Controllers\Auth\VerifyEmailController;
+use App\Http\Controllers\Chat\ContactController;
 use App\Http\Controllers\Profile\AccountController;
 use App\Http\Controllers\Profile\AvatarController;
 use App\Http\Controllers\Profile\PasswordController;
 use App\Models\User;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Route;
 
 Route::get('check-username/{username}', function ($username) {
@@ -25,12 +27,21 @@ Route::get('/', function () {
 
 Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/messages', function () {
-        return view('chat.index');
+        return view('chat.index', [
+            'users' => auth()->user()->contacts()->orderBy('name')->limit(20)->get(),
+            'onlineIds' => DB::table('sessions')->whereNotNull('user_id')->pluck('user_id')->all(),
+        ]);
     })->name('chat');
 
     Route::get('/profile', function () {
-        return view('profile.index');
+        return view('profile.index', [
+            'users' => auth()->user()->contacts()->orderBy('name')->limit(20)->get(),
+            'onlineIds' => DB::table('sessions')->whereNotNull('user_id')->pluck('user_id')->all(),
+        ]);
     })->name('profile');
+
+    Route::get('/contacts', [ContactController::class, 'index'])->name('contacts.index');
+    Route::post('/contacts', [ContactController::class, 'store'])->name('contacts.store');
 
     Route::post('/profile/password', [PasswordController::class, 'update'])->name('profile.password');
     Route::post('/profile/avatar', [AvatarController::class, 'update'])->name('profile.avatar');

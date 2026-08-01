@@ -1,11 +1,12 @@
 import { BUBBLE_ME, BUBBLE_OTHER } from './constants.js';
-import { DEMO_CONVERSATIONS } from './demo-data.js';
 
 export const EMOJIS = ['👍', '❤️', '😂', '😮', '😢'];
 
 const PENCIL_SVG = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" class="w-3 h-3"><path stroke-linecap="round" stroke-linejoin="round" d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L10.582 16.07a4.5 4.5 0 01-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 011.13-1.897l8.932-8.931zm0 0L19.5 7.125"/></svg>';
 
 export let currentChatName = null;
+
+const localMessages = {};
 
 export function setCurrentChat(name) {
     currentChatName = name;
@@ -24,14 +25,7 @@ function bubbleInnerHtml(msg, chatName, index) {
     const text = truncated ? msg.text.slice(0, 1000) + '…' : msg.text;
     const sender = msg.sender;
     const senderLine = sender
-        ? (function () {
-            const member = DEMO_CONVERSATIONS[chatName] && DEMO_CONVERSATIONS[chatName].members
-                ? DEMO_CONVERSATIONS[chatName].members.find(function (m) { return m.name === sender; })
-                : null;
-            if (!member) return '';
-            const roleClass = member.role === 'Admin' ? 'text-yellow-400/90 font-medium' : 'text-white/25 font-normal';
-            return `<p class="text-[10px] font-medium text-[#E091A9]/80 mb-0.5">${escapeHtml(sender)} <span class="${roleClass}">· ${escapeHtml(member.role)}</span></p>`;
-        })()
+        ? `<p class="text-[10px] font-medium text-[#E091A9]/80 mb-0.5">${escapeHtml(sender)}</p>`
         : '';
     const reaction = msg.reaction
         ? `<button type="button" class="bubble-react-toggle cursor-pointer absolute -bottom-2 ${isMe ? 'right-2' : 'left-2'} bg-[#1A1A1A] border border-white/10 rounded-full px-1.5 py-0.5 text-[10px] leading-none hover:scale-110 transition-transform">${msg.reaction}</button>`
@@ -55,9 +49,10 @@ function bubbleInnerHtml(msg, chatName, index) {
 
 export function appendMessage(text, time) {
     const container = document.getElementById('messages-container');
-    if (!container || !currentChatName || !DEMO_CONVERSATIONS[currentChatName]) return;
+    if (!container || !currentChatName) return;
 
-    const messages = DEMO_CONVERSATIONS[currentChatName].messages;
+    if (!localMessages[currentChatName]) localMessages[currentChatName] = [];
+    const messages = localMessages[currentChatName];
     messages.push({ from: 'me', text, time });
     container.insertAdjacentHTML('beforeend', messageHtml(messages[messages.length - 1], currentChatName, messages.length - 1));
     container.scrollTop = container.scrollHeight;
@@ -77,7 +72,7 @@ function bubbleRow(target) {
 function messageFor(row) {
     const chatName = row.dataset.chat;
     const index = Number(row.dataset.index);
-    const messages = DEMO_CONVERSATIONS[chatName] && DEMO_CONVERSATIONS[chatName].messages;
+    const messages = localMessages[chatName];
     return messages ? { chatName, index, message: messages[index] } : null;
 }
 
