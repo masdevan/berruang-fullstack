@@ -120,7 +120,11 @@ window.openConversation = function (name, avatar, status, about, customName, rea
     usernameEl.textContent = '@' + username;
     usernameEl.classList.toggle('hidden', !username);
     document.getElementById('rightbar-save-contact').classList.toggle('hidden', !!customName);
-    document.getElementById('rightbar-avatar').innerHTML = AVATAR_IMG;
+    const avatarEl = document.getElementById('rightbar-avatar');
+    avatarEl.innerHTML = AVATAR_IMG;
+    avatarEl.onclick = hasAvatar ? function () { window.openMediaModal(avatar); } : null;
+    avatarEl.title = hasAvatar ? 'View profile photo' : '';
+    avatarEl.classList.toggle('cursor-pointer', !!hasAvatar);
     document.getElementById('rightbar-about-text').textContent = about;
     rightbarHasChat = true;
     showRightbarEmptyState(false);
