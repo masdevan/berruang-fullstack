@@ -5,7 +5,6 @@ namespace Tests\Feature;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Str;
 use Tests\TestCase;
 
 class ContactTest extends TestCase
@@ -56,27 +55,6 @@ class ContactTest extends TestCase
 
         $second = $this->actingAs($me)->getJson('/contacts?page=2')->assertOk()->json();
         $this->assertFalse($second['has_more']);
-    }
-
-    public function test_online_flag_renders_in_item_html(): void
-    {
-        $me = $this->actingUser();
-        $alice = User::factory()->create(['name' => 'Alice']);
-        $bob = User::factory()->create(['name' => 'Bob']);
-        $me->contacts()->attach([$alice->id, $bob->id]);
-
-        DB::table('sessions')->insert([
-            'id' => Str::random(40),
-            'user_id' => $alice->id,
-            'ip_address' => '127.0.0.1',
-            'user_agent' => 'test',
-            'payload' => 'test',
-            'last_activity' => now()->timestamp,
-        ]);
-
-        $html = $this->actingAs($me)->getJson('/contacts?page=1')->json('html');
-        $this->assertStringContainsString('data-name="Alice" data-avatar="A" data-online="1"', $html);
-        $this->assertStringContainsString('data-name="Bob" data-avatar="B" data-online="0"', $html);
     }
 
     public function test_update_names_sets_custom_contact_name_in_html(): void

@@ -14,7 +14,7 @@ class UserFactory extends Factory
     {
         return [
             'name' => fake()->name(),
-            'username' => fake()->unique()->userName(),
+            'username' => fake()->unique()->regexify('[a-z0-9_]{10}'),
             'email' => fake()->unique()->safeEmail(),
             'email_verified_at' => now(),
             'onboarded_at' => now(),

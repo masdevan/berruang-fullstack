@@ -12,6 +12,10 @@ export function setCurrentChat(name) {
     currentChatName = name;
 }
 
+export function clearMessages(chatName) {
+    if (localMessages[chatName]) localMessages[chatName] = [];
+}
+
 export function messageHtml(msg, chatName, index) {
     return `
         <div class="flex ${msg.from === 'me' ? 'justify-end' : 'justify-start'} mb-2 group/bubble" data-chat="${chatName}" data-index="${index}">
@@ -23,10 +27,6 @@ function bubbleInnerHtml(msg, chatName, index) {
     const isMe = msg.from === 'me';
     const truncated = msg.text.length > 1000;
     const text = truncated ? msg.text.slice(0, 1000) + '…' : msg.text;
-    const sender = msg.sender;
-    const senderLine = sender
-        ? `<p class="text-[10px] font-medium text-[#E091A9]/80 mb-0.5">${escapeHtml(sender)}</p>`
-        : '';
     const reaction = msg.reaction
         ? `<button type="button" class="bubble-react-toggle cursor-pointer absolute -bottom-2 ${isMe ? 'right-2' : 'left-2'} bg-[#1A1A1A] border border-white/10 rounded-full px-1.5 py-0.5 text-[10px] leading-none hover:scale-110 transition-transform">${msg.reaction}</button>`
         : '';
@@ -39,7 +39,6 @@ function bubbleInnerHtml(msg, chatName, index) {
     return `
         <div class="relative ${isMe ? BUBBLE_ME : BUBBLE_OTHER}">
             ${actions}
-            ${senderLine}
             <p class="bubble-text text-xs text-white/85 leading-relaxed wrap-break-word">${escapeHtml(text)}</p>
             ${truncated ? `<button type="button" class="bubble-expand cursor-pointer mt-1 text-[10px] text-[#E091A9] hover:text-[#E8A8BC] transition-colors">Lihat selengkapnya</button>` : ''}
             <p class="text-[9px] text-white/25 text-right mt-0.5">${msg.time}</p>
@@ -48,24 +47,29 @@ function bubbleInnerHtml(msg, chatName, index) {
 }
 
 export function appendMessage(text, time) {
+    pushMessage({ id: null, from: 'me', text, time }, true);
+}
+
+export function pushMessage(msg, animate = false) {
     const container = document.getElementById('messages-container');
     if (!container || !currentChatName) return;
 
     if (!localMessages[currentChatName]) localMessages[currentChatName] = [];
     const messages = localMessages[currentChatName];
-    messages.push({ from: 'me', text, time });
-    container.insertAdjacentHTML('beforeend', messageHtml(messages[messages.length - 1], currentChatName, messages.length - 1));
-    const bubble = container.lastElementChild;
-    bubble.animate(
-        [{ opacity: 0, transform: 'translateY(10px) scale(0.96)' }, { opacity: 1, transform: 'translateY(0) scale(1)' }],
-        { duration: 180, easing: 'ease-out' }
-    );
+    messages.push(msg);
+    container.insertAdjacentHTML('beforeend', messageHtml(msg, currentChatName, messages.length - 1));
+    if (animate) {
+        container.lastElementChild.animate(
+            [{ opacity: 0, transform: 'translateY(10px) scale(0.96)' }, { opacity: 1, transform: 'translateY(0) scale(1)' }],
+            { duration: 180, easing: 'ease-out' }
+        );
+    }
     container.scrollTop = container.scrollHeight;
-    updateConversationPreview(currentChatName, text);
+    updateConversationPreview(currentChatName, msg.text);
 }
 
-export function updateConversationPreview(name, text) {
-    const item = document.querySelector('[data-name="' + name + '"]');
+export function updateConversationPreview(username, text) {
+    const item = document.querySelector('[data-username="' + username + '"]');
     const preview = item && item.querySelector('.conversation-last');
     if (preview) preview.textContent = text;
 }

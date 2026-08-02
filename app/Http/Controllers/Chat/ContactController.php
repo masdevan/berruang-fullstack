@@ -3,15 +3,49 @@
 namespace App\Http\Controllers\Chat;
 
 use App\Http\Controllers\Controller;
+use App\Models\Message;
 use App\Models\User;
 use Illuminate\Database\QueryException;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Collection;
 
 class ContactController extends Controller
 {
     private const PER_PAGE = 20;
+
+    public static function conversationMeta(User $user, Collection $contacts): array
+    {
+        $ids = $contacts->pluck('id');
+
+        $lastMessages = Message::where(function ($q) use ($user, $ids) {
+            $q->where('sender_id', $user->id)->whereIn('receiver_id', $ids)
+                ->orWhere(function ($q2) use ($user, $ids) {
+                    $q2->whereIn('sender_id', $ids)->where('receiver_id', $user->id);
+                });
+        })->orderByDesc('id')->limit(500)->get()->groupBy(function (Message $m) use ($user) {
+            return $m->sender_id === $user->id ? $m->receiver_id : $m->sender_id;
+        });
+
+        $unread = Message::where('receiver_id', $user->id)
+            ->whereIn('sender_id', $ids)
+            ->whereNull('read_at')
+            ->selectRaw('sender_id, count(*) as total')
+            ->groupBy('sender_id')
+            ->pluck('total', 'sender_id');
+
+        $meta = [];
+        foreach ($contacts as $contact) {
+            $last = $lastMessages->get($contact->id)?->first();
+            $meta[$contact->id] = [
+                'last' => $last?->body,
+                'time' => $last ? $last->created_at->format('H:i') : '',
+                'unread' => (int) ($unread[$contact->id] ?? 0),
+            ];
+        }
+
+        return $meta;
+    }
 
     public function index(Request $request): JsonResponse
     {
@@ -21,7 +55,7 @@ class ContactController extends Controller
 
         $html = view('components.chat.conversation-list-items', [
             'users' => $contacts->items(),
-            'onlineIds' => $this->onlineIds(),
+            'meta' => self::conversationMeta($request->user(), $contacts->getCollection()),
         ])->render();
 
         return response()->json([
@@ -59,7 +93,7 @@ class ContactController extends Controller
 
         $html = view('components.chat.conversation-list-items', [
             'users' => collect([$target]),
-            'onlineIds' => $this->onlineIds(),
+            'meta' => self::conversationMeta($request->user(), collect([$target])),
         ])->render();
 
         return response()->json([
@@ -88,17 +122,9 @@ class ContactController extends Controller
 
         $html = view('components.chat.conversation-list-items', [
             'users' => collect([$contact]),
-            'onlineIds' => $this->onlineIds(),
+            'meta' => self::conversationMeta($request->user(), collect([$contact])),
         ])->render();
 
         return response()->json(['html' => $html]);
-    }
-
-    private function onlineIds(): array
-    {
-        return DB::table('sessions')
-            ->whereNotNull('user_id')
-            ->pluck('user_id')
-            ->all();
     }
 }

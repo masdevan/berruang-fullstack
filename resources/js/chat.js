@@ -1,6 +1,6 @@
 import './auth.js';
 import './chat-layout.js';
-import { appendMessage } from './chat/bubbles.js';
+import { appendMessage, currentChatName } from './chat/bubbles.js';
 
 import.meta.glob(['../images/**']);
 
@@ -39,20 +39,47 @@ document.addEventListener('DOMContentLoaded', function () {
 
     if (!form) return;
 
+    let typingTimer = null;
+
+    function reportTyping(typing) {
+        if (!currentChatName) return;
+        fetch('/typing', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content },
+            body: JSON.stringify({ to: currentChatName, typing: typing })
+        }).catch(function () {});
+    }
+
     form.addEventListener('submit', function (e) {
         e.preventDefault();
         const text = input.value.trim();
-        if (!text) return;
+        if (!text || !currentChatName) return;
+
+        clearTimeout(typingTimer);
+        reportTyping(false);
 
         sendBtn.disabled = true;
         sendBtn.classList.add('opacity-50', 'cursor-not-allowed');
 
-        appendMessage(text, now());
+        fetch('/messages', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content },
+            body: JSON.stringify({ to: currentChatName, body: text })
+        })
+            .then(function (response) { return response.json().then(function (data) { return { ok: response.ok, data: data }; }); })
+            .then(function ({ ok, data }) {
+                sendBtn.disabled = false;
+                sendBtn.classList.remove('opacity-50', 'cursor-not-allowed');
+                if (!ok) return;
 
-        input.value = '';
-        input.style.height = 'auto';
-        sendBtn.disabled = false;
-        sendBtn.classList.remove('opacity-50', 'cursor-not-allowed');
+                appendMessage(text, data.time);
+                input.value = '';
+                input.style.height = 'auto';
+            })
+            .catch(function () {
+                sendBtn.disabled = false;
+                sendBtn.classList.remove('opacity-50', 'cursor-not-allowed');
+            });
     });
 
     if (input) {
@@ -66,10 +93,9 @@ document.addEventListener('DOMContentLoaded', function () {
         input.addEventListener('input', function () {
             this.style.height = 'auto';
             this.style.height = Math.min(this.scrollHeight, 120) + 'px';
+            clearTimeout(typingTimer);
+            reportTyping(true);
+            typingTimer = setTimeout(function () { reportTyping(false); }, 1200);
         });
     }
 });
-
-function now() {
-    return new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-}

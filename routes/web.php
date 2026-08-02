@@ -7,10 +7,12 @@ use App\Http\Controllers\Auth\ResetPasswordController;
 use App\Http\Controllers\Auth\SetupProfileController;
 use App\Http\Controllers\Auth\VerifyEmailController;
 use App\Http\Controllers\Chat\ContactController;
+use App\Http\Controllers\Chat\MessageController;
+use App\Http\Controllers\Chat\StatusController;
+use App\Http\Controllers\Chat\TypingController;
 use App\Http\Controllers\Profile\AccountController;
 use App\Http\Controllers\Profile\PasswordController;
 use App\Models\User;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Route;
 
 Route::get('check-username/{username}', function ($username) {
@@ -27,22 +29,30 @@ Route::get('/', function () {
 
 Route::middleware(['auth', 'verified', 'onboarded'])->group(function () {
     Route::get('/messages', function () {
+        $users = auth()->user()->contacts()->orderBy('first_name')->limit(20)->get();
+
         return view('chat.index', [
-            'users' => auth()->user()->contacts()->orderBy('first_name')->limit(20)->get(),
-            'onlineIds' => DB::table('sessions')->whereNotNull('user_id')->pluck('user_id')->all(),
+            'users' => $users,
+            'meta' => ContactController::conversationMeta(auth()->user(), $users),
         ]);
     })->name('chat');
 
     Route::get('/profile', function () {
         return view('profile.index', [
             'users' => auth()->user()->contacts()->orderBy('first_name')->limit(20)->get(),
-            'onlineIds' => DB::table('sessions')->whereNotNull('user_id')->pluck('user_id')->all(),
         ]);
     })->name('profile');
 
     Route::get('/contacts', [ContactController::class, 'index'])->name('contacts.index');
     Route::post('/contacts', [ContactController::class, 'store'])->name('contacts.store');
     Route::patch('/contacts/{id}', [ContactController::class, 'updateNames'])->name('contacts.update-names');
+    Route::get('/messages/thread', [MessageController::class, 'index'])->name('messages.index');
+    Route::post('/messages', [MessageController::class, 'store'])->name('messages.store');
+
+    Route::get('/presence-status', [StatusController::class, 'index'])->name('presence-status.index');
+    Route::post('/presence-status', [StatusController::class, 'store'])->name('presence-status.store');
+
+    Route::post('/typing', [TypingController::class, 'store'])->name('typing.store');
 
     Route::post('/profile/password', [PasswordController::class, 'update'])->name('profile.password');
     Route::post('/profile/account', [AccountController::class, 'update'])->name('profile.account');

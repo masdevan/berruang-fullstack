@@ -17,6 +17,7 @@
         <button type="button" onclick="switchTab('chat')" id="tab-btn-chat"
                 class="flex-1 py-2.5 text-xs font-medium cursor-pointer border-b-2 -mb-px text-white border-[#E091A9] transition-colors">
             <span class="inline-flex items-center gap-1.5">
+                <span id="chat-unread-total" class="invisible shrink-0 min-w-3 h-3 rounded-full bg-[#E091A9] text-[#0A0A0A] text-[7px] font-semibold flex items-center justify-center px-0.5 leading-none self-center">0</span>
                 Chat
                 <span class="section-info-btn relative cursor-pointer text-white/25 hover:text-white/60 transition-colors shrink-0" data-tip-root="leftbar-root">
                     <x-icons.help class="w-3.5 h-3.5" />
@@ -48,7 +49,7 @@
 
     <div id="tab-pane-chat" class="flex flex-col flex-1 min-h-0">
         <div class="flex-1 overflow-y-auto">
-            <x-chat.conversation-list-items :users="$users" :online-ids="$onlineIds" />
+            <x-chat.conversation-list-items :users="$users" :meta="$meta ?? []" />
             <div id="contacts-sentinel" class="h-2"></div>
             @if ($users->isEmpty())
                 <div class="empty-state flex flex-col items-center justify-center h-full gap-2 px-8 text-center">

@@ -1,10 +1,14 @@
 import './chat/modal.js';
 import './chat/add-user.js';
 import './chat/search.js';
+import './chat/realtime.js';
+import './chat/idle.js';
 import { makeResizable, setRightbarVisible } from './chat/sidebar.js';
 import { showSectionInfo, hideSectionInfo } from './chat/section-info.js';
+import { recalcUnreadTotal } from './chat/unread.js';
 
 document.addEventListener('DOMContentLoaded', function () {
+    recalcUnreadTotal();
     const input = document.getElementById('search-input');
     if (input) {
         input.addEventListener('input', window.filterLists);
@@ -33,6 +37,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 .then(function (response) { return response.json(); })
                 .then(function (data) {
                     contactsSentinel.insertAdjacentHTML('beforebegin', data.html);
+                    recalcUnreadTotal();
                     if (!data.has_more) contactsSentinel.remove();
                     contactsLoading = false;
                 })

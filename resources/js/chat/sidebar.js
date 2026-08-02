@@ -1,5 +1,8 @@
 import { MOBILE_BREAKPOINT, TAB_BASE, TAB_ACTIVE, TAB_INACTIVE } from './constants.js';
-import { messageHtml, setCurrentChat } from './bubbles.js';
+import { setCurrentChat } from './bubbles.js';
+import { openChat } from './messaging.js';
+import { clearUnread } from './unread.js';
+import { setStatus } from './realtime.js';
 
 window.switchTab = function (tab) {
     const isChat = tab === 'chat';
@@ -70,7 +73,7 @@ window.backToConversations = function () {
     document.getElementById('sidebar-right').classList.add('translate-x-full');
 };
 
-window.openConversation = function (name, avatar, online, about, customName, realName, username, hasAvatar) {
+window.openConversation = function (name, avatar, status, about, customName, realName, username, hasAvatar) {
 
     const headerAvatar = document.getElementById('chat-header-avatar');
     if (!headerAvatar) {
@@ -100,12 +103,6 @@ window.openConversation = function (name, avatar, online, about, customName, rea
         : avatar;
     headerAvatar.innerHTML = AVATAR_IMG;
     document.getElementById('chat-header-name').textContent = name;
-    const status = document.getElementById('chat-header-status');
-    status.classList.toggle('text-green-400/70', online);
-    status.classList.toggle('text-white/30', !online);
-    status.innerHTML = online
-        ? '<span class="w-1.5 h-1.5 rounded-full bg-green-400 inline-block -mt-0.5"></span> Online'
-        : '<span class="w-1.5 h-1.5 rounded-full bg-white/20 inline-block -mt-0.5"></span> Offline';
 
     const customNameEl = document.getElementById('rightbar-custom-name');
     const realNameEl = document.getElementById('rightbar-real-name');
@@ -117,9 +114,6 @@ window.openConversation = function (name, avatar, online, about, customName, rea
     usernameEl.textContent = '@' + username;
     usernameEl.classList.toggle('hidden', !username);
     document.getElementById('rightbar-avatar').innerHTML = AVATAR_IMG;
-    const rightbarDot = document.getElementById('rightbar-online-dot');
-    rightbarDot.classList.toggle('bg-green-500', online);
-    rightbarDot.classList.toggle('bg-white/20', !online);
     document.getElementById('rightbar-about-text').textContent = about;
     rightbarHasChat = true;
     showRightbarEmptyState(false);
@@ -133,7 +127,10 @@ window.openConversation = function (name, avatar, online, about, customName, rea
     }
 
     const container = document.getElementById('messages-container');
-    setCurrentChat(name);
+    setCurrentChat(username);
+    setStatus(username, status || 'offline');
+    clearUnread(username);
+    openChat(username);
     container.innerHTML = '';
     container.scrollTop = container.scrollHeight;
     container.animate(
