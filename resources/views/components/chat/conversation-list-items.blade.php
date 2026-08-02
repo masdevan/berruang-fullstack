@@ -2,8 +2,8 @@
 
 @foreach ($users as $user)
     @php
-        $customName = $user->pivot?->first_name
-            ? trim($user->pivot->first_name.' '.($user->pivot->last_name ?? ''))
+        $customName = ($user->pivot?->first_name || $user->pivot?->last_name)
+            ? trim(($user->pivot?->first_name ?? '').' '.($user->pivot?->last_name ?? ''))
             : null;
         $itemMeta = $meta[$user->id] ?? [];
     @endphp
@@ -18,5 +18,6 @@
         :about="$user->bio"
         :real-name="$user->name"
         :username="$user->username"
-        :custom-name="$customName" />
+        :custom-name="$customName"
+        :user-id="$user->id" />
 @endforeach

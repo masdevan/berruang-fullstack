@@ -10,9 +10,15 @@
                 <span id="rightbar-avatar" class="w-full h-full rounded-full bg-white/8 flex items-center justify-center text-sm font-medium text-white/60 block">AP</span>
                 <div id="rightbar-online-dot" class="absolute -top-0.5 -right-0.5 w-3 h-3 rounded-full border-2 border-[#0F0F0F] bg-white/20"></div>
             </div>
+            <span id="rightbar-unsaved-badge" onclick="openSaveContactModal()" title="Save contact" class="unsaved-badge hidden flex items-center justify-center min-w-[48px] text-[8px] font-medium text-white/35 bg-white/8 rounded-full px-1.5 py-0.5 cursor-pointer hover:bg-green-500 hover:text-[#0A0A0A] transition-colors">unsaved</span>
             <p id="rightbar-custom-name" class="text-xs font-medium mt-1.5 text-[#E091A9] hidden"></p>
-            <p id="rightbar-real-name" class="text-xs font-medium mt-1.5 text-white/80 hidden"></p>
+            <p id="rightbar-real-name" class="text-xs font-medium mt-1.5 text-white/80 hidden">
+                <span class="inline-flex items-center gap-1.5 justify-center w-full">
+                    <span id="rightbar-real-name-text"></span>
+                </span>
+            </p>
             <p id="rightbar-username" class="text-[10px] text-white/40 mt-0.5 hidden"></p>
+            <button type="button" id="rightbar-save-contact" onclick="openSaveContactModal()" title="Save contact" class="hidden text-[9px] font-medium text-[#0A0A0A] bg-green-500 hover:bg-green-400 rounded-full px-3 py-1 transition-colors cursor-pointer mt-2 mx-auto">Save contact</button>
         </div>
 
         <div id="rightbar-about" class="p-3 border-b border-white/6">

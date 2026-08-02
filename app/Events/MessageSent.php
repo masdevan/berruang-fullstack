@@ -30,6 +30,7 @@ class MessageSent implements ShouldBroadcast
             'body' => $this->message->body,
             'time' => $this->message->created_at->format('H:i'),
             'from' => 'other',
+            'sender_user_id' => $sender->id,
             'sender_username' => $sender->username,
             'sender_avatar' => $sender->avatar ? $sender->avatarUrl(36) : $sender->initials(),
             'sender_has_avatar' => (bool) $sender->avatar,

@@ -26,8 +26,8 @@ class Message extends Model
     public function senderDisplayFor(User $viewer): array
     {
         $contact = $viewer->contacts()->where('contact_user_id', $this->sender_id)->first();
-        $customName = $contact?->pivot->first_name
-            ? trim($contact->pivot->first_name.' '.($contact->pivot->last_name ?? ''))
+        $customName = ($contact?->pivot->first_name || $contact?->pivot->last_name)
+            ? trim(($contact->pivot->first_name ?? '').' '.($contact->pivot->last_name ?? ''))
             : null;
 
         return [

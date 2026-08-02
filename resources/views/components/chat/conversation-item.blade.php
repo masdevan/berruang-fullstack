@@ -1,6 +1,6 @@
-@props(['name', 'avatar', 'hasAvatar' => false, 'custom' => false, 'lastMessage' => '', 'time' => '', 'unread' => 0, 'online' => false, 'active' => false, 'about' => '', 'realName' => '', 'username' => '', 'customName' => ''])
+@props(['name', 'avatar', 'hasAvatar' => false, 'custom' => false, 'lastMessage' => '', 'time' => '', 'unread' => 0, 'online' => false, 'active' => false, 'about' => '', 'realName' => '', 'username' => '', 'customName' => '', 'userId' => ''])
 
-<div data-conversation="{{ strtolower($name) }} {{ strtolower($lastMessage) }}" data-name="{{ $name }}" data-avatar="{{ $avatar }}" data-has-avatar="{{ $hasAvatar ? '1' : '0' }}" data-status="{{ $online ? 'online' : 'offline' }}" data-about="{{ $about }}" data-real-name="{{ $realName }}" data-username="{{ $username }}" data-custom-name="{{ $customName }}" onclick="openConversation(this.dataset.name, this.dataset.avatar, this.dataset.status, this.dataset.about, this.dataset.customName, this.dataset.realName, this.dataset.username, this.dataset.hasAvatar === '1')" class="flex items-center gap-2.5 px-3 py-2.5 cursor-pointer transition-all duration-150 hover:bg-white/5 {{ $active ? 'bg-white/5' : '' }}">
+<div data-conversation="{{ strtolower($name) }} {{ strtolower($lastMessage) }}" data-user-id="{{ $userId }}" data-name="{{ $name }}" data-avatar="{{ $avatar }}" data-has-avatar="{{ $hasAvatar ? '1' : '0' }}" data-status="{{ $online ? 'online' : 'offline' }}" data-about="{{ $about }}" data-real-name="{{ $realName }}" data-username="{{ $username }}" data-custom-name="{{ $customName }}" onclick="openConversation(this.dataset.name, this.dataset.avatar, this.dataset.status, this.dataset.about, this.dataset.customName, this.dataset.realName, this.dataset.username, this.dataset.hasAvatar === '1')" class="flex items-center gap-2.5 px-3 py-2.5 cursor-pointer transition-all duration-150 hover:bg-white/5 {{ $active ? 'bg-white/5' : '' }}">
     <div class="relative shrink-0">
         @if ($hasAvatar)
             <img src="{{ $avatar }}" alt="{{ $name }}" class="w-9 h-9 rounded-full object-cover">
@@ -15,7 +15,7 @@
     <div class="flex-1 min-w-0">
         <div class="flex items-center justify-between">
             <p class="flex items-center gap-1.5 min-w-0 text-xs font-medium truncate {{ $active ? 'text-white' : 'text-white/80' }}">
-                <span class="truncate">{{ $name }}</span>
+                <span class="truncate">{{ $customName ? $name : '@'.$username }}</span>
                 @if (! $custom)
                     <span class="shrink-0 text-[8px] font-medium text-white/35 bg-white/8 rounded-full px-1.5 py-0.5">unsaved</span>
                 @endif

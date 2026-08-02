@@ -102,17 +102,24 @@ window.openConversation = function (name, avatar, status, about, customName, rea
         ? '<img src="' + avatar + '" class="w-full h-full object-cover rounded-full">'
         : avatar;
     headerAvatar.innerHTML = AVATAR_IMG;
-    document.getElementById('chat-header-name').textContent = name;
+    const headerNameEl = document.getElementById('chat-header-name');
+    headerNameEl.textContent = customName ? name : '@' + username;
+    headerNameEl.title = customName ? '' : 'Save contact';
+    headerNameEl.classList.toggle('cursor-pointer', !customName);
+    headerNameEl.classList.toggle('hover:text-[#E091A9]', !customName);
+    headerNameEl.onclick = customName ? null : function () { window.openSaveContactModal(); };
 
     const customNameEl = document.getElementById('rightbar-custom-name');
     const realNameEl = document.getElementById('rightbar-real-name');
     const usernameEl = document.getElementById('rightbar-username');
     customNameEl.textContent = name;
     customNameEl.classList.toggle('hidden', !customName);
-    realNameEl.textContent = realName;
+    document.getElementById('rightbar-real-name-text').textContent = realName;
     realNameEl.classList.toggle('hidden', !realName);
+    document.getElementById('rightbar-unsaved-badge').classList.toggle('hidden', !!customName);
     usernameEl.textContent = '@' + username;
     usernameEl.classList.toggle('hidden', !username);
+    document.getElementById('rightbar-save-contact').classList.toggle('hidden', !!customName);
     document.getElementById('rightbar-avatar').innerHTML = AVATAR_IMG;
     document.getElementById('rightbar-about-text').textContent = about;
     rightbarHasChat = true;

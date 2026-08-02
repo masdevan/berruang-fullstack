@@ -1,4 +1,5 @@
-import { openModal, closeModal } from './modal.js';
+import { openModal } from './modal.js';
+import { currentChatName } from './bubbles.js';
 
 let addUserPending = false;
 let addUserNamesPending = false;
@@ -112,7 +113,7 @@ window.submitAddUser = function () {
             input.value = '';
             addUserPending = false;
             pendingAdd = { id: data.id, html: data.html };
-            closeModal('add-user-modal');
+            window.closeModal('add-user-modal');
             openModal('add-user-names-modal');
         })
         .catch(function () {
@@ -122,6 +123,53 @@ window.submitAddUser = function () {
         });
 };
 
+let badgeLocked = false;
+
+function setBadgeText(text) {
+    const badge = document.getElementById('rightbar-unsaved-badge');
+    if (!badge) return;
+    badge.textContent = text;
+}
+
+window.openSaveContactModal = function (itemEl) {
+    const item = itemEl ? itemEl.closest('[data-username]') : document.querySelector('[data-username="' + currentChatName + '"]');
+    if (!item || !item.dataset.userId) return;
+
+    pendingAdd = { id: item.dataset.userId, html: item.outerHTML, mode: 'update', username: item.dataset.username };
+    document.getElementById('add-user-first-name').value = '';
+    document.getElementById('add-user-last-name').value = '';
+    document.getElementById('add-user-names-error').classList.add('hidden');
+    badgeLocked = true;
+    const badge = document.getElementById('rightbar-unsaved-badge');
+    if (badge) {
+        badge.textContent = 'save';
+        badge.classList.add('bg-green-500', 'text-[#0A0A0A]');
+    }
+    openModal('add-user-names-modal');
+};
+
+const closeModalOriginal = window.closeModal;
+window.closeModal = function (id) {
+    if (id === 'add-user-names-modal') {
+        badgeLocked = false;
+        const badge = document.getElementById('rightbar-unsaved-badge');
+        if (badge) {
+            badge.textContent = 'unsaved';
+            badge.classList.remove('bg-green-500', 'text-[#0A0A0A]');
+        }
+    }
+    closeModalOriginal(id);
+};
+
+document.addEventListener('mouseover', function (e) {
+    const badge = e.target.closest('.unsaved-badge');
+    if (badge && !badgeLocked) badge.textContent = 'save';
+});
+document.addEventListener('mouseout', function (e) {
+    const badge = e.target.closest('.unsaved-badge');
+    if (badge && !badgeLocked) badge.textContent = 'unsaved';
+});
+
 window.submitAddUserNames = function (skip) {
     if (!pendingAdd || addUserNamesPending) return;
 
@@ -129,7 +177,7 @@ window.submitAddUserNames = function (skip) {
         const html = pendingAdd.html;
         pendingAdd = null;
         prependContact(html);
-        closeModal('add-user-names-modal');
+        window.closeModal('add-user-names-modal');
         return;
     }
 
@@ -160,9 +208,25 @@ window.submitAddUserNames = function (skip) {
                 error.classList.remove('hidden');
                 return;
             }
+            const mode = pendingAdd.mode;
+            const username = pendingAdd.username;
             pendingAdd = null;
+            if (mode === 'update') {
+                const old = document.querySelector('[data-username="' + username + '"]');
+                if (old) old.remove();
+                if (currentChatName === username) {
+                    const badge = document.getElementById('rightbar-unsaved-badge');
+                    if (badge) {
+                        badge.classList.add('hidden');
+                        badge.textContent = 'unsaved';
+                        badge.classList.remove('bg-green-500', 'text-[#0A0A0A]');
+                    }
+                    const saveBtn = document.getElementById('rightbar-save-contact');
+                    if (saveBtn) saveBtn.classList.add('hidden');
+                }
+            }
             prependContact(data.html);
-            closeModal('add-user-names-modal');
+            window.closeModal('add-user-names-modal');
         })
         .catch(function () {
             setTopLoader(false);
