@@ -14,6 +14,14 @@ class ContactController extends Controller
 {
     private const PER_PAGE = 20;
 
+    public static function drafts(): array
+    {
+        return collect(session()->all())
+            ->filter(fn ($value, $key) => str_starts_with($key, 'chat_draft:'))
+            ->mapWithKeys(fn ($value, $key) => [str_replace('chat_draft:', '', $key) => $value])
+            ->all();
+    }
+
     public static function conversationMeta(User $user, Collection $contacts): array
     {
         $ids = $contacts->pluck('id');
@@ -66,6 +74,7 @@ class ContactController extends Controller
         $html = view('components.chat.conversation-list-items', [
             'users' => $contacts->items(),
             'meta' => self::conversationMeta($request->user(), $contacts->getCollection()),
+            'drafts' => self::drafts(),
         ])->render();
 
         return response()->json([

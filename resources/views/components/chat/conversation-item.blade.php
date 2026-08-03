@@ -1,6 +1,6 @@
-@props(['name', 'avatar', 'hasAvatar' => false, 'custom' => false, 'lastMessage' => '', 'time' => '', 'unread' => 0, 'online' => false, 'active' => false, 'about' => '', 'realName' => '', 'username' => '', 'customName' => '', 'userId' => ''])
+@props(['name', 'avatar', 'hasAvatar' => false, 'custom' => false, 'lastMessage' => '', 'time' => '', 'unread' => 0, 'online' => false, 'active' => false, 'about' => '', 'realName' => '', 'username' => '', 'customName' => '', 'userId' => '', 'draft' => ''])
 
-<div data-conversation="{{ strtolower($name) }} {{ strtolower($lastMessage) }}" data-user-id="{{ $userId }}" data-name="{{ $name }}" data-avatar="{{ $avatar }}" data-has-avatar="{{ $hasAvatar ? '1' : '0' }}" data-status="{{ $online ? 'online' : 'offline' }}" data-about="{{ $about }}" data-real-name="{{ $realName }}" data-username="{{ $username }}" data-custom-name="{{ $customName }}" onclick="openConversation(this.dataset.name, this.dataset.avatar, this.dataset.status, this.dataset.about, this.dataset.customName, this.dataset.realName, this.dataset.username, this.dataset.hasAvatar === '1')" class="flex items-center gap-2.5 px-3 py-2.5 cursor-pointer transition-all duration-150 hover:bg-white/5 {{ $active ? 'bg-white/5' : '' }}">
+<div data-conversation="{{ strtolower($name) }} {{ strtolower($lastMessage) }}" data-last-message="{{ $lastMessage }}" data-user-id="{{ $userId }}" data-name="{{ $name }}" data-avatar="{{ $avatar }}" data-has-avatar="{{ $hasAvatar ? '1' : '0' }}" data-status="{{ $online ? 'online' : 'offline' }}" data-about="{{ $about }}" data-real-name="{{ $realName }}" data-username="{{ $username }}" data-custom-name="{{ $customName }}" onclick="openConversation(this.dataset.name, this.dataset.avatar, this.dataset.status, this.dataset.about, this.dataset.customName, this.dataset.realName, this.dataset.username, this.dataset.hasAvatar === '1')" class="flex items-center gap-2.5 px-3 py-2.5 cursor-pointer transition-all duration-150 hover:bg-white/5 {{ $active ? 'bg-white/5' : '' }}">
     <div class="relative shrink-0">
         @if ($hasAvatar)
             <img src="{{ $avatar }}" alt="{{ $name }}" class="w-9 h-9 rounded-full object-cover">
@@ -23,7 +23,7 @@
             <p class="text-[10px] text-white/30 shrink-0 ml-2">{{ $time }}</p>
         </div>
         <div class="flex items-center justify-between mt-0.5">
-            <p class="conversation-last text-[11px] text-white/35 truncate">{{ $lastMessage }}</p>
+            <p class="conversation-last text-[11px] truncate {{ $draft ? 'text-[#E091A9]/80' : 'text-white/35' }}">{{ $draft ? 'Draft: '.$draft : $lastMessage }}</p>
             @if ($unread)
                 <span class="unread-badge shrink-0 ml-2 min-w-3.75 h-3.75 rounded-full bg-[#E091A9] text-[#0A0A0A] text-[7px] font-semibold flex items-center justify-center px-1 leading-none">{{ $unread }}</span>
             @endif

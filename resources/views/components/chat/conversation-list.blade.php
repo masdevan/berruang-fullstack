@@ -1,3 +1,4 @@
+@props(['users' => [], 'meta' => [], 'drafts' => []])
 <div id="leftbar-root" class="relative h-full border-r border-white/6 flex flex-col bg-[#0F0F0F]">
     <div class="flex items-center justify-between px-4 py-3 border-b border-white/6">
         <a href="{{ url('/messages') }}" class="hover:opacity-80 transition-opacity" title="Messages">
@@ -49,7 +50,7 @@
 
     <div id="tab-pane-chat" class="flex flex-col flex-1 min-h-0">
         <div class="flex-1 overflow-y-auto">
-            <x-chat.conversation-list-items :users="$users" :meta="$meta ?? []" />
+            <x-chat.conversation-list-items :users="$users" :meta="$meta ?? []" :drafts="$drafts ?? []" />
             <div id="contacts-sentinel" class="h-2"></div>
             @if ($users->isEmpty())
                 <div class="empty-state flex flex-col items-center justify-center h-full gap-2 px-8 text-center">

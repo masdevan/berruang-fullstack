@@ -1,5 +1,5 @@
 import { BUBBLE_ME, BUBBLE_OTHER } from './constants.js';
-import { getDraft } from './draft.js';
+import { applyDraftPreview } from './draft.js';
 
 export const EMOJIS = ['👍', '❤️', '😂', '😮', '😢'];
 
@@ -115,10 +115,10 @@ export function updateConversationPreview(username, text) {
     const item = document.querySelector('[data-username="' + username + '"]');
     const preview = item && item.querySelector('.conversation-last');
     if (preview) {
-        if (getDraft(username) && preview.dataset.draftOriginal !== undefined) return;
         preview.textContent = text;
         delete preview.dataset.draftOriginal;
     }
+    applyDraftPreview(username);
 }
 
 function bubbleRow(target) {

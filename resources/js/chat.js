@@ -1,7 +1,7 @@
 import './auth.js';
 import './chat-layout.js';
 import { appendMessage, currentChatName, pushMessage, updateLocalFileUrl } from './chat/bubbles.js';
-import { saveDraft } from './chat/draft.js';
+import { saveDraft, applyDraftPreview, sendDraftSync } from './chat/draft.js';
 
 import.meta.glob(['../images/**']);
 
@@ -34,6 +34,7 @@ if (loaderBar) {
 }
 
 document.addEventListener('DOMContentLoaded', function () {
+    loadAttachments();
     const form = document.getElementById('chat-form');
     const input = document.getElementById('message-input');
     const sendBtn = document.getElementById('send-btn');
@@ -63,6 +64,8 @@ document.addEventListener('DOMContentLoaded', function () {
             });
             pendingByChat[currentChatName] = [];
             renderAttachPreview();
+            persistChat(currentChatName);
+            persistPendingLabel(currentChatName);
             input.value = '';
             input.style.height = 'auto';
             return;
@@ -87,10 +90,10 @@ document.addEventListener('DOMContentLoaded', function () {
                 sendBtn.classList.remove('opacity-50', 'cursor-not-allowed');
                 if (!ok) return;
 
+                saveDraft(currentChatName, '');
                 appendMessage(text, data.time);
                 input.value = '';
                 input.style.height = 'auto';
-                saveDraft(currentChatName, '');
             })
             .catch(function () {
                 sendBtn.disabled = false;
@@ -120,6 +123,120 @@ document.addEventListener('DOMContentLoaded', function () {
 let pendingByChat = {};
 let attachSeq = 0;
 
+let idbPromise = null;
+function openDb() {
+    if (!idbPromise) {
+        idbPromise = new Promise(function (resolve, reject) {
+            const req = indexedDB.open('berruang-attachments', 1);
+            req.onupgradeneeded = function () {
+                if (!req.result.objectStoreNames.contains('chat')) {
+                    req.result.createObjectStore('chat', { keyPath: 'username' });
+                }
+            };
+            req.onsuccess = function () { resolve(req.result); };
+            req.onerror = function () { reject(req.error); };
+        });
+    }
+    return idbPromise;
+}
+
+function persistChat(username) {
+    const items = (pendingByChat[username] || []).map(function (f) {
+        return { id: f.id, kind: f.kind, file: f.file };
+    });
+    return openDb().then(function (db) {
+        const store = db.transaction('chat', 'readwrite').objectStore('chat');
+        return new Promise(function (resolve, reject) {
+            const req = items.length ? store.put({ username: username, items: items }) : store.delete(username);
+            req.onsuccess = resolve;
+            req.onerror = function () { reject(req.error); };
+        });
+    }).catch(function () {});
+}
+
+function persistPendingLabel(username) {
+    const label = window.getPendingLabel(username);
+    if (label) {
+        localStorage.setItem('berruang-pending-label:' + username, label);
+    } else {
+        localStorage.removeItem('berruang-pending-label:' + username);
+    }
+    sendDraftSync(username);
+    applyDraftPreview(username);
+}
+
+function loadAttachments() {
+    return openDb().then(function (db) {
+        return new Promise(function (resolve, reject) {
+            const req = db.transaction('chat').objectStore('chat').getAll();
+            req.onsuccess = function () {
+                (req.result || []).forEach(function (rec) {
+                    pendingByChat[rec.username] = rec.items.map(function (it) {
+                        return { id: it.id, kind: it.kind, file: it.file, url: URL.createObjectURL(it.file), failed: false, sent: false };
+                    });
+                    persistPendingLabel(rec.username);
+                });
+                resolve();
+            };
+            req.onerror = reject;
+        });
+    }).then(function () {
+        if (currentChatName) {
+            renderAttachPreview();
+            applyDraftPreview(currentChatName);
+        }
+    }).catch(function () {});
+}
+
+(function setupAttachDrag() {
+    const bar = document.getElementById('attach-preview-bar');
+    if (!bar) return;
+    bar.addEventListener('dragstart', function (e) { e.preventDefault(); });
+    window.__attachDragged = false;
+    let dragging = false;
+    let startX = 0;
+    let startLeft = 0;
+    let targetLeft = null;
+    let rafId = null;
+    bar.addEventListener('pointerdown', function (e) {
+        if (e.target.closest('button')) return;
+        window.__attachDragged = false;
+        dragging = true;
+        startX = e.clientX;
+        startLeft = bar.scrollLeft;
+        if (rafId) cancelAnimationFrame(rafId);
+        (function frame() {
+            if (!dragging) return;
+            if (targetLeft !== null) {
+                bar.scrollLeft = targetLeft;
+                targetLeft = null;
+            }
+            rafId = requestAnimationFrame(frame);
+        })();
+    });
+    bar.addEventListener('pointermove', function (e) {
+        if (!dragging) return;
+        if (Math.abs(e.clientX - startX) > 5) window.__attachDragged = true;
+        targetLeft = startLeft - (e.clientX - startX);
+    });
+    function stop() {
+        dragging = false;
+        if (rafId) cancelAnimationFrame(rafId);
+    }
+    bar.addEventListener('pointerup', stop);
+    bar.addEventListener('pointercancel', stop);
+})();
+
+window.getPendingLabel = function (username) {
+    const items = pendingByChat[username] || [];
+    if (!items.length) return '';
+    if (items.length === 1) {
+        const kind = items[0].kind;
+        return kind === 'image' ? 'Photo' : kind === 'video' ? 'Video' : items[0].file.name;
+    }
+    return items.length + ' items';
+};
+
 window.triggerAttach = function (kind) {
     const input = document.getElementById('attach-file-input');
     input.accept = kind === 'photo'
@@ -138,6 +255,8 @@ function queueFile(file) {
     if (!pendingByChat[currentChatName]) pendingByChat[currentChatName] = [];
     pendingByChat[currentChatName].push({ id: 'att-' + (++attachSeq), file, kind, url: URL.createObjectURL(file), failed: false });
     renderAttachPreview();
+    persistChat(currentChatName);
+    persistPendingLabel(currentChatName);
 }
 
 window.renderAttachPreview = function () {
@@ -151,8 +270,8 @@ window.renderAttachPreview = function () {
     }
     bar.classList.remove('hidden');
     bar.innerHTML = '';
-    items.forEach(function (item) {
-        const el = document.createElement('div');
+    items.forEach(function (item) {        const el = document.createElement('div');
+        el.dataset.attachId = item.id;
         el.className = 'relative shrink-0 w-14 h-14 rounded-lg bg-white/5 border border-white/10 cursor-pointer';
         if (item.kind === 'image') {
             el.innerHTML = '<img src="' + item.url + '" class="w-full h-full object-cover rounded-lg">';
@@ -163,6 +282,7 @@ window.renderAttachPreview = function () {
             el.innerHTML = '<div class="w-full h-full flex flex-col items-center justify-center gap-0.5 text-white/60 px-1">' + icon + '<span class="text-[8px] text-white/40 truncate max-w-full">' + item.file.name + '</span></div>';
         }
         el.addEventListener('click', function () {
+            if (window.__attachDragged) { window.__attachDragged = false; return; }
             if (item.kind === 'image') window.openMediaModal(item.url);
             if (item.kind === 'video') window.openMediaModal(item.url, 'video');
         });
@@ -175,15 +295,32 @@ window.renderAttachPreview = function () {
         el.appendChild(rm);
         bar.appendChild(el);
     });
+    applyDraftPreview(currentChatName);
 }
 
 function removeAttach(id) {
-    const items = pendingByChat[currentChatName] || [];
+    let username = null;
+    Object.keys(pendingByChat).forEach(function (u) {
+        if (!username && pendingByChat[u].some(function (f) { return f.id === id; })) username = u;
+    });
+    if (!username) return;
+    const items = pendingByChat[username] || [];
     const idx = items.findIndex(function (f) { return f.id === id; });
     if (idx === -1) return;
     URL.revokeObjectURL(items[idx].url);
     items.splice(idx, 1);
-    renderAttachPreview();
+    persistChat(username);
+    persistPendingLabel(username);
+    if (username !== currentChatName) return;
+    const el = document.querySelector('[data-attach-id="' + id + '"]');
+    if (el) {
+        el.animate(
+            [{ opacity: 1, transform: 'scale(1)' }, { opacity: 0, transform: 'scale(0.8)' }],
+            { duration: 150, easing: 'ease-in' }
+        ).onfinish = function () { renderAttachPreview(); };
+    } else {
+        renderAttachPreview();
+    }
 }
 
 function sendFile(item) {

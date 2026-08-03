@@ -41,3 +41,12 @@
     opacity: 1;
     transform: scale(1);
 }
+
+.js-loading .conversation-last,
+.js-loading #messages-container {
+    opacity: 0;
+}
+
+.conversation-last {
+    transition: opacity 0.15s ease;
+}

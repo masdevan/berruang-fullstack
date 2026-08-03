@@ -1,4 +1,4 @@
-@props(['users' => [], 'meta' => []])
+@props(['users' => [], 'meta' => [], 'drafts' => []])
 
 @foreach ($users as $user)
     @php
@@ -17,6 +17,7 @@
         :unread="$itemMeta['unread'] ?? 0"
         :about="$user->bio"
         :real-name="$user->name"
+        :draft="$drafts[$user->username] ?? ''"
         :username="$user->username"
         :custom-name="$customName"
         :user-id="$user->id" />
