@@ -55,13 +55,13 @@ document.addEventListener('DOMContentLoaded', function () {
         e.preventDefault();
         const text = input.value.trim();
 
-        if (pendingFiles.length) {
+        if (pendingByChat[currentChatName] && pendingByChat[currentChatName].length) {
             clearTimeout(typingTimer);
             reportTyping(false);
-            pendingFiles.slice().forEach(function (item) {
+            pendingByChat[currentChatName].slice().forEach(function (item) {
                 sendFile(item);
             });
-            pendingFiles = [];
+            pendingByChat[currentChatName] = [];
             renderAttachPreview();
             input.value = '';
             input.style.height = 'auto';
@@ -117,7 +117,7 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 });
 
-let pendingFiles = [];
+let pendingByChat = {};
 let attachSeq = 0;
 
 window.triggerAttach = function (kind) {
@@ -133,23 +133,25 @@ window.triggerAttach = function (kind) {
 };
 
 function queueFile(file) {
+    if (!currentChatName) return;
     const kind = file.type.startsWith('image/') ? 'image' : file.type.startsWith('video/') ? 'video' : 'document';
-    const item = { id: 'att-' + (++attachSeq), file, kind, url: URL.createObjectURL(file), failed: false };
-    pendingFiles.push(item);
+    if (!pendingByChat[currentChatName]) pendingByChat[currentChatName] = [];
+    pendingByChat[currentChatName].push({ id: 'att-' + (++attachSeq), file, kind, url: URL.createObjectURL(file), failed: false });
     renderAttachPreview();
 }
 
-function renderAttachPreview() {
+window.renderAttachPreview = function () {
     const bar = document.getElementById('attach-preview-bar');
     if (!bar) return;
-    if (!pendingFiles.length) {
+    const items = (pendingByChat[currentChatName] || []).filter(function (f) { return !f.sent; });
+    if (!items.length) {
         bar.classList.add('hidden');
         bar.innerHTML = '';
         return;
     }
     bar.classList.remove('hidden');
     bar.innerHTML = '';
-    pendingFiles.forEach(function (item) {
+    items.forEach(function (item) {
         const el = document.createElement('div');
         el.className = 'relative shrink-0 w-14 h-14 rounded-lg bg-white/5 border border-white/10 cursor-pointer';
         if (item.kind === 'image') {
@@ -176,10 +178,11 @@ function renderAttachPreview() {
 }
 
 function removeAttach(id) {
-    const idx = pendingFiles.findIndex(function (f) { return f.id === id; });
+    const items = pendingByChat[currentChatName] || [];
+    const idx = items.findIndex(function (f) { return f.id === id; });
     if (idx === -1) return;
-    URL.revokeObjectURL(pendingFiles[idx].url);
-    pendingFiles.splice(idx, 1);
+    URL.revokeObjectURL(items[idx].url);
+    items.splice(idx, 1);
     renderAttachPreview();
 }
 

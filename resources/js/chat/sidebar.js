@@ -153,6 +153,7 @@ window.openConversation = function (name, avatar, status, about, customName, rea
         input.style.height = Math.min(input.scrollHeight, 120) + 'px';
     }
     applyDraftPreview(username);
+    if (window.renderAttachPreview) window.renderAttachPreview();
     container.animate(
         [{ opacity: 0, transform: 'translateY(6px)' }, { opacity: 1, transform: 'translateY(0)' }],
         { duration: 150, easing: 'ease-out' }
