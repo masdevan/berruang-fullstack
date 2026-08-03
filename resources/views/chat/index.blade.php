@@ -13,7 +13,7 @@
         <x-chat.right-sidebar />
     </div>
 
-    <div id="media-modal" class="hidden fixed inset-0 z-50 bg-black/80 items-center justify-center p-4" onclick="closeMediaModal()">
+    <div id="media-modal" class="hidden fixed inset-0 z-50 bg-black/30 backdrop-blur-xl items-center justify-center p-4" onclick="closeMediaModal()">
         <button type="button" onclick="closeMediaModal()"
                 class="absolute top-4 right-4 w-8 h-8 rounded-full bg-white/10 flex items-center justify-center text-white/60 hover:text-white hover:bg-white/20 transition-colors cursor-pointer">
             <x-icons.x class="w-4 h-4" />
