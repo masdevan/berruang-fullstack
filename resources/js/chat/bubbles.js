@@ -1,4 +1,4 @@
-import { BUBBLE_ME, BUBBLE_OTHER } from './constants.js';
+import { BUBBLE_ME, BUBBLE_OTHER, BUBBLE_MEDIA_ME, BUBBLE_MEDIA_OTHER } from './constants.js';
 import { applyDraftPreview } from './draft.js';
 
 export const EMOJIS = ['👍', '❤️', '😂', '😮', '😢'];
@@ -27,8 +27,12 @@ export function messageHtml(msg, chatName, index) {
 function bubbleInnerHtml(msg, chatName, index) {
     const isMe = msg.from === 'me';
     const isText = !msg.type || msg.type === 'text';
+    const isMedia = (msg.type === 'image' || msg.type === 'video') && msg.file;
     const truncated = isText && msg.text.length > 1000;
     const text = truncated ? msg.text.slice(0, 1000) + '…' : msg.text;
+    const bubbleClass = isMedia
+        ? (isMe ? BUBBLE_MEDIA_ME : BUBBLE_MEDIA_OTHER)
+        : (isMe ? BUBBLE_ME : BUBBLE_OTHER);
     const reaction = msg.reaction
         ? `<button type="button" class="bubble-react-toggle cursor-pointer absolute -bottom-2 ${isMe ? 'right-2' : 'left-2'} bg-[#1A1A1A] border border-white/10 rounded-full px-1.5 py-0.5 text-[10px] leading-none hover:scale-110 transition-transform">${msg.reaction}</button>`
         : '';
@@ -39,11 +43,11 @@ function bubbleInnerHtml(msg, chatName, index) {
             ${isMe && isText ? `<button type="button" class="bubble-edit cursor-pointer w-5 h-5 flex items-center justify-center text-white/40 hover:text-white transition-colors" title="Edit">${PENCIL_SVG}</button>` : ''}
         </div>`;
     return `
-        <div class="relative ${isMe ? BUBBLE_ME : BUBBLE_OTHER}">
+        <div class="relative ${bubbleClass}">
             ${actions}
             ${mediaHtml(msg, isText)}
             ${truncated ? `<button type="button" class="bubble-expand cursor-pointer mt-1 text-[10px] text-[#E091A9] hover:text-[#E8A8BC] transition-colors">Lihat selengkapnya</button>` : ''}
-            <p class="text-[9px] text-white/25 text-right mt-0.5">${msg.time}</p>
+            <p class="text-[9px] text-white/25 text-right ${isMedia ? 'px-3 pt-1' : ''} mt-0.5">${msg.time}</p>
             ${reaction}
         </div>`;
 }
@@ -55,11 +59,12 @@ function mediaHtml(msg, isText) {
     const caption = msg.text && msg.text !== msg.file.name
         ? `<p class="bubble-text text-xs text-white/85 leading-relaxed wrap-break-word">${escapeHtml(msg.text)}</p>`
         : '';
+    const captionBlock = caption ? `<div class="px-3 pt-1.5">${caption}</div>` : '';
     if (msg.type === 'image' && msg.file) {
-        return `<img src="${msg.file.url}" alt="${escapeHtml(msg.file.name)}" title="Click to view" class="bubble-file max-w-56 max-h-64 object-cover rounded-lg cursor-pointer mb-1 block">${caption}`;
+        return `<img src="${msg.file.url}" alt="${escapeHtml(msg.file.name)}" title="Click to view" class="bubble-file block w-full max-h-72 object-cover cursor-pointer">${captionBlock}`;
     }
     if (msg.type === 'video' && msg.file) {
-        return `<video src="${msg.file.url}" controls class="max-w-56 max-h-64 rounded-lg mb-1 block"></video>${caption}`;
+        return `<video src="${msg.file.url}" controls class="block w-full max-h-72 bg-black"></video>${captionBlock}`;
     }
     if (msg.type === 'document' && msg.file) {
         return `
