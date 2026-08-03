@@ -5,6 +5,8 @@ import { resetSharedMedia, addSharedMedia, renderSharedMedia } from './shared-me
 export const EMOJIS = ['👍', '❤️', '😂', '😮', '😢'];
 
 const PENCIL_SVG = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" class="w-3 h-3"><path stroke-linecap="round" stroke-linejoin="round" d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L10.582 16.07a4.5 4.5 0 01-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 011.13-1.897l8.932-8.931zm0 0L19.5 7.125"/></svg>';
+const CHECK_SENT_SVG = '<svg viewBox="0 0 12 8" fill="none" stroke="currentColor" stroke-width="1.8" class="w-2.5 h-2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M1 4.5L4.5 8L11 1"/></svg>';
+const CHECK_DONE_SVG = '<svg viewBox="0 0 18 10" fill="none" stroke="currentColor" stroke-width="1.6" class="w-3 h-2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M1 5.5L4.5 9L11.5 1.5"/><path stroke-linecap="round" stroke-linejoin="round" d="M7 5.8L10 9L17 1.5"/></svg>';
 
 export let currentChatName = null;
 
@@ -50,9 +52,18 @@ function bubbleInnerHtml(msg, chatName, index) {
             ${actions}
             ${mediaHtml(msg, isText)}
             ${truncated ? `<button type="button" class="bubble-expand cursor-pointer mt-1 text-[10px] text-[#E091A9] hover:text-[#E8A8BC] transition-colors">Lihat selengkapnya</button>` : ''}
-            <p class="text-[9px] text-white/25 text-right ${isMedia ? 'px-3 pb-1.5' + (hasCaption ? '' : ' mt-2') : ''}">${msg.time}</p>
+            <p class="text-[9px] text-white/25 flex items-center ${isMedia ? 'px-3 pb-1.5' + (hasCaption ? '' : ' mt-2') : ''}">
+                ${isMe ? checksHtml(msg.status) : ''}
+                <span class="ml-auto">${msg.time}</span>
+            </p>
             ${reaction}
         </div>`;
+}
+
+function checksHtml(status) {
+    if (status === 'read') return `<span class="text-[#E091A9] shrink-0 mr-2">${CHECK_DONE_SVG}</span>`;
+    if (status === 'delivered') return `<span class="text-white/25 shrink-0 mr-2">${CHECK_DONE_SVG}</span>`;
+    return `<span class="text-white/25 shrink-0 mr-2">${CHECK_SENT_SVG}</span>`;
 }
 
 function mediaHtml(msg, isText) {
@@ -106,6 +117,16 @@ export function pushMessage(msg, animate = false) {
     const container = document.getElementById('messages-container');
     if (!container || !currentChatName) return;
 
+    if (msg.from === 'me' && !msg.status) {
+        if (msg.read_at) {
+            msg.status = 'read';
+        } else {
+            const item = document.querySelector('[data-username="' + currentChatName + '"]');
+            const online = item && (item.dataset.status === 'online' || item.dataset.status === 'idle');
+            msg.status = online ? 'delivered' : 'sent';
+        }
+    }
+
     if (!localMessages[currentChatName]) localMessages[currentChatName] = [];
     const messages = localMessages[currentChatName];
     messages.push(msg);
@@ -119,6 +140,24 @@ export function pushMessage(msg, animate = false) {
     }
     container.scrollTop = container.scrollHeight;
     updateConversationPreview(currentChatName, filePreviewLabel(msg));
+}
+
+export function markMessagesRead(messageIds) {
+    const msgs = localMessages[currentChatName];
+    if (!msgs || !messageIds.length) return;
+    let changed = false;
+    msgs.forEach(function (m) {
+        if (m.from === 'me' && messageIds.indexOf(m.id) !== -1 && m.status !== 'read') {
+            m.status = 'read';
+            changed = true;
+        }
+    });
+    if (!changed) return;
+    document.querySelectorAll('#messages-container [data-chat="' + currentChatName + '"]').forEach(function (row) {
+        const index = Number(row.dataset.index);
+        const message = msgs[index];
+        if (message) row.firstElementChild.innerHTML = bubbleInnerHtml(message, currentChatName, index);
+    });
 }
 
 export function updateConversationPreview(username, text) {

@@ -1,6 +1,6 @@
 import Echo from 'laravel-echo';
 import Pusher from 'pusher-js';
-import { pushMessage, currentChatName, updateConversationPreview, filePreviewLabel } from './bubbles.js';
+import { pushMessage, currentChatName, updateConversationPreview, filePreviewLabel, markMessagesRead } from './bubbles.js';
 import { bumpUnread, clearUnread, ensureConversationItem } from './unread.js';
 
 window.Pusher = Pusher;
@@ -29,6 +29,11 @@ if (userId) {
         })
         .listen('TypingEvent', function (e) {
             setTyping(e.from_username, e.typing);
+        })
+        .listen('MessageRead', function (e) {
+            if (currentChatName === e.reader_username) {
+                markMessagesRead(e.message_ids);
+            }
         });
 }
 

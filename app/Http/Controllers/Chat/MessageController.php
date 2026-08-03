@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Chat;
 
+use App\Events\MessageRead;
 use App\Events\MessageSent;
 use App\Http\Controllers\Controller;
 use App\Models\Message;
@@ -48,10 +49,15 @@ class MessageController extends Controller
                 });
         });
 
-        Message::where('sender_id', $other->id)
+        $unreadIds = Message::where('sender_id', $other->id)
             ->where('receiver_id', $user->id)
             ->whereNull('read_at')
-            ->update(['read_at' => now()]);
+            ->pluck('id');
+
+        if ($unreadIds->isNotEmpty()) {
+            Message::whereIn('id', $unreadIds)->update(['read_at' => now()]);
+            broadcast(new MessageRead($other, $user, $unreadIds->all()));
+        }
 
         if ($after = (int) $request->input('after')) {
             $messages = $query->where('id', '>', $after)->orderBy('id')->get();
@@ -69,6 +75,7 @@ class MessageController extends Controller
                     'time' => $m->created_at->format('H:i'),
                     'from' => $m->sender_id === $user->id ? 'me' : 'other',
                     'type' => $m->type,
+                    'read_at' => $m->read_at,
                     'file' => $m->file_path
                         ? ['url' => $m->fileUrl(), 'name' => $m->fileName()]
                         : null,
