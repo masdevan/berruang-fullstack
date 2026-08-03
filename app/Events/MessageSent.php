@@ -30,6 +30,10 @@ class MessageSent implements ShouldBroadcast
             'body' => $this->message->body,
             'time' => $this->message->created_at->format('H:i'),
             'from' => 'other',
+            'type' => $this->message->type,
+            'file' => $this->message->file_path
+                ? ['url' => $this->message->fileUrl(), 'name' => $this->message->fileName()]
+                : null,
             'sender_user_id' => $sender->id,
             'sender_username' => $sender->username,
             'sender_avatar' => $sender->avatar ? $sender->avatarUrl(36) : $sender->initials(),

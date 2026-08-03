@@ -38,13 +38,23 @@ class ContactController extends Controller
         foreach ($contacts as $contact) {
             $last = $lastMessages->get($contact->id)?->first();
             $meta[$contact->id] = [
-                'last' => $last?->body,
+                'last' => $last ? self::previewLabel($last) : '',
                 'time' => $last ? $last->created_at->format('H:i') : '',
                 'unread' => (int) ($unread[$contact->id] ?? 0),
             ];
         }
 
         return $meta;
+    }
+
+    private static function previewLabel(Message $m): string
+    {
+        return match ($m->type) {
+            'image' => 'Photo',
+            'video' => 'Video',
+            'document' => 'Document',
+            default => $m->body,
+        };
     }
 
     public function index(Request $request): JsonResponse

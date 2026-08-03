@@ -1,6 +1,7 @@
 import './auth.js';
 import './chat-layout.js';
-import { appendMessage, currentChatName } from './chat/bubbles.js';
+import { appendMessage, currentChatName, pushMessage, updateLocalFileUrl } from './chat/bubbles.js';
+import { saveDraft } from './chat/draft.js';
 
 import.meta.glob(['../images/**']);
 
@@ -53,6 +54,20 @@ document.addEventListener('DOMContentLoaded', function () {
     form.addEventListener('submit', function (e) {
         e.preventDefault();
         const text = input.value.trim();
+
+        if (pendingFiles.length) {
+            clearTimeout(typingTimer);
+            reportTyping(false);
+            pendingFiles.slice().forEach(function (item) {
+                sendFile(item);
+            });
+            pendingFiles = [];
+            renderAttachPreview();
+            input.value = '';
+            input.style.height = 'auto';
+            return;
+        }
+
         if (!text || !currentChatName) return;
 
         clearTimeout(typingTimer);
@@ -75,6 +90,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 appendMessage(text, data.time);
                 input.value = '';
                 input.style.height = 'auto';
+                saveDraft(currentChatName, '');
             })
             .catch(function () {
                 sendBtn.disabled = false;
@@ -96,6 +112,118 @@ document.addEventListener('DOMContentLoaded', function () {
             clearTimeout(typingTimer);
             reportTyping(true);
             typingTimer = setTimeout(function () { reportTyping(false); }, 1200);
+            if (currentChatName) saveDraft(currentChatName, this.value);
         });
     }
 });
+
+let pendingFiles = [];
+let attachSeq = 0;
+
+window.triggerAttach = function (kind) {
+    const input = document.getElementById('attach-file-input');
+    input.accept = kind === 'photo'
+        ? 'image/*,video/*'
+        : '.pdf,.txt,.zip,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.csv';
+    input.onchange = function () {
+        Array.from(input.files).forEach(queueFile);
+        input.value = '';
+    };
+    input.click();
+};
+
+function queueFile(file) {
+    const kind = file.type.startsWith('image/') ? 'image' : file.type.startsWith('video/') ? 'video' : 'document';
+    const item = { id: 'att-' + (++attachSeq), file, kind, url: URL.createObjectURL(file), failed: false };
+    pendingFiles.push(item);
+    renderAttachPreview();
+}
+
+function renderAttachPreview() {
+    const bar = document.getElementById('attach-preview-bar');
+    if (!bar) return;
+    if (!pendingFiles.length) {
+        bar.classList.add('hidden');
+        bar.innerHTML = '';
+        return;
+    }
+    bar.classList.remove('hidden');
+    bar.innerHTML = '';
+    pendingFiles.forEach(function (item) {
+        const el = document.createElement('div');
+        el.className = 'relative shrink-0 w-14 h-14 rounded-lg bg-white/5 border border-white/10 cursor-pointer';
+        if (item.kind === 'image') {
+            el.innerHTML = '<img src="' + item.url + '" class="w-full h-full object-cover rounded-lg">';
+        } else {
+            const icon = item.kind === 'video'
+                ? '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" class="w-4 h-4"><path stroke-linecap="round" stroke-linejoin="round" d="M5.25 5.653c0-.856.917-1.398 1.667-.986l11.54 6.347a1.125 1.125 0 010 1.972l-11.54 6.347a1.125 1.125 0 01-1.667-.986V5.653z"/></svg>'
+                : '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" class="w-4 h-4"><path stroke-linecap="round" stroke-linejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m2.25 0H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z"/></svg>';
+            el.innerHTML = '<div class="w-full h-full flex flex-col items-center justify-center gap-0.5 text-white/60 px-1">' + icon + '<span class="text-[8px] text-white/40 truncate max-w-full">' + item.file.name + '</span></div>';
+        }
+        el.addEventListener('click', function () {
+            if (item.kind === 'image') window.openMediaModal(item.url);
+            if (item.kind === 'video') window.openMediaModal(item.url, 'video');
+        });
+        const rm = document.createElement('button');
+        rm.type = 'button';
+        rm.textContent = '×';
+        rm.title = 'Remove';
+        rm.className = 'absolute -top-1.5 -right-1.5 w-4 h-4 rounded-full bg-[#E091A9] text-[#0A0A0A] text-[10px] leading-none flex items-center justify-center cursor-pointer z-10 hover:bg-[#E8A8BC] transition-colors';
+        rm.onclick = function (e) { e.stopPropagation(); removeAttach(item.id); };
+        el.appendChild(rm);
+        bar.appendChild(el);
+    });
+}
+
+function removeAttach(id) {
+    const idx = pendingFiles.findIndex(function (f) { return f.id === id; });
+    if (idx === -1) return;
+    URL.revokeObjectURL(pendingFiles[idx].url);
+    pendingFiles.splice(idx, 1);
+    renderAttachPreview();
+}
+
+function sendFile(item) {
+    if (!currentChatName || item.sent) return;
+    item.sent = true;
+    const localUrl = URL.createObjectURL(item.file);
+    pushMessage({ id: null, from: 'me', text: item.file.name, time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }), type: item.kind, file: { url: localUrl, name: item.file.name } }, true);
+
+    const form = new FormData();
+    form.append('to', currentChatName);
+    form.append('file', item.file);
+
+    fetch('/messages', {
+        method: 'POST',
+        headers: { 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content },
+        body: form
+    })
+        .then(function (response) { return response.json().then(function (data) { return { ok: response.ok, data: data }; }); })
+        .then(function ({ ok, data }) {
+            const nodes = document.querySelectorAll('#messages-container [src="' + localUrl + '"], #messages-container [href="' + localUrl + '"]');
+            if (ok && data.file) {
+                nodes.forEach(function (el) {
+                    el.setAttribute(el.tagName === 'A' ? 'href' : 'src', data.file.url);
+                });
+                updateLocalFileUrl(currentChatName, data.id, data.file.url);
+            } else {
+                item.failed = true;
+                const failMsg = (data && data.message) || 'Gagal mengirim file';
+                nodes.forEach(function (el) {
+                    el.remove();
+                    const row = el.closest('[data-chat]');
+                    if (row) {
+                        const p = document.createElement('p');
+                        p.className = 'text-[10px] text-red-400/80 mt-1';
+                        p.textContent = 'Tidak terkirim: ' + failMsg;
+                        row.firstElementChild.appendChild(p);
+                    }
+                });
+            }
+            removeAttach(item.id);
+        })
+        .catch(function () {
+            item.failed = true;
+            removeAttach(item.id);
+        });
+}

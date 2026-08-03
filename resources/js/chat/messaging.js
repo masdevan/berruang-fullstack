@@ -36,5 +36,7 @@ function normalize(msg) {
         from: msg.from,
         text: msg.body,
         time: msg.time,
+        type: msg.type || 'text',
+        file: msg.file || null,
     };
 }

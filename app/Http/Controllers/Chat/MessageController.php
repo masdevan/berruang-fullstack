@@ -8,10 +8,19 @@ use App\Models\Message;
 use App\Models\User;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Validation\Rule;
 
 class MessageController extends Controller
 {
     private const HISTORY_LIMIT = 50;
+
+    private const DOCUMENT_MIMES = [
+        'application/pdf', 'text/plain', 'application/zip',
+        'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+        'application/vnd.ms-excel', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+        'application/vnd.ms-powerpoint', 'application/vnd.openxmlformats-officedocument.presentationml.presentation',
+        'text/csv',
+    ];
 
     public function index(Request $request): JsonResponse
     {
@@ -59,6 +68,10 @@ class MessageController extends Controller
                     'body' => $m->body,
                     'time' => $m->created_at->format('H:i'),
                     'from' => $m->sender_id === $user->id ? 'me' : 'other',
+                    'type' => $m->type,
+                    'file' => $m->file_path
+                        ? ['url' => $m->fileUrl(), 'name' => $m->fileName()]
+                        : null,
                 ];
 
                 if ($data['from'] === 'other') {
@@ -74,7 +87,9 @@ class MessageController extends Controller
     {
         $request->validate([
             'to' => ['required', 'string'],
-            'body' => ['required', 'string', 'max:5000'],
+            'body' => ['required_without:file', 'nullable', 'string', 'max:5000'],
+            'type' => ['nullable', 'string', Rule::in(Message::TYPES)],
+            'file' => ['nullable', 'file', 'max:20480'],
         ]);
 
         $user = $request->user();
@@ -84,10 +99,30 @@ class MessageController extends Controller
             return response()->json(['message' => 'Contact not found.'], 422);
         }
 
+        $type = $request->type ?: ($request->hasFile('file') ? 'document' : 'text');
+
+        if ($request->hasFile('file')) {
+            $file = $request->file('file');
+            $mime = $file->getMimeType();
+            $type = str_starts_with($mime, 'image/') ? 'image' : (str_starts_with($mime, 'video/') ? 'video' : 'document');
+
+            if (! in_array($mime, array_merge(
+                ['image/jpeg', 'image/png', 'image/gif', 'image/webp', 'image/svg+xml'],
+                ['video/mp4', 'video/webm', 'video/ogg', 'video/quicktime'],
+                self::DOCUMENT_MIMES
+            ))) {
+                return response()->json(['message' => 'File type not allowed.'], 422);
+            }
+        }
+
         $message = Message::create([
             'sender_id' => $user->id,
             'receiver_id' => $receiver->id,
-            'body' => $request->body,
+            'body' => $request->body ?: ($request->hasFile('file') ? $file->getClientOriginalName() : ''),
+            'type' => $type,
+            'file_path' => $request->hasFile('file')
+                ? $file->storeAs('uploads', ($type === 'document' ? uniqid().'-' : '').$file->getClientOriginalName(), 'public')
+                : null,
         ]);
 
         if (! $receiver->contacts()->where('contact_user_id', $user->id)->exists()) {
@@ -99,6 +134,10 @@ class MessageController extends Controller
         return response()->json([
             'id' => $message->id,
             'time' => $message->created_at->format('H:i'),
+            'type' => $message->type,
+            'file' => $message->file_path
+                ? ['url' => $message->fileUrl(), 'name' => $message->fileName()]
+                : null,
         ]);
     }
 }

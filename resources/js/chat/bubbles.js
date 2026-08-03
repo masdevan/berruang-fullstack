@@ -1,4 +1,5 @@
 import { BUBBLE_ME, BUBBLE_OTHER } from './constants.js';
+import { getDraft } from './draft.js';
 
 export const EMOJIS = ['👍', '❤️', '😂', '😮', '😢'];
 
@@ -25,7 +26,8 @@ export function messageHtml(msg, chatName, index) {
 
 function bubbleInnerHtml(msg, chatName, index) {
     const isMe = msg.from === 'me';
-    const truncated = msg.text.length > 1000;
+    const isText = !msg.type || msg.type === 'text';
+    const truncated = isText && msg.text.length > 1000;
     const text = truncated ? msg.text.slice(0, 1000) + '…' : msg.text;
     const reaction = msg.reaction
         ? `<button type="button" class="bubble-react-toggle cursor-pointer absolute -bottom-2 ${isMe ? 'right-2' : 'left-2'} bg-[#1A1A1A] border border-white/10 rounded-full px-1.5 py-0.5 text-[10px] leading-none hover:scale-110 transition-transform">${msg.reaction}</button>`
@@ -34,20 +36,61 @@ function bubbleInnerHtml(msg, chatName, index) {
     const actions = `
         <div class="bubble-pill absolute ${pillBottom} ${isMe ? 'right-0' : 'left-0'} bg-[#1A1A1A] border border-white/10 rounded-full px-1 py-0.5 flex items-center gap-0.5 z-10">
             ${EMOJIS.map(emoji => `<button type="button" class="bubble-react cursor-pointer w-5 h-5 flex items-center justify-center text-[11px] leading-none hover:scale-125 transition-transform" data-emoji="${emoji}">${emoji}</button>`).join('')}
-            ${isMe ? `<button type="button" class="bubble-edit cursor-pointer w-5 h-5 flex items-center justify-center text-white/40 hover:text-white transition-colors" title="Edit">${PENCIL_SVG}</button>` : ''}
+            ${isMe && isText ? `<button type="button" class="bubble-edit cursor-pointer w-5 h-5 flex items-center justify-center text-white/40 hover:text-white transition-colors" title="Edit">${PENCIL_SVG}</button>` : ''}
         </div>`;
     return `
         <div class="relative ${isMe ? BUBBLE_ME : BUBBLE_OTHER}">
             ${actions}
-            <p class="bubble-text text-xs text-white/85 leading-relaxed wrap-break-word">${escapeHtml(text)}</p>
+            ${mediaHtml(msg, isText)}
             ${truncated ? `<button type="button" class="bubble-expand cursor-pointer mt-1 text-[10px] text-[#E091A9] hover:text-[#E8A8BC] transition-colors">Lihat selengkapnya</button>` : ''}
             <p class="text-[9px] text-white/25 text-right mt-0.5">${msg.time}</p>
             ${reaction}
         </div>`;
 }
 
+function mediaHtml(msg, isText) {
+    if (isText) {
+        return `<p class="bubble-text text-xs text-white/85 leading-relaxed wrap-break-word">${escapeHtml(msg.text)}</p>`;
+    }
+    const caption = msg.text && msg.text !== msg.file.name
+        ? `<p class="bubble-text text-xs text-white/85 leading-relaxed wrap-break-word">${escapeHtml(msg.text)}</p>`
+        : '';
+    if (msg.type === 'image' && msg.file) {
+        return `<img src="${msg.file.url}" alt="${escapeHtml(msg.file.name)}" title="Click to view" class="bubble-file max-w-56 max-h-64 object-cover rounded-lg cursor-pointer mb-1 block">${caption}`;
+    }
+    if (msg.type === 'video' && msg.file) {
+        return `<video src="${msg.file.url}" controls class="max-w-56 max-h-64 rounded-lg mb-1 block"></video>${caption}`;
+    }
+    if (msg.type === 'document' && msg.file) {
+        return `
+            <a href="${msg.file.url}" target="_blank" class="flex items-center gap-2 rounded-lg bg-white/5 hover:bg-white/10 transition-colors px-2.5 py-2 mb-1">
+                <div class="w-7 h-7 rounded bg-white/10 flex items-center justify-center text-white/50 shrink-0">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" class="w-3.5 h-3.5"><path stroke-linecap="round" stroke-linejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m2.25 0H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z"/></svg>
+                </div>
+                <span class="text-[10px] text-white/70 truncate max-w-36">${escapeHtml(msg.file.name)}</span>
+            </a>${caption}`;
+    }
+    return `<p class="bubble-text text-xs text-white/85 leading-relaxed wrap-break-word">${escapeHtml(msg.text)}</p>`;
+}
+
 export function appendMessage(text, time) {
     pushMessage({ id: null, from: 'me', text, time }, true);
+}
+
+export function filePreviewLabel(msg) {
+    return msg.type === 'image' ? 'Photo' : msg.type === 'video' ? 'Video' : msg.type === 'document' ? 'Document' : msg.text;
+}
+
+export function updateLocalFileUrl(username, id, url) {
+    const msgs = localMessages[username];
+    if (!msgs) return;
+    for (let i = msgs.length - 1; i >= 0; i--) {
+        if (msgs[i].from === 'me' && msgs[i].file && msgs[i].file.url.startsWith('blob:') && !msgs[i].id) {
+            msgs[i].file.url = url;
+            msgs[i].id = id;
+            break;
+        }
+    }
 }
 
 export function pushMessage(msg, animate = false) {
@@ -65,13 +108,17 @@ export function pushMessage(msg, animate = false) {
         );
     }
     container.scrollTop = container.scrollHeight;
-    updateConversationPreview(currentChatName, msg.text);
+    updateConversationPreview(currentChatName, filePreviewLabel(msg));
 }
 
 export function updateConversationPreview(username, text) {
     const item = document.querySelector('[data-username="' + username + '"]');
     const preview = item && item.querySelector('.conversation-last');
-    if (preview) preview.textContent = text;
+    if (preview) {
+        if (getDraft(username) && preview.dataset.draftOriginal !== undefined) return;
+        preview.textContent = text;
+        delete preview.dataset.draftOriginal;
+    }
 }
 
 function bubbleRow(target) {
@@ -163,6 +210,12 @@ document.addEventListener('click', function (e) {
             message.reaction = null;
             rerender(row);
         }
+        return;
+    }
+
+    const fileImg = e.target.closest('img.bubble-file');
+    if (fileImg) {
+        window.openMediaModal(fileImg.src);
         return;
     }
 

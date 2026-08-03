@@ -1,8 +1,9 @@
 import { MOBILE_BREAKPOINT, TAB_BASE, TAB_ACTIVE, TAB_INACTIVE } from './constants.js';
-import { setCurrentChat } from './bubbles.js';
+import { setCurrentChat, currentChatName } from './bubbles.js';
 import { openChat } from './messaging.js';
 import { clearUnread } from './unread.js';
 import { setStatus } from './realtime.js';
+import { getDraft, applyDraftPreview } from './draft.js';
 
 window.switchTab = function (tab) {
     const isChat = tab === 'chat';
@@ -138,12 +139,20 @@ window.openConversation = function (name, avatar, status, about, customName, rea
     }
 
     const container = document.getElementById('messages-container');
+    applyDraftPreview(currentChatName);
     setCurrentChat(username);
     setStatus(username, status || 'offline');
     clearUnread(username);
     openChat(username);
     container.innerHTML = '';
     container.scrollTop = container.scrollHeight;
+    const input = document.getElementById('message-input');
+    if (input) {
+        input.value = getDraft(username);
+        input.style.height = 'auto';
+        input.style.height = Math.min(input.scrollHeight, 120) + 'px';
+    }
+    applyDraftPreview(username);
     container.animate(
         [{ opacity: 0, transform: 'translateY(6px)' }, { opacity: 1, transform: 'translateY(0)' }],
         { duration: 150, easing: 'ease-out' }

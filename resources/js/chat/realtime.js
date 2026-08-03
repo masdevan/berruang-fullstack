@@ -1,6 +1,6 @@
 import Echo from 'laravel-echo';
 import Pusher from 'pusher-js';
-import { pushMessage, currentChatName, updateConversationPreview } from './bubbles.js';
+import { pushMessage, currentChatName, updateConversationPreview, filePreviewLabel } from './bubbles.js';
 import { bumpUnread, clearUnread, ensureConversationItem } from './unread.js';
 
 window.Pusher = Pusher;
@@ -20,10 +20,10 @@ if (userId) {
         .listen('MessageSent', function (e) {
             if (currentChatName === e.sender_username) {
                 clearUnread(e.sender_username);
-                pushMessage({ id: e.id, from: 'other', text: e.body, time: e.time }, true);
+                pushMessage({ id: e.id, from: 'other', text: e.body, time: e.time, type: e.type || 'text', file: e.file || null }, true);
             } else {
                 ensureConversationItem(e);
-                updateConversationPreview(e.sender_username, e.body);
+                updateConversationPreview(e.sender_username, filePreviewLabel({ type: e.type, text: e.body }));
                 bumpUnread(e.sender_username);
             }
         })
