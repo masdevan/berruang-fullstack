@@ -123,7 +123,10 @@ window.openConversation = function (name, avatar, status, about, customName, rea
     document.getElementById('rightbar-save-contact').classList.toggle('hidden', !!customName);
     const avatarEl = document.getElementById('rightbar-avatar');
     avatarEl.innerHTML = AVATAR_IMG;
-    avatarEl.onclick = hasAvatar ? function () { window.openMediaModal(avatar); } : null;
+    avatarEl.onclick = hasAvatar ? function () {
+        const item = document.querySelector('[data-username="' + username + '"]');
+        window.openMediaModal((item && item.dataset.fullAvatar) || avatar);
+    } : null;
     avatarEl.title = hasAvatar ? 'View profile photo' : '';
     avatarEl.classList.toggle('cursor-pointer', !!hasAvatar);
     document.getElementById('rightbar-about-text').textContent = about;

@@ -7,6 +7,7 @@ use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Event;
+use Illuminate\Support\Facades\Storage;
 
 uses(RefreshDatabase::class);
 
@@ -239,6 +240,38 @@ test('uploaded image stores its dimensions in the response', function () {
         ->assertJsonPath('type', 'image')
         ->assertJsonPath('file.width', 4)
         ->assertJsonPath('file.height', 4);
+});
+
+test('large uploads keep the original and get a compressed preview under 10kb', function () {
+    Storage::fake('public');
+    [$user, $other] = contactPair();
+
+    $img = imagecreatetruecolor(1600, 1200);
+    for ($y = 0; $y < 1200; $y += 8) {
+        for ($x = 0; $x < 1600; $x += 8) {
+            imagesetpixel($img, $x, $y, imagecolorallocate($img, $x % 255, $y % 255, 128));
+        }
+    }
+    $tmp = tempnam(sys_get_temp_dir(), 'brtest');
+    imagepng($img, $tmp);
+    imagedestroy($img);
+    $png = file_get_contents($tmp);
+    @unlink($tmp);
+
+    $response = $this->actingAs($user)->post('/messages', [
+        'to' => $other->username,
+        'body' => 'foto besar',
+        'file' => UploadedFile::fake()->createWithContent('besar.png', $png),
+    ])->assertOk();
+
+    $message = Message::first();
+
+    expect($message->preview_path)->not->toBeNull();
+    expect($response->json('file.preview_url'))->not->toBeNull();
+    expect($response->json('file.width'))->toBe(1600);
+    expect(Storage::disk('public')->exists($message->file_path))->toBeTrue();
+    expect(Storage::disk('public')->exists($message->preview_path))->toBeTrue();
+    expect(Storage::disk('public')->size($message->preview_path))->toBeLessThanOrEqual(10 * 1024);
 });
 
 test('uploaded svg stores its dimensions from width height or viewBox', function () {

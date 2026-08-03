@@ -10,6 +10,7 @@
     <x-chat.conversation-item
         :name="$customName ?: $user->name"
         :avatar="$user->avatar ? $user->avatarUrl(36) : $user->initials()"
+        :avatar-full="$user->avatar ? $user->avatarFullUrl() : ''"
         :has-avatar="$user->avatar ? '1' : '0'"
         :custom="$customName ? '1' : '0'"
         :last-message="$itemMeta['last'] ?? ($user->bio ?: '@'.$user->username)"

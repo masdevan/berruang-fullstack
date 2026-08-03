@@ -88,7 +88,8 @@ function mediaHtml(msg, isText) {
     const dims = msg.file.width && msg.file.height;
     const sizeAttrs = dims ? `width="${msg.file.width}" height="${msg.file.height}"` : '';
     if (msg.type === 'image' && msg.file) {
-        return `<img src="${msg.file.url}" alt="${escapeHtml(msg.file.name)}" title="Click to view" ${sizeAttrs} loading="lazy" decoding="async" class="bubble-file block w-full h-auto cursor-pointer bg-white/5">${captionBlock}`;
+        const preview = msg.file.preview_url || msg.file.url;
+        return `<img src="${preview}" alt="${escapeHtml(msg.file.name)}" title="Click to view" data-full-src="${escapeHtml(msg.file.url)}" ${sizeAttrs} loading="lazy" decoding="async" class="bubble-file block w-full h-auto cursor-pointer bg-white/5">${captionBlock}`;
     }
     if (msg.type === 'video' && msg.file) {
         return `<video src="${msg.file.url}" controls ${sizeAttrs} loading="lazy" preload="metadata" class="block w-full h-auto bg-black"></video>${captionBlock}`;
@@ -330,7 +331,7 @@ document.addEventListener('click', function (e) {
 
     const fileImg = e.target.closest('img.bubble-file');
     if (fileImg) {
-        window.openMediaModal(fileImg.src);
+        window.openMediaModal(fileImg.dataset.fullSrc || fileImg.src);
         return;
     }
 

@@ -12,6 +12,7 @@ use Illuminate\Database\QueryException;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Storage;
 
 class ChatService
 {
@@ -105,7 +106,24 @@ class ChatService
 
         $dimensions = null;
         if ($file && $resolvedType === 'image') {
-            $dimensions = $this->optimizeImage($file->getRealPath(), $mime);
+            $size = @getimagesize($file->getRealPath());
+            if (is_array($size)) {
+                $dimensions = ['width' => $size[0], 'height' => $size[1]];
+            } elseif ($mime === 'image/svg+xml') {
+                $dimensions = $this->svgDimensions($file->getRealPath());
+            }
+        }
+
+        $filePath = $file
+            ? $file->storeAs('uploads', ($resolvedType === 'document' ? uniqid().'-' : '').$file->getClientOriginalName(), 'public')
+            : null;
+
+        $previewPath = null;
+        if ($file && $resolvedType === 'image' && $dimensions && ! str_starts_with($mime, 'image/svg')) {
+            $previewPath = $this->previewPathFor($filePath);
+            if (! $this->createImagePreview($file->getRealPath(), $mime, 10 * 1024, $previewPath)) {
+                $previewPath = null;
+            }
         }
 
         $message = Message::create([
@@ -113,9 +131,8 @@ class ChatService
             'receiver_id' => $receiver->id,
             'body' => $body ?: ($file ? $file->getClientOriginalName() : ''),
             'type' => $resolvedType,
-            'file_path' => $file
-                ? $file->storeAs('uploads', ($resolvedType === 'document' ? uniqid().'-' : '').$file->getClientOriginalName(), 'public')
-                : null,
+            'file_path' => $filePath,
+            'preview_path' => $previewPath,
             ...($dimensions ?? []),
         ]);
 
@@ -135,7 +152,13 @@ class ChatService
             'time' => $message->created_at->format('H:i'),
             'type' => $message->type,
             'file' => $message->file_path
-                ? ['url' => $message->fileUrl(), 'name' => $message->fileName(), 'width' => $message->width, 'height' => $message->height]
+                ? [
+                    'url' => $message->fileUrl(),
+                    'preview_url' => $this->previewUrl($message),
+                    'name' => $message->fileName(),
+                    'width' => $message->width,
+                    'height' => $message->height,
+                ]
                 : null,
         ];
     }
@@ -302,7 +325,13 @@ class ChatService
             'type' => $m->type,
             'read_at' => $m->read_at,
             'file' => $m->file_path
-                ? ['url' => $m->fileUrl(), 'name' => $m->fileName(), 'width' => $m->width, 'height' => $m->height]
+                ? [
+                    'url' => $m->fileUrl(),
+                    'preview_url' => $this->previewUrl($m),
+                    'name' => $m->fileName(),
+                    'width' => $m->width,
+                    'height' => $m->height,
+                ]
                 : null,
         ];
 
@@ -323,57 +352,105 @@ class ChatService
         };
     }
 
-    private function optimizeImage(string $path, string $mime): ?array
+    public function previewUrl(Message $m): ?string
     {
-        $size = @getimagesize($path);
-        if (is_array($size)) {
-            [$w, $h] = $size;
-            $max = 1280;
-            if ($w > $max || $h > $max) {
-                $src = match ($mime) {
-                    'image/jpeg' => @imagecreatefromjpeg($path),
-                    'image/png' => @imagecreatefrompng($path),
-                    'image/webp' => @imagecreatefromwebp($path),
-                    default => null,
-                };
-                if ($src) {
-                    $scale = $max / max($w, $h);
-                    $nw = (int) round($w * $scale);
-                    $nh = (int) round($h * $scale);
-                    $dst = imagecreatetruecolor($nw, $nh);
-                    if ($mime === 'image/png' || $mime === 'image/webp') {
-                        imagealphablending($dst, false);
-                        imagesavealpha($dst, true);
-                    }
-                    imagecopyresampled($dst, $src, 0, 0, 0, 0, $nw, $nh, $w, $h);
-                    if ($mime === 'image/jpeg') {
-                        imageinterlace($dst, 1);
-                    }
-                    $tmp = $path.'.opt';
-                    $ok = match ($mime) {
-                        'image/jpeg' => imagejpeg($dst, $tmp, 80),
-                        'image/png' => imagepng($dst, $tmp, 8),
-                        'image/webp' => imagewebp($dst, $tmp, 80),
-                        default => false,
-                    };
-                    imagedestroy($src);
-                    imagedestroy($dst);
-                    if ($ok) {
-                        @rename($tmp, $path);
-                        $w = $nw;
-                        $h = $nh;
-                    }
-                }
+        return $m->preview_path ? asset('storage/'.$m->preview_path) : null;
+    }
+
+    public function previewPathFor(string $filePath): string
+    {
+        $dir = pathinfo($filePath, PATHINFO_DIRNAME);
+        $name = pathinfo($filePath, PATHINFO_FILENAME);
+        $ext = in_array(strtolower(pathinfo($filePath, PATHINFO_EXTENSION)), ['jpg', 'jpeg']) ? 'jpg' : 'webp';
+
+        return $dir.'/'.$name.'.preview.'.$ext;
+    }
+
+    public function createImagePreview(string $srcPath, string $mime, int $targetBytes, string $destPath): bool
+    {
+        $src = match ($mime) {
+            'image/jpeg' => @imagecreatefromjpeg($srcPath),
+            'image/png' => @imagecreatefrompng($srcPath),
+            'image/webp' => @imagecreatefromwebp($srcPath),
+            default => null,
+        };
+
+        if (! $src) {
+            return false;
+        }
+
+        $size = @getimagesize($srcPath);
+        if (! is_array($size)) {
+            imagedestroy($src);
+
+            return false;
+        }
+
+        [$w, $h] = $size;
+
+        if (filesize($srcPath) <= $targetBytes && max($w, $h) <= 1280) {
+            imagedestroy($src);
+
+            return false;
+        }
+
+        $bestTmp = null;
+        $bestBytes = PHP_INT_MAX;
+        $bestOk = false;
+
+        foreach ([[800, 60], [600, 55], [480, 50], [360, 45], [256, 40], [180, 35], [128, 30]] as [$maxDim, $quality]) {
+            $scale = min(1, $maxDim / max($w, $h));
+            $nw = max(1, (int) round($w * $scale));
+            $nh = max(1, (int) round($h * $scale));
+            $dst = imagecreatetruecolor($nw, $nh);
+            if ($mime === 'image/png' || $mime === 'image/webp') {
+                imagealphablending($dst, false);
+                imagesavealpha($dst, true);
+            }
+            imagecopyresampled($dst, $src, 0, 0, 0, 0, $nw, $nh, $w, $h);
+            $tmp = tempnam(sys_get_temp_dir(), 'brpv');
+            $ok = match ($mime) {
+                'image/jpeg' => imagejpeg($dst, $tmp, $quality),
+                'image/png' => imagepng($dst, $tmp, 8),
+                'image/webp' => imagewebp($dst, $tmp, $quality),
+                default => false,
+            };
+            $bytes = $ok ? (int) filesize($tmp) : PHP_INT_MAX;
+            imagedestroy($dst);
+
+            if (! $ok) {
+                @unlink($tmp);
+
+                continue;
             }
 
-            return ['width' => $w, 'height' => $h];
+            if ($bytes <= $targetBytes) {
+                $bestTmp = $tmp;
+                $bestOk = true;
+                break;
+            }
+
+            if ($bytes < $bestBytes) {
+                $bestBytes = $bytes;
+                if ($bestTmp !== null) {
+                    @unlink($bestTmp);
+                }
+                $bestTmp = $tmp;
+            } else {
+                @unlink($tmp);
+            }
         }
 
-        if ($mime === 'image/svg+xml') {
-            return $this->svgDimensions($path);
+        imagedestroy($src);
+
+        if (! $bestOk && $bestTmp === null) {
+            return false;
         }
 
-        return null;
+        $stored = Storage::disk('public')->put($destPath, file_get_contents($bestTmp));
+        @unlink($bestTmp);
+
+        return $stored;
     }
 
     private function svgDimensions(string $path): ?array

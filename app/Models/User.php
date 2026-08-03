@@ -23,6 +23,7 @@ class User extends Authenticatable implements MustVerifyEmail
         'email',
         'password',
         'avatar',
+        'avatar_preview_path',
         'username_changed_at',
         'bio',
         'onboarded_at',
@@ -62,11 +63,20 @@ class User extends Authenticatable implements MustVerifyEmail
 
     public function avatarUrl(int $size = 64): string
     {
+        if ($this->avatar_preview_path) {
+            return asset('storage/'.$this->avatar_preview_path);
+        }
+
         if ($this->avatar) {
             return asset('storage/'.$this->avatar);
         }
 
         return 'https://ui-avatars.com/api/?name='.rawurlencode(Str::substr($this->name, 0, 1))."&background=2A2A2A&color=FFFFFF&size={$size}";
+    }
+
+    public function avatarFullUrl(): string
+    {
+        return $this->avatar ? asset('storage/'.$this->avatar) : $this->avatarUrl();
     }
 
     public function initials(): string

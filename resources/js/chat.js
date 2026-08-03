@@ -381,7 +381,12 @@ async function sendFile(item, caption) {
             const nodes = document.querySelectorAll('#messages-container [src="' + localUrl + '"], #messages-container [href="' + localUrl + '"]');
             if (ok && data.file) {
                 nodes.forEach(function (el) {
-                    el.setAttribute(el.tagName === 'A' ? 'href' : 'src', data.file.url);
+                    if (el.tagName === 'IMG') {
+                        el.setAttribute('src', data.file.preview_url || data.file.url);
+                        el.setAttribute('data-full-src', data.file.url);
+                    } else {
+                        el.setAttribute(el.tagName === 'A' ? 'href' : 'src', data.file.url);
+                    }
                 });
                 updateLocalFileUrl(currentChatName, data.id, data.file.url, data.file.width, data.file.height);
                 if (data.file.width && data.file.height) {

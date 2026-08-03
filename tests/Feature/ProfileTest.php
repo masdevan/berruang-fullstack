@@ -107,4 +107,7 @@ test('avatar can be uploaded with the account details', function () {
 
     expect($user->refresh()->avatar)->not->toBeNull();
     Storage::disk('public')->assertExists($user->avatar);
+    expect($user->avatar_preview_path)->not->toBeNull();
+    Storage::disk('public')->assertExists($user->avatar_preview_path);
+    expect(Storage::disk('public')->size($user->avatar_preview_path))->toBeLessThanOrEqual(10 * 1024);
 });

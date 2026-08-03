@@ -73,13 +73,13 @@ function mediaItemHtml(m) {
     const isVideo = m.type === 'video';
     const inner = isVideo
         ? `<video src="${escapeHtml(m.file.url)}" preload="metadata" muted playsinline loading="lazy" class="w-full h-full object-cover"></video>`
-        : `<img src="${escapeHtml(m.file.url)}" alt="${escapeHtml(m.file.name)}" loading="lazy" decoding="async" class="w-full h-full object-cover">`;
+        : `<img src="${escapeHtml(m.file.preview_url || m.file.url)}" alt="${escapeHtml(m.file.name)}" loading="lazy" decoding="async" class="w-full h-full object-cover">`;
     return `<div data-media-url="${escapeHtml(m.file.url)}" data-media-type="${m.type}" class="relative aspect-square rounded-lg overflow-hidden bg-white/5 cursor-pointer hover:opacity-80 transition-opacity">${inner}${isVideo ? '<span class="absolute inset-0 flex items-center justify-center bg-black/20">' + PLAY_SVG + '</span>' : ''}</div>`;
 }
 
 function fileItemHtml(m) {
     const thumb = m.type === 'image'
-        ? `<img src="${escapeHtml(m.file.url)}" alt="${escapeHtml(m.file.name)}" loading="lazy" decoding="async" class="w-6 h-6 rounded object-cover shrink-0">`
+        ? `<img src="${escapeHtml(m.file.preview_url || m.file.url)}" alt="${escapeHtml(m.file.name)}" loading="lazy" decoding="async" class="w-6 h-6 rounded object-cover shrink-0">`
         : m.type === 'video'
             ? `<video src="${escapeHtml(m.file.url)}" preload="metadata" muted playsinline loading="lazy" class="w-6 h-6 rounded object-cover shrink-0"></video>`
             : `<div class="w-6 h-6 rounded bg-white/10 flex items-center justify-center text-white/50 shrink-0">${DOC_SVG}</div>`;

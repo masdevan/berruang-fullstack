@@ -3,6 +3,7 @@
 namespace App\Events;
 
 use App\Models\Message;
+use App\Services\ChatService;
 use Illuminate\Broadcasting\InteractsWithSockets;
 use Illuminate\Broadcasting\PrivateChannel;
 use Illuminate\Contracts\Broadcasting\ShouldBroadcast;
@@ -34,6 +35,7 @@ class MessageSent implements ShouldBroadcast
             'file' => $this->message->file_path
                 ? [
                     'url' => $this->message->fileUrl(),
+                    'preview_url' => app(ChatService::class)->previewUrl($this->message),
                     'name' => $this->message->fileName(),
                     'width' => $this->message->width,
                     'height' => $this->message->height,
@@ -42,6 +44,7 @@ class MessageSent implements ShouldBroadcast
             'sender_user_id' => $sender->id,
             'sender_username' => $sender->username,
             'sender_avatar' => $sender->avatar ? $sender->avatarUrl(36) : $sender->initials(),
+            'sender_full_avatar' => $sender->avatar ? $sender->avatarFullUrl() : null,
             'sender_has_avatar' => (bool) $sender->avatar,
             'sender_bio' => $sender->bio ?? '',
             ...$this->message->senderDisplayFor($viewer),

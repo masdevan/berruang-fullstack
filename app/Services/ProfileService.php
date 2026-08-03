@@ -73,8 +73,61 @@ class ProfileService
     {
         if ($user->avatar) {
             Storage::disk('public')->delete($user->avatar);
+            Storage::disk('public')->delete($this->avatarPreviewPath($user->avatar));
         }
 
         $user->avatar = $avatar->store('avatars', 'public');
+        $user->avatar_preview_path = $this->makeAvatarPreview($user->avatar)
+            ? $this->avatarPreviewPath($user->avatar)
+            : null;
+    }
+
+    public function avatarPreviewPath(string $avatarPath): string
+    {
+        return self::previewPathFor($avatarPath);
+    }
+
+    public static function previewPathFor(string $avatarPath): string
+    {
+        $dir = pathinfo($avatarPath, PATHINFO_DIRNAME);
+        $name = pathinfo($avatarPath, PATHINFO_FILENAME);
+
+        return $dir.'/'.$name.'.preview.webp';
+    }
+
+    public function makeAvatarPreview(string $avatarPath): bool
+    {
+        $src = @imagecreatefromstring((string) Storage::disk('public')->get($avatarPath));
+        if (! $src) {
+            return false;
+        }
+
+        $w = imagesx($src);
+        $h = imagesy($src);
+        $max = 128;
+        $scale = min(1, $max / max($w, $h));
+        $nw = max(1, (int) round($w * $scale));
+        $nh = max(1, (int) round($h * $scale));
+
+        $dst = imagecreatetruecolor($nw, $nh);
+        imagealphablending($dst, false);
+        imagesavealpha($dst, true);
+        imagecopyresampled($dst, $src, 0, 0, 0, 0, $nw, $nh, $w, $h);
+
+        $tmp = tempnam(sys_get_temp_dir(), 'brapv');
+        for ($q = 70; $q >= 30; $q -= 5) {
+            imagewebp($dst, $tmp, $q);
+            if (filesize($tmp) <= 10 * 1024) {
+                break;
+            }
+        }
+
+        imagedestroy($src);
+        imagedestroy($dst);
+
+        $stored = Storage::disk('public')->put($this->avatarPreviewPath($avatarPath), file_get_contents($tmp));
+        @unlink($tmp);
+
+        return $stored;
     }
 }

@@ -105,7 +105,9 @@ berruang/
 │   │   ├── 2026_08_02_000002_add_indexes_to_messages_table.php
 │   │   ├── 2026_08_03_000001_add_type_and_file_to_messages_table.php
 │   │   ├── 2026_08_03_000002_add_dimensions_to_messages_table.php
-│   │   └── 2026_08_03_000003_backfill_message_dimensions.php
+│   │   ├── 2026_08_03_000003_backfill_message_dimensions.php
+│   │   ├── 2026_08_04_000001_add_preview_paths.php
+│   │   └── 2026_08_04_000002_backfill_preview_paths.php
 │   └── seeders/
 │       └── DatabaseSeeder.php
 ├── public/

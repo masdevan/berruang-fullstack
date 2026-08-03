@@ -40,8 +40,8 @@ class ChatTest extends TestCase
         $me->contacts()->attach([$alice->id, $bob->id]);
 
         $html = $this->actingAs($me)->get('/messages')->getContent();
-        $this->assertStringContainsString('data-name="Alice" data-avatar="A" data-has-avatar="0" data-status="offline"', $html);
-        $this->assertStringContainsString('data-name="Bob" data-avatar="B" data-has-avatar="0" data-status="offline"', $html);
+        $this->assertStringContainsString('data-name="Alice" data-avatar="A" data-full-avatar="" data-has-avatar="0" data-status="offline"', $html);
+        $this->assertStringContainsString('data-name="Bob" data-avatar="B" data-full-avatar="" data-has-avatar="0" data-status="offline"', $html);
 
         config(['broadcasting.default' => 'pusher']);
         config(['broadcasting.connections.pusher' => [

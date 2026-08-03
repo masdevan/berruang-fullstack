@@ -13,6 +13,7 @@ class Message extends Model
         'body',
         'type',
         'file_path',
+        'preview_path',
         'width',
         'height',
     ];
