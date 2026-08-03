@@ -23,6 +23,59 @@ class MessageController extends Controller
         'text/csv',
     ];
 
+    private static function optimizeImage(string $path, string $mime): ?array
+    {
+        $size = @getimagesize($path);
+        if (is_array($size)) {
+            [$w, $h] = $size;
+            $max = 1280;
+            if ($w > $max || $h > $max) {
+                $src = match ($mime) {
+                    'image/jpeg' => @imagecreatefromjpeg($path),
+                    'image/png' => @imagecreatefrompng($path),
+                    'image/webp' => @imagecreatefromwebp($path),
+                    default => null,
+                };
+                if ($src) {
+                    $scale = $max / max($w, $h);
+                    $nw = (int) round($w * $scale);
+                    $nh = (int) round($h * $scale);
+                    $dst = imagecreatetruecolor($nw, $nh);
+                    if ($mime === 'image/png' || $mime === 'image/webp') {
+                        imagealphablending($dst, false);
+                        imagesavealpha($dst, true);
+                    }
+                    imagecopyresampled($dst, $src, 0, 0, 0, 0, $nw, $nh, $w, $h);
+                    if ($mime === 'image/jpeg') {
+                        imageinterlace($dst, 1);
+                    }
+                    $tmp = $path.'.opt';
+                    $ok = match ($mime) {
+                        'image/jpeg' => imagejpeg($dst, $tmp, 80),
+                        'image/png' => imagepng($dst, $tmp, 8),
+                        'image/webp' => imagewebp($dst, $tmp, 80),
+                        default => false,
+                    };
+                    imagedestroy($src);
+                    imagedestroy($dst);
+                    if ($ok) {
+                        @rename($tmp, $path);
+                        $w = $nw;
+                        $h = $nh;
+                    }
+                }
+            }
+
+            return ['width' => $w, 'height' => $h];
+        }
+
+        if ($mime === 'image/svg+xml') {
+            return self::svgDimensions($path);
+        }
+
+        return null;
+    }
+
     private static function svgDimensions(string $path): ?array
     {
         $svg = @file_get_contents($path);
@@ -145,12 +198,7 @@ class MessageController extends Controller
 
         $dimensions = null;
         if ($request->hasFile('file') && $type === 'image') {
-            $size = @getimagesize($file->getRealPath());
-            if (is_array($size)) {
-                $dimensions = ['width' => $size[0], 'height' => $size[1]];
-            } elseif ($mime === 'image/svg+xml') {
-                $dimensions = self::svgDimensions($file->getRealPath());
-            }
+            $dimensions = self::optimizeImage($file->getRealPath(), $mime);
         }
 
         $message = Message::create([

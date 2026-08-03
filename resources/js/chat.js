@@ -325,11 +325,39 @@ function removeAttach(id) {
     }
 }
 
-function sendFile(item, caption) {
+function mediaDimensions(file) {
+    return new Promise(function (resolve) {
+        const url = URL.createObjectURL(file);
+        const done = function (dims) { URL.revokeObjectURL(url); resolve(dims); };
+        const timer = setTimeout(function () { done(null); }, 3000);
+        if (file.type.startsWith('video/')) {
+            const video = document.createElement('video');
+            video.preload = 'metadata';
+            video.onloadedmetadata = function () { clearTimeout(timer); done([video.videoWidth, video.videoHeight]); };
+            video.onerror = function () { clearTimeout(timer); done(null); };
+            video.src = url;
+        } else {
+            const img = new Image();
+            img.onload = function () { clearTimeout(timer); done([img.naturalWidth, img.naturalHeight]); };
+            img.onerror = function () { clearTimeout(timer); done(null); };
+            img.src = url;
+        }
+    });
+}
+
+function applyMediaDims(url, width, height) {
+    document.querySelectorAll('#messages-container [src="' + url + '"]').forEach(function (el) {
+        el.setAttribute('width', width);
+        el.setAttribute('height', height);
+    });
+}
+
+async function sendFile(item, caption) {
     if (!currentChatName || item.sent) return;
     item.sent = true;
+    const dims = await mediaDimensions(item.file);
     const localUrl = URL.createObjectURL(item.file);
-    pushMessage({ id: null, from: 'me', text: caption || item.file.name, time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }), type: item.kind, file: { url: localUrl, name: item.file.name } }, true);
+    pushMessage({ id: null, from: 'me', text: caption || item.file.name, time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }), type: item.kind, file: { url: localUrl, name: item.file.name, width: dims ? dims[0] : null, height: dims ? dims[1] : null } }, true);
 
     const form = new FormData();
     form.append('to', currentChatName);
@@ -348,7 +376,10 @@ function sendFile(item, caption) {
                 nodes.forEach(function (el) {
                     el.setAttribute(el.tagName === 'A' ? 'href' : 'src', data.file.url);
                 });
-                updateLocalFileUrl(currentChatName, data.id, data.file.url);
+                updateLocalFileUrl(currentChatName, data.id, data.file.url, data.file.width, data.file.height);
+                if (data.file.width && data.file.height) {
+                    applyMediaDims(data.file.url, data.file.width, data.file.height);
+                }
             } else {
                 item.failed = true;
                 const failMsg = (data && data.message) || 'Gagal mengirim file';

@@ -14,7 +14,9 @@ const localMessages = {};
 
 document.addEventListener('load', function (e) {
     const el = e.target;
-    if (el.tagName === 'IMG' && el.classList.contains('bubble-file') && !el.getAttribute('width') && el.naturalWidth) {
+    if (el.tagName !== 'IMG' || !el.classList.contains('bubble-file')) return;
+    el.classList.add('loaded');
+    if (!el.getAttribute('width') && el.naturalWidth) {
         el.setAttribute('width', el.naturalWidth);
         el.setAttribute('height', el.naturalHeight);
     }
@@ -85,10 +87,10 @@ function mediaHtml(msg, isText) {
     const dims = msg.file.width && msg.file.height;
     const sizeAttrs = dims ? `width="${msg.file.width}" height="${msg.file.height}"` : '';
     if (msg.type === 'image' && msg.file) {
-        return `<img src="${msg.file.url}" alt="${escapeHtml(msg.file.name)}" title="Click to view" ${sizeAttrs} class="bubble-file block w-full h-auto cursor-pointer">${captionBlock}`;
+        return `<img src="${msg.file.url}" alt="${escapeHtml(msg.file.name)}" title="Click to view" ${sizeAttrs} loading="lazy" decoding="async" class="bubble-file block w-full h-auto cursor-pointer bg-white/5">${captionBlock}`;
     }
     if (msg.type === 'video' && msg.file) {
-        return `<video src="${msg.file.url}" controls ${sizeAttrs} class="block w-full h-auto bg-black"></video>${captionBlock}`;
+        return `<video src="${msg.file.url}" controls ${sizeAttrs} loading="lazy" preload="metadata" class="block w-full h-auto bg-black"></video>${captionBlock}`;
     }
     if (msg.type === 'document' && msg.file) {
         return `
@@ -110,13 +112,21 @@ export function filePreviewLabel(msg) {
     return msg.type === 'image' ? 'Photo' : msg.type === 'video' ? 'Video' : msg.type === 'document' ? 'Document' : msg.text;
 }
 
-export function updateLocalFileUrl(username, id, url) {
+export function updateLocalFileUrl(username, id, url, width, height) {
     const msgs = localMessages[username];
     if (!msgs) return;
     for (let i = msgs.length - 1; i >= 0; i--) {
         if (msgs[i].from === 'me' && msgs[i].file && msgs[i].file.url.startsWith('blob:') && !msgs[i].id) {
             msgs[i].file.url = url;
             msgs[i].id = id;
+            if (width && height) {
+                msgs[i].file.width = width;
+                msgs[i].file.height = height;
+                document.querySelectorAll('#messages-container [src="' + url + '"]').forEach(function (el) {
+                    el.setAttribute('width', width);
+                    el.setAttribute('height', height);
+                });
+            }
             renderSharedMedia();
             break;
         }
