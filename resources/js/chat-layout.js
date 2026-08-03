@@ -19,13 +19,7 @@ document.addEventListener('DOMContentLoaded', function () {
         input.addEventListener('input', window.filterLists);
     }
 
-    const chatParam = new URLSearchParams(window.location.search).get('chat');
-    const item = chatParam ? document.querySelector('[data-name="' + chatParam + '"]') : null;
-    if (item) {
-        item.click();
-    } else {
-        setRightbarVisible(false);
-    }
+    setRightbarVisible(false);
 
     makeResizable('sidebar-left', 'resize-left', 200, 500);
     makeResizable('sidebar-right', 'resize-right', 200, 400);

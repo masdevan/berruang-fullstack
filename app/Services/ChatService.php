@@ -64,6 +64,25 @@ class ChatService
         return $messages->map(fn (Message $m) => $this->messagePayload($m, $viewer))->all();
     }
 
+    public function markRead(User $reader, string $with): void
+    {
+        $other = User::where('username', $with)->first();
+
+        if (! $other) {
+            return;
+        }
+
+        $unreadIds = Message::where('sender_id', $other->id)
+            ->where('receiver_id', $reader->id)
+            ->whereNull('read_at')
+            ->pluck('id');
+
+        if ($unreadIds->isNotEmpty()) {
+            Message::whereIn('id', $unreadIds)->update(['read_at' => now()]);
+            broadcast(new MessageRead($other, $reader, $unreadIds->all()));
+        }
+    }
+
     public function store(User $sender, string $to, ?string $body, ?UploadedFile $file, ?string $type): array
     {
         $receiver = User::where('username', $to)->first();
@@ -194,7 +213,7 @@ class ChatService
 
     public function setPresence(User $user, string $status): void
     {
-        Cache::put("presence.status.{$user->id}", $status, now()->addMinutes(2));
+        Cache::put("presence.status.{$user->id}", $status, now()->addMinutes(10));
         broadcast(new UserStatusChanged($user->username, $status));
     }
 

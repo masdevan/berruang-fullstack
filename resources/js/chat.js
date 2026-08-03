@@ -1,6 +1,6 @@
 import './auth.js';
 import './chat-layout.js';
-import { appendMessage, currentChatName, pushMessage, updateLocalFileUrl } from './chat/bubbles.js';
+import { currentChatName, pushMessage, updateLocalFileUrl } from './chat/bubbles.js';
 import { saveDraft, applyDraftPreview, sendDraftSync } from './chat/draft.js';
 import VIDEO_SVG from './icons/video.js';
 import DOC_SVG_LG from './icons/doc-lg.js';
@@ -44,6 +44,7 @@ document.addEventListener('DOMContentLoaded', function () {
     if (!form) return;
 
     let typingTimer = null;
+    let sending = false;
 
     function reportTyping(typing) {
         if (!currentChatName) return;
@@ -56,9 +57,11 @@ document.addEventListener('DOMContentLoaded', function () {
 
     form.addEventListener('submit', function (e) {
         e.preventDefault();
+        if (sending) return;
         const text = input.value.trim();
 
         if (pendingByChat[currentChatName] && pendingByChat[currentChatName].length) {
+            sending = true;
             clearTimeout(typingTimer);
             reportTyping(false);
             pendingByChat[currentChatName].slice().forEach(function (item, i) {
@@ -71,6 +74,7 @@ document.addEventListener('DOMContentLoaded', function () {
             saveDraft(currentChatName, '');
             input.value = '';
             input.style.height = 'auto';
+            setTimeout(function () { sending = false; }, 500);
             return;
         }
 
@@ -79,6 +83,7 @@ document.addEventListener('DOMContentLoaded', function () {
         clearTimeout(typingTimer);
         reportTyping(false);
 
+        sending = true;
         sendBtn.disabled = true;
         sendBtn.classList.add('opacity-50', 'cursor-not-allowed');
 
@@ -89,16 +94,18 @@ document.addEventListener('DOMContentLoaded', function () {
         })
             .then(function (response) { return response.json().then(function (data) { return { ok: response.ok, data: data }; }); })
             .then(function ({ ok, data }) {
+                sending = false;
                 sendBtn.disabled = false;
                 sendBtn.classList.remove('opacity-50', 'cursor-not-allowed');
                 if (!ok) return;
 
                 saveDraft(currentChatName, '');
-                appendMessage(text, data.time);
+                pushMessage({ id: data.id, from: 'me', text, time: data.time }, true);
                 input.value = '';
                 input.style.height = 'auto';
             })
             .catch(function () {
+                sending = false;
                 sendBtn.disabled = false;
                 sendBtn.classList.remove('opacity-50', 'cursor-not-allowed');
             });

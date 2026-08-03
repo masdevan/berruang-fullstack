@@ -26,6 +26,15 @@ class MessageController extends Controller
         return response()->json(['messages' => $messages]);
     }
 
+    public function markRead(Request $request): JsonResponse
+    {
+        $request->validate(['with' => ['required', 'string']]);
+
+        $this->chat->markRead($request->user(), $request->with);
+
+        return response()->json(['ok' => true]);
+    }
+
     public function store(Request $request): JsonResponse
     {
         $request->validate([

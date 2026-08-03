@@ -11,6 +11,7 @@ export const EMOJIS = ['👍', '❤️', '😂', '😮', '😢'];
 export let currentChatName = null;
 
 const localMessages = {};
+const pendingReadIds = new Set();
 
 document.addEventListener('load', function (e) {
     const el = e.target;
@@ -104,10 +105,6 @@ function mediaHtml(msg, isText) {
     return `<p class="bubble-text text-xs text-white/85 leading-relaxed wrap-break-word">${escapeHtml(msg.text)}</p>`;
 }
 
-export function appendMessage(text, time) {
-    pushMessage({ id: null, from: 'me', text, time }, true);
-}
-
 export function filePreviewLabel(msg) {
     return msg.type === 'image' ? 'Photo' : msg.type === 'video' ? 'Video' : msg.type === 'document' ? 'Document' : msg.text;
 }
@@ -119,6 +116,10 @@ export function updateLocalFileUrl(username, id, url, width, height) {
         if (msgs[i].from === 'me' && msgs[i].file && msgs[i].file.url.startsWith('blob:') && !msgs[i].id) {
             msgs[i].file.url = url;
             msgs[i].id = id;
+            if (pendingReadIds.delete(String(id))) {
+                msgs[i].status = 'read';
+                renderAllMessages();
+            }
             if (width && height) {
                 msgs[i].file.width = width;
                 msgs[i].file.height = height;
@@ -137,9 +138,14 @@ export function pushMessage(msg, animate = false) {
     const container = document.getElementById('messages-container');
     if (!container || !currentChatName) return;
 
+    if (!localMessages[currentChatName]) localMessages[currentChatName] = [];
+    const messages = localMessages[currentChatName];
+    if (msg.id && messages.some(function (m) { return m.id === msg.id; })) return;
+
     if (msg.from === 'me' && !msg.status) {
-        if (msg.read_at) {
+        if (msg.read_at || pendingReadIds.has(String(msg.id))) {
             msg.status = 'read';
+            if (msg.id) pendingReadIds.delete(String(msg.id));
         } else {
             const item = document.querySelector('[data-username="' + currentChatName + '"]');
             const online = item && (item.dataset.status === 'online' || item.dataset.status === 'idle');
@@ -147,8 +153,6 @@ export function pushMessage(msg, animate = false) {
         }
     }
 
-    if (!localMessages[currentChatName]) localMessages[currentChatName] = [];
-    const messages = localMessages[currentChatName];
     messages.push(msg);
     addSharedMedia(msg, currentChatName);
     container.insertAdjacentHTML('beforeend', messageHtml(msg, currentChatName, messages.length - 1));
@@ -164,20 +168,35 @@ export function pushMessage(msg, animate = false) {
 
 export function markMessagesRead(messageIds) {
     const msgs = localMessages[currentChatName];
-    if (!msgs || !messageIds.length) return;
     let changed = false;
-    msgs.forEach(function (m) {
-        if (m.from === 'me' && messageIds.indexOf(m.id) !== -1 && m.status !== 'read') {
-            m.status = 'read';
-            changed = true;
+    messageIds.forEach(function (id) {
+        const key = String(id);
+        const target = msgs && msgs.find(function (m) {
+            return m.from === 'me' && String(m.id) === key;
+        });
+        if (target) {
+            pendingReadIds.delete(id);
+            if (target.status !== 'read') {
+                target.status = 'read';
+                changed = true;
+            }
+        } else {
+            pendingReadIds.add(key);
         }
     });
     if (!changed) return;
-    document.querySelectorAll('#messages-container [data-chat="' + currentChatName + '"]').forEach(function (row) {
-        const index = Number(row.dataset.index);
-        const message = msgs[index];
-        if (message) row.firstElementChild.innerHTML = bubbleInnerHtml(message, currentChatName, index);
-    });
+    renderAllMessages();
+}
+
+function renderAllMessages() {
+    const container = document.getElementById('messages-container');
+    const msgs = localMessages[currentChatName];
+    if (!container || !msgs) return;
+    const scroll = container.scrollTop;
+    container.innerHTML = msgs.map(function (m, i) {
+        return messageHtml(m, currentChatName, i);
+    }).join('');
+    container.scrollTop = scroll;
 }
 
 export function updateConversationPreview(username, text, status) {
@@ -187,6 +206,7 @@ export function updateConversationPreview(username, text, status) {
         preview.textContent = text;
         delete preview.dataset.draftOriginal;
     }
+    if (item) item.dataset.previewOwner = status ? 'me' : 'other';
     updatePreviewCheck(item, status);
     applyDraftPreview(username);
 }
@@ -212,7 +232,9 @@ function updatePreviewCheck(item, status) {
 }
 
 export function markPreviewRead(username) {
-    updatePreviewCheck(document.querySelector('[data-username="' + username + '"]'), 'read');
+    const item = document.querySelector('[data-username="' + username + '"]');
+    if (!item || item.dataset.previewOwner !== 'me') return;
+    updatePreviewCheck(item, 'read');
 }
 
 function bubbleRow(target) {
@@ -226,9 +248,8 @@ function messageFor(row) {
     return messages ? { chatName, index, message: messages[index] } : null;
 }
 
-function rerender(row) {
-    const { chatName, index, message } = messageFor(row);
-    row.innerHTML = bubbleInnerHtml(message, chatName, index);
+function rerender() {
+    renderAllMessages();
 }
 
 function enterEdit(row) {
@@ -261,14 +282,14 @@ function saveEdit(row) {
     if (!text) return;
 
     message.text = text;
-    rerender(row);
+    rerender();
     updateConversationPreview(chatName, text);
 }
 
 function toggleReaction(row, emoji) {
-    const { chatName, index, message } = messageFor(row);
+    const { message } = messageFor(row);
     message.reaction = message.reaction === emoji ? null : emoji;
-    rerender(row);
+    rerender();
 }
 
 function hideAllPills() {
@@ -302,7 +323,7 @@ document.addEventListener('click', function (e) {
         if (row) {
             const { message } = messageFor(row);
             message.reaction = null;
-            rerender(row);
+            rerender();
         }
         return;
     }
@@ -348,7 +369,7 @@ document.addEventListener('click', function (e) {
     const cancelBtn = e.target.closest('.bubble-cancel');
     if (cancelBtn) {
         const row = bubbleRow(cancelBtn);
-        if (row) rerender(row);
+        if (row) rerender();
     }
 });
 

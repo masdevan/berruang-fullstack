@@ -21,6 +21,11 @@ if (userId) {
             if (currentChatName === e.sender_username) {
                 clearUnread(e.sender_username);
                 pushMessage({ id: e.id, from: 'other', text: e.body, time: e.time, type: e.type || 'text', file: e.file || null }, true);
+                fetch('/messages/read', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content },
+                    body: JSON.stringify({ with: e.sender_username })
+                }).catch(function () {});
             } else {
                 ensureConversationItem(e);
                 updateConversationPreview(e.sender_username, filePreviewLabel({ type: e.type, text: e.body }));
@@ -126,7 +131,9 @@ function syncStatuses(usernames, fallback) {
         .then(function (r) { return r.json(); })
         .then(function (map) {
             usernames.forEach(function (u) {
-                setStatus(u, map[u] || fallback || 'offline');
+                const item = document.querySelector('[data-username="' + u + '"]');
+                const known = item && item.dataset.status;
+                setStatus(u, map[u] || (known && known !== 'offline' ? known : fallback) || 'offline');
             });
         })
         .catch(function () {});

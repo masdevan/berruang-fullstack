@@ -1,5 +1,6 @@
 <?php
 
+use App\Events\MessageRead;
 use App\Events\MessageSent;
 use App\Models\Message;
 use App\Models\User;
@@ -88,6 +89,44 @@ test('sending broadcasts MessageSent to the receiver channel', function () {
     });
 });
 
+test('MessageSent broadcast payload includes file dimensions', function () {
+    [$user, $other] = contactPair();
+
+    $png = base64_decode('iVBORw0KGgoAAAANSUhEUgAAAAQAAAAECAIAAAAmkwkpAAAAFElEQVR4nGP8z8AARMAgYGRk+AcAHwEC/xL2XccAAAAASUVORK5CYII=');
+
+    $this->actingAs($user)->post('/messages', [
+        'to' => $other->username,
+        'body' => 'foto',
+        'file' => UploadedFile::fake()->createWithContent('foto.png', $png),
+    ])->assertOk();
+
+    $message = Message::first();
+
+    $payload = (new MessageSent($message))->broadcastWith();
+
+    expect($payload['type'])->toBe('image');
+    expect($payload['file']['width'])->toBe(4);
+    expect($payload['file']['height'])->toBe(4);
+    expect($payload['sender_username'])->toBe($user->username);
+});
+
+test('MessageRead broadcast targets the sender channel with int ids and reader username', function () {
+    [$user, $other] = contactPair();
+
+    $this->actingAs($user)->post('/messages', ['to' => $other->username, 'body' => 'halo']);
+
+    $this->actingAs($other)->get('/messages/thread?with='.$user->username)->assertOk();
+
+    $message = Message::first();
+
+    $event = new MessageRead($user, $other, [$message->id]);
+
+    expect($event->broadcastOn()[0]->name)->toBe('private-App.Models.User.'.$user->id);
+    expect($event->broadcastWith()['message_ids'])->toBe([$message->id]);
+    expect($event->broadcastWith()['reader_username'])->toBe($other->username);
+    expect($event->broadcastWith()['read_at'])->not->toBeNull();
+});
+
 test('receiver who never saved the sender still gets the thread with real name and unsaved flag', function () {
     $user = User::factory()->create(['first_name' => 'Rizky', 'last_name' => 'Ramadhan']);
     $other = User::factory()->create();
@@ -127,6 +166,52 @@ test('fetching the thread marks received messages as read', function () {
     $this->actingAs($user)->get('/messages/thread?with='.$other->username)->assertOk();
 
     expect(Message::where('receiver_id', $user->id)->whereNull('read_at')->count())->toBe(0);
+});
+
+test('marking a read via the read endpoint sets read_at and broadcasts', function () {
+    [$user, $other] = contactPair();
+    Event::fake([MessageRead::class]);
+
+    $this->actingAs($user)->post('/messages', ['to' => $other->username, 'body' => 'halo']);
+
+    $this->actingAs($other)->post('/messages/read', ['with' => $user->username])
+        ->assertOk();
+
+    expect(Message::where('receiver_id', $other->id)->whereNull('read_at')->count())->toBe(0);
+    Event::assertDispatched(MessageRead::class, fn (MessageRead $e) => $e->reader->is($other));
+});
+
+test('read endpoint is a no-op without unread messages', function () {
+    [$user, $other] = contactPair();
+    Event::fake([MessageRead::class]);
+
+    $this->actingAs($other)->post('/messages/read', ['with' => $user->username])
+        ->assertOk();
+
+    Event::assertNotDispatched(MessageRead::class);
+});
+
+test('sender thread shows read_at once the message was read', function () {
+    [$user, $other] = contactPair();
+
+    $this->actingAs($user)->post('/messages', ['to' => $other->username, 'body' => 'halo']);
+
+    $this->actingAs($other)->get('/messages/thread?with='.$user->username)->assertOk();
+
+    $this->actingAs($user)->get('/messages/thread?with='.$other->username)
+        ->assertOk()
+        ->assertJsonPath('messages.0.read_at', fn ($value) => $value !== null);
+});
+
+test('opening a thread broadcasts MessageRead to the sender channel', function () {
+    [$user, $other] = contactPair();
+    Event::fake([MessageRead::class]);
+
+    $this->actingAs($user)->post('/messages', ['to' => $other->username, 'body' => 'halo']);
+
+    $this->actingAs($other)->get('/messages/thread?with='.$user->username)->assertOk();
+
+    Event::assertDispatched(MessageRead::class);
 });
 
 test('sidebar shows last message, time and unread badge per contact', function () {

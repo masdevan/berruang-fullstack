@@ -31,6 +31,7 @@ Route::middleware(['auth', 'verified', 'onboarded'])->group(function () {
     Route::patch('/contacts/{id}', [ContactController::class, 'updateNames'])->name('contacts.update-names');
     Route::get('/messages/thread', [MessageController::class, 'index'])->name('messages.index');
     Route::post('/messages', [MessageController::class, 'store'])->name('messages.store');
+    Route::post('/messages/read', [MessageController::class, 'markRead'])->name('messages.read');
 
     Route::get('/presence-status', [StatusController::class, 'index'])->name('presence-status.index');
     Route::post('/presence-status', [StatusController::class, 'store'])->name('presence-status.store');

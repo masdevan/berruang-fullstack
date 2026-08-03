@@ -93,4 +93,63 @@ class ChatTest extends TestCase
         $this->assertSame('pesan-70', $data[0]['body']);
         $this->assertSame('pesan-119', $data[49]['body']);
     }
+
+    public function test_conversation_preview_renders_read_check_when_last_message_was_sent_and_read(): void
+    {
+        $me = User::factory()->create();
+        $alice = User::factory()->create(['name' => 'Alice']);
+        $me->contacts()->attach($alice->id);
+        $alice->contacts()->attach($me->id);
+
+        Message::create([
+            'sender_id' => $me->id,
+            'receiver_id' => $alice->id,
+            'body' => 'terkirim dan dibaca',
+            'read_at' => now(),
+        ]);
+
+        $html = $this->actingAs($me)->get('/messages')->getContent();
+
+        $this->assertStringContainsString('data-preview-owner="me"', $html);
+        $this->assertStringContainsString('conversation-check', $html);
+        $this->assertStringContainsString('text-[#E091A9]', $html);
+    }
+
+    public function test_conversation_preview_has_no_check_when_last_message_came_from_them(): void
+    {
+        $me = User::factory()->create();
+        $alice = User::factory()->create(['name' => 'Alice']);
+        $me->contacts()->attach($alice->id);
+
+        Message::create([
+            'sender_id' => $alice->id,
+            'receiver_id' => $me->id,
+            'body' => 'pesan dari alice',
+        ]);
+
+        $html = $this->actingAs($me)->get('/messages')->getContent();
+
+        $this->assertStringContainsString('data-preview-owner="other"', $html);
+        $this->assertStringNotContainsString('conversation-check', $html);
+    }
+
+    public function test_conversation_preview_shows_draft_label_over_last_message(): void
+    {
+        $me = User::factory()->create();
+        $alice = User::factory()->create(['name' => 'Alice']);
+        $me->contacts()->attach($alice->id);
+
+        Message::create([
+            'sender_id' => $alice->id,
+            'receiver_id' => $me->id,
+            'body' => 'pesan lama',
+        ]);
+
+        session(['chat_draft:'.$alice->username => 'draft aktif']);
+
+        $html = $this->actingAs($me)->get('/messages')->getContent();
+
+        $this->assertStringContainsString('Draft: draft aktif', $html);
+        $this->assertStringNotContainsString('conversation-last text-[11px] truncate text-[#E091A9]/80">pesan lama', $html);
+    }
 }
