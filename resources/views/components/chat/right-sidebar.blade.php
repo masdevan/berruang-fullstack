@@ -4,6 +4,18 @@
         <p class="text-[11px] text-white/20">Pick a conversation</p>
         <p class="text-[10px] text-white/10 leading-relaxed">Profile, shared media<br>and files will appear here</p>
     </div>
+    <div id="rightbar-view" class="hidden absolute inset-0 z-20 bg-[#0F0F0F] flex-col">
+        <div class="flex items-center gap-2 px-4 py-3 border-b border-white/6 bg-[#0A0A0A] shrink-0">
+            <button type="button" onclick="closeSharedView()" class="w-7 h-7 flex items-center justify-center text-white/30 hover:text-white/60 transition-colors cursor-pointer shrink-0" title="Back">
+                <x-icons.chevron-left class="w-4 h-4" />
+            </button>
+            <p id="rightbar-view-title" class="text-xs font-medium leading-none truncate"></p>
+            <button type="button" onclick="closeSharedView()" class="w-7 h-7 flex items-center justify-center text-white/30 hover:text-white/60 transition-colors cursor-pointer shrink-0 ml-auto" title="Close">
+                <x-icons.x class="w-4 h-4" />
+            </button>
+        </div>
+        <div id="rightbar-view-list" class="flex-1 overflow-y-auto p-3"></div>
+    </div>
     <div class="flex-1 overflow-hidden flex flex-col">
         <div id="rightbar-profile" class="p-4 text-center border-b border-white/6">
             <div class="relative w-12 h-12 mx-auto">
@@ -27,21 +39,27 @@
         </div>
 
         <div class="p-3 border-b border-white/6">
-            <x-chat.section-label title="Shared Media" info="Images and videos shared in this conversation." />
-            <div class="empty-state flex flex-col items-center justify-center gap-2 py-8 text-center">
+            <x-chat.section-label title="Shared Media" info="Images and videos shared in this conversation.">
+                <button type="button" id="shared-media-viewall" onclick="openSharedView('media')" class="hidden text-[9px] font-medium text-[#E091A9] hover:text-[#E8A8BC] transition-colors cursor-pointer">View all</button>
+            </x-chat.section-label>
+            <div id="shared-media-empty" class="empty-state flex flex-col items-center justify-center gap-2 py-8 text-center">
                 <x-icons.ghost class="w-8 h-8 text-white/15" />
                 <p class="text-[11px] text-white/20">No shared media yet</p>
                 <p class="text-[10px] text-white/10">Photos and videos will appear here</p>
             </div>
+            <div id="shared-media-list" class="hidden grid grid-cols-3 gap-1.5 pt-2"></div>
         </div>
 
-        <div class="px-3 pt-3 pb-0 flex-1 overflow-hidden flex flex-col min-h-0">
-            <x-chat.section-label title="Shared Files" info="Documents and files shared in this conversation." />
-            <div class="empty-state flex flex-col items-center justify-center gap-2 py-8 text-center flex-1">
+        <div class="px-3 pt-3 pb-2 flex-1 overflow-hidden flex flex-col min-h-0">
+            <x-chat.section-label title="Shared Files" info="All files shared in this conversation.">
+                <button type="button" id="shared-files-viewall" onclick="openSharedView('files')" class="hidden text-[9px] font-medium text-[#E091A9] hover:text-[#E8A8BC] transition-colors cursor-pointer">View all</button>
+            </x-chat.section-label>
+            <div id="shared-files-empty" class="empty-state flex flex-col items-center justify-center gap-2 py-8 text-center flex-1">
                 <x-icons.ghost class="w-8 h-8 text-white/15" />
                 <p class="text-[11px] text-white/20">No shared files yet</p>
-                <p class="text-[10px] text-white/10">Documents will appear here</p>
+                <p class="text-[10px] text-white/10">All attachments will appear here</p>
             </div>
+            <div id="shared-files-list" class="hidden flex-1 overflow-y-auto pt-2 space-y-1.5"></div>
         </div>
     </div>
 </div>

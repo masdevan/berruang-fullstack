@@ -1,5 +1,6 @@
 import { BUBBLE_ME, BUBBLE_OTHER, BUBBLE_MEDIA_ME, BUBBLE_MEDIA_OTHER } from './constants.js';
 import { applyDraftPreview } from './draft.js';
+import { resetSharedMedia, addSharedMedia } from './shared-media.js';
 
 export const EMOJIS = ['👍', '❤️', '😂', '😮', '😢'];
 
@@ -15,6 +16,7 @@ export function setCurrentChat(name) {
 
 export function clearMessages(chatName) {
     if (localMessages[chatName]) localMessages[chatName] = [];
+    resetSharedMedia(chatName);
 }
 
 export function messageHtml(msg, chatName, index) {
@@ -93,6 +95,7 @@ export function updateLocalFileUrl(username, id, url) {
         if (msgs[i].from === 'me' && msgs[i].file && msgs[i].file.url.startsWith('blob:') && !msgs[i].id) {
             msgs[i].file.url = url;
             msgs[i].id = id;
+            addSharedMedia(msgs[i], username);
             break;
         }
     }
@@ -105,6 +108,7 @@ export function pushMessage(msg, animate = false) {
     if (!localMessages[currentChatName]) localMessages[currentChatName] = [];
     const messages = localMessages[currentChatName];
     messages.push(msg);
+    addSharedMedia(msg, currentChatName);
     container.insertAdjacentHTML('beforeend', messageHtml(msg, currentChatName, messages.length - 1));
     if (animate) {
         container.lastElementChild.animate(
