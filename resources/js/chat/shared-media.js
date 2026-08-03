@@ -1,5 +1,6 @@
 const sharedByChat = {};
 let activeUsername = null;
+let currentViewKind = null;
 
 const MEDIA_LIMIT = 5;
 const FILES_LIMIT = 15;
@@ -15,15 +16,20 @@ export function resetSharedMedia(username) {
 }
 
 export function addSharedMedia(msg, username) {
-    if (!msg || !msg.file || !msg.id || !['image', 'video', 'document'].includes(msg.type)) return;
+    if (!msg || !msg.file || !['image', 'video', 'document'].includes(msg.type)) return;
     const list = sharedByChat[username];
     if (!list) return;
-    if (msg.type !== 'document' && !list.media.some(m => m.id === msg.id)) list.media.push(msg);
-    if (!list.files.some(m => m.id === msg.id)) list.files.push(msg);
+    const isDup = function (bucket) {
+        return bucket.some(function (m) {
+            return (msg.id && m.id === msg.id) || (m.file && m.file.url === msg.file.url);
+        });
+    };
+    if (msg.type !== 'document' && !isDup(list.media)) list.media.unshift(msg);
+    if (!isDup(list.files)) list.files.unshift(msg);
     renderSharedMedia();
 }
 
-function renderSharedMedia() {
+export function renderSharedMedia() {
     const list = sharedByChat[activeUsername];
     const mediaList = document.getElementById('shared-media-list');
     const filesList = document.getElementById('shared-files-list');
@@ -51,6 +57,8 @@ function renderSharedMedia() {
     const filesViewBtn = document.getElementById('shared-files-viewall');
     if (mediaViewBtn) mediaViewBtn.classList.toggle('hidden', mediaAll.length === 0);
     if (filesViewBtn) filesViewBtn.classList.toggle('hidden', filesAll.length === 0);
+
+    if (currentViewKind) renderView(currentViewKind);
 }
 
 function toggleEmpty(id, count) {
@@ -80,11 +88,10 @@ function fileItemHtml(m) {
     </div>`;
 }
 
-window.openSharedView = function (kind) {
-    const view = document.getElementById('rightbar-view');
+function renderView(kind) {
     const title = document.getElementById('rightbar-view-title');
     const container = document.getElementById('rightbar-view-list');
-    if (!view || !title || !container) return;
+    if (!title || !container) return;
     const list = sharedByChat[activeUsername] || { media: [], files: [] };
     if (kind === 'media') {
         title.textContent = 'Shared Media';
@@ -93,6 +100,13 @@ window.openSharedView = function (kind) {
         title.textContent = 'Shared Files';
         container.innerHTML = '<div class="space-y-1.5">' + list.files.map(fileItemHtml).join('') + '</div>';
     }
+}
+
+window.openSharedView = function (kind) {
+    const view = document.getElementById('rightbar-view');
+    if (!view) return;
+    currentViewKind = kind;
+    renderView(kind);
     view.classList.remove('hidden');
     view.classList.add('flex');
     view.animate(
@@ -104,6 +118,7 @@ window.openSharedView = function (kind) {
 window.closeSharedView = function () {
     const view = document.getElementById('rightbar-view');
     if (!view || view.classList.contains('hidden')) return;
+    currentViewKind = null;
     view.animate(
         [{ transform: 'translateX(0)' }, { transform: 'translateX(100%)' }],
         { duration: 150, easing: 'ease-in' }

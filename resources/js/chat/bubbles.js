@@ -1,6 +1,6 @@
 import { BUBBLE_ME, BUBBLE_OTHER, BUBBLE_MEDIA_ME, BUBBLE_MEDIA_OTHER } from './constants.js';
 import { applyDraftPreview } from './draft.js';
-import { resetSharedMedia, addSharedMedia } from './shared-media.js';
+import { resetSharedMedia, addSharedMedia, renderSharedMedia } from './shared-media.js';
 
 export const EMOJIS = ['👍', '❤️', '😂', '😮', '😢'];
 
@@ -30,6 +30,7 @@ function bubbleInnerHtml(msg, chatName, index) {
     const isMe = msg.from === 'me';
     const isText = !msg.type || msg.type === 'text';
     const isMedia = (msg.type === 'image' || msg.type === 'video') && msg.file;
+    const hasCaption = isMedia && msg.text && msg.text !== msg.file.name;
     const truncated = isText && msg.text.length > 1000;
     const text = truncated ? msg.text.slice(0, 1000) + '…' : msg.text;
     const bubbleClass = isMedia
@@ -49,7 +50,7 @@ function bubbleInnerHtml(msg, chatName, index) {
             ${actions}
             ${mediaHtml(msg, isText)}
             ${truncated ? `<button type="button" class="bubble-expand cursor-pointer mt-1 text-[10px] text-[#E091A9] hover:text-[#E8A8BC] transition-colors">Lihat selengkapnya</button>` : ''}
-            <p class="text-[9px] text-white/25 text-right ${isMedia ? 'px-3 pt-1' : ''} mt-0.5">${msg.time}</p>
+            <p class="text-[9px] text-white/25 text-right ${isMedia ? 'px-3 pb-1.5' + (hasCaption ? '' : ' mt-2') : ''}">${msg.time}</p>
             ${reaction}
         </div>`;
 }
@@ -61,7 +62,7 @@ function mediaHtml(msg, isText) {
     const caption = msg.text && msg.text !== msg.file.name
         ? `<p class="bubble-text text-xs text-white/85 leading-relaxed wrap-break-word">${escapeHtml(msg.text)}</p>`
         : '';
-    const captionBlock = caption ? `<div class="px-3 pt-1.5">${caption}</div>` : '';
+    const captionBlock = caption ? `<div class="px-3 pt-1">${caption}</div>` : '';
     if (msg.type === 'image' && msg.file) {
         return `<img src="${msg.file.url}" alt="${escapeHtml(msg.file.name)}" title="Click to view" class="bubble-file block w-full max-h-72 object-cover cursor-pointer">${captionBlock}`;
     }
@@ -95,7 +96,7 @@ export function updateLocalFileUrl(username, id, url) {
         if (msgs[i].from === 'me' && msgs[i].file && msgs[i].file.url.startsWith('blob:') && !msgs[i].id) {
             msgs[i].file.url = url;
             msgs[i].id = id;
-            addSharedMedia(msgs[i], username);
+            renderSharedMedia();
             break;
         }
     }

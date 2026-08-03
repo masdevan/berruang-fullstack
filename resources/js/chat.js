@@ -59,13 +59,14 @@ document.addEventListener('DOMContentLoaded', function () {
         if (pendingByChat[currentChatName] && pendingByChat[currentChatName].length) {
             clearTimeout(typingTimer);
             reportTyping(false);
-            pendingByChat[currentChatName].slice().forEach(function (item) {
-                sendFile(item);
+            pendingByChat[currentChatName].slice().forEach(function (item, i) {
+                sendFile(item, i === 0 ? text : null);
             });
             pendingByChat[currentChatName] = [];
             renderAttachPreview();
             persistChat(currentChatName);
             persistPendingLabel(currentChatName);
+            saveDraft(currentChatName, '');
             input.value = '';
             input.style.height = 'auto';
             return;
@@ -324,14 +325,15 @@ function removeAttach(id) {
     }
 }
 
-function sendFile(item) {
+function sendFile(item, caption) {
     if (!currentChatName || item.sent) return;
     item.sent = true;
     const localUrl = URL.createObjectURL(item.file);
-    pushMessage({ id: null, from: 'me', text: item.file.name, time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }), type: item.kind, file: { url: localUrl, name: item.file.name } }, true);
+    pushMessage({ id: null, from: 'me', text: caption || item.file.name, time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }), type: item.kind, file: { url: localUrl, name: item.file.name } }, true);
 
     const form = new FormData();
     form.append('to', currentChatName);
+    if (caption) form.append('body', caption);
     form.append('file', item.file);
 
     fetch('/messages', {
