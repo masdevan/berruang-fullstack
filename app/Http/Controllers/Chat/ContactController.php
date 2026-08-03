@@ -49,6 +49,8 @@ class ContactController extends Controller
                 'last' => $last ? self::previewLabel($last) : '',
                 'time' => $last ? $last->created_at->format('H:i') : '',
                 'unread' => (int) ($unread[$contact->id] ?? 0),
+                'sent' => $last ? $last->sender_id === $user->id : false,
+                'read' => $last ? (bool) $last->read_at : false,
             ];
         }
 

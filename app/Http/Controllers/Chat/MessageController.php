@@ -23,6 +23,27 @@ class MessageController extends Controller
         'text/csv',
     ];
 
+    private static function svgDimensions(string $path): ?array
+    {
+        $svg = @file_get_contents($path);
+        if ($svg === false) {
+            return null;
+        }
+
+        preg_match('/<svg[^>]*?width\s*=\s*["\']([\d.]+)["\']/', $svg, $w);
+        preg_match('/<svg[^>]*?height\s*=\s*["\']([\d.]+)["\']/', $svg, $h);
+
+        if (isset($w[1], $h[1])) {
+            return ['width' => (int) $w[1], 'height' => (int) $h[1]];
+        }
+
+        if (preg_match('/viewBox\s*=\s*["\']\s*[\d.]+\s+[\d.]+\s+([\d.]+)\s+([\d.]+)\s*["\']/', $svg, $vb)) {
+            return ['width' => (int) $vb[1], 'height' => (int) $vb[2]];
+        }
+
+        return null;
+    }
+
     public function index(Request $request): JsonResponse
     {
         $request->validate(['with' => ['required', 'string']]);
@@ -77,7 +98,7 @@ class MessageController extends Controller
                     'type' => $m->type,
                     'read_at' => $m->read_at,
                     'file' => $m->file_path
-                        ? ['url' => $m->fileUrl(), 'name' => $m->fileName()]
+                        ? ['url' => $m->fileUrl(), 'name' => $m->fileName(), 'width' => $m->width, 'height' => $m->height]
                         : null,
                 ];
 
@@ -122,6 +143,16 @@ class MessageController extends Controller
             }
         }
 
+        $dimensions = null;
+        if ($request->hasFile('file') && $type === 'image') {
+            $size = @getimagesize($file->getRealPath());
+            if (is_array($size)) {
+                $dimensions = ['width' => $size[0], 'height' => $size[1]];
+            } elseif ($mime === 'image/svg+xml') {
+                $dimensions = self::svgDimensions($file->getRealPath());
+            }
+        }
+
         $message = Message::create([
             'sender_id' => $user->id,
             'receiver_id' => $receiver->id,
@@ -130,6 +161,7 @@ class MessageController extends Controller
             'file_path' => $request->hasFile('file')
                 ? $file->storeAs('uploads', ($type === 'document' ? uniqid().'-' : '').$file->getClientOriginalName(), 'public')
                 : null,
+            ...($dimensions ?? []),
         ]);
 
         if (! $receiver->contacts()->where('contact_user_id', $user->id)->exists()) {
@@ -143,7 +175,7 @@ class MessageController extends Controller
             'time' => $message->created_at->format('H:i'),
             'type' => $message->type,
             'file' => $message->file_path
-                ? ['url' => $message->fileUrl(), 'name' => $message->fileName()]
+                ? ['url' => $message->fileUrl(), 'name' => $message->fileName(), 'width' => $message->width, 'height' => $message->height]
                 : null,
         ]);
     }

@@ -1,4 +1,9 @@
-@props(['name', 'avatar', 'hasAvatar' => false, 'custom' => false, 'lastMessage' => '', 'time' => '', 'unread' => 0, 'online' => false, 'active' => false, 'about' => '', 'realName' => '', 'username' => '', 'customName' => '', 'userId' => '', 'draft' => ''])
+@props(['name', 'avatar', 'hasAvatar' => false, 'custom' => false, 'lastMessage' => '', 'time' => '', 'unread' => 0, 'online' => false, 'active' => false, 'about' => '', 'realName' => '', 'username' => '', 'customName' => '', 'userId' => '', 'draft' => '', 'lastSent' => false, 'lastRead' => false])
+
+@php
+    $checkSent = '<svg viewBox="0 0 12 8" fill="none" stroke="currentColor" stroke-width="1.8" class="w-2.5 h-2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M1 4.5L4.5 8L11 1"/></svg>';
+    $checkDone = '<svg viewBox="0 0 18 10" fill="none" stroke="currentColor" stroke-width="1.6" class="w-3 h-2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M1 5.5L4.5 9L11.5 1.5"/><path stroke-linecap="round" stroke-linejoin="round" d="M7 5.8L10 9L17 1.5"/></svg>';
+@endphp
 
 <div data-conversation="{{ strtolower($name) }} {{ strtolower($lastMessage) }}" data-last-message="{{ $lastMessage }}" data-user-id="{{ $userId }}" data-name="{{ $name }}" data-avatar="{{ $avatar }}" data-has-avatar="{{ $hasAvatar ? '1' : '0' }}" data-status="{{ $online ? 'online' : 'offline' }}" data-about="{{ $about }}" data-real-name="{{ $realName }}" data-username="{{ $username }}" data-custom-name="{{ $customName }}" onclick="openConversation(this.dataset.name, this.dataset.avatar, this.dataset.status, this.dataset.about, this.dataset.customName, this.dataset.realName, this.dataset.username, this.dataset.hasAvatar === '1')" class="flex items-center gap-2.5 px-3 py-2.5 cursor-pointer transition-all duration-150 hover:bg-white/5 {{ $active ? 'bg-white/5' : '' }}">
     <div class="relative shrink-0">
@@ -23,7 +28,12 @@
             <p class="text-[10px] text-white/30 shrink-0 ml-2">{{ $time }}</p>
         </div>
         <div class="flex items-center justify-between mt-0.5">
-            <p class="conversation-last text-[11px] truncate {{ $draft ? 'text-[#E091A9]/80' : 'text-white/35' }}">{{ $draft ? 'Draft: '.$draft : $lastMessage }}</p>
+            <div class="flex items-center gap-1 min-w-0 flex-1">
+                @if ($lastSent)
+                    <span class="conversation-check shrink-0 {{ $lastRead ? 'text-[#E091A9]' : 'text-white/35' }}" data-check="{{ $lastRead ? 'read' : 'sent' }}">{!! $lastRead ? $checkDone : $checkSent !!}</span>
+                @endif
+                <p class="conversation-last text-[11px] truncate {{ $draft ? 'text-[#E091A9]/80' : 'text-white/35' }}">{{ $draft ? 'Draft: '.$draft : $lastMessage }}</p>
+            </div>
             @if ($unread)
                 <span class="unread-badge shrink-0 ml-2 min-w-3.75 h-3.75 rounded-full bg-[#E091A9] text-[#0A0A0A] text-[7px] font-semibold flex items-center justify-center px-1 leading-none">{{ $unread }}</span>
             @endif

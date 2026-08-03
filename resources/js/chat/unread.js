@@ -64,7 +64,9 @@ export function ensureConversationItem(msg) {
                     <p class="text-[10px] text-white/30 shrink-0 ml-2">${msg.time}</p>
                 </div>
                 <div class="flex items-center justify-between mt-0.5">
-                    <p class="conversation-last text-[11px] text-white/35 truncate"></p>
+                    <div class="flex items-center gap-1 min-w-0 flex-1">
+                        <p class="conversation-last text-[11px] text-white/35 truncate"></p>
+                    </div>
                 </div>
             </div>
         </div>`;

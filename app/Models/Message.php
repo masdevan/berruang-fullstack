@@ -13,6 +13,13 @@ class Message extends Model
         'body',
         'type',
         'file_path',
+        'width',
+        'height',
+    ];
+
+    protected $casts = [
+        'width' => 'integer',
+        'height' => 'integer',
     ];
 
     public const TYPES = ['text', 'image', 'video', 'document'];

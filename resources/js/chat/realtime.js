@@ -1,6 +1,6 @@
 import Echo from 'laravel-echo';
 import Pusher from 'pusher-js';
-import { pushMessage, currentChatName, updateConversationPreview, filePreviewLabel, markMessagesRead } from './bubbles.js';
+import { pushMessage, currentChatName, updateConversationPreview, filePreviewLabel, markMessagesRead, markPreviewRead } from './bubbles.js';
 import { bumpUnread, clearUnread, ensureConversationItem } from './unread.js';
 
 window.Pusher = Pusher;
@@ -34,6 +34,7 @@ if (userId) {
             if (currentChatName === e.reader_username) {
                 markMessagesRead(e.message_ids);
             }
+            markPreviewRead(e.reader_username);
         });
 }
 

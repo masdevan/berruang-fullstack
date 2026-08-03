@@ -7,5 +7,5 @@ export const TAB_INACTIVE = 'text-white/40 border-transparent';
 export const BUBBLE_ME = 'max-w-[70%] bg-[#E091A9]/10 rounded-sm px-3 py-1.5';
 export const BUBBLE_OTHER = 'max-w-[70%] bg-white/5 rounded-sm px-3 py-1.5';
 
-export const BUBBLE_MEDIA_ME = 'max-w-[70%] bg-[#E091A9]/10 rounded-b-sm';
-export const BUBBLE_MEDIA_OTHER = 'max-w-[70%] bg-white/5 rounded-b-sm';
+export const BUBBLE_MEDIA_ME = 'max-w-[min(360px,70%)] bg-[#E091A9]/10 rounded-b-sm';
+export const BUBBLE_MEDIA_OTHER = 'max-w-[min(360px,70%)] bg-white/5 rounded-b-sm';

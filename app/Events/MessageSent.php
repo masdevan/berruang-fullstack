@@ -32,7 +32,12 @@ class MessageSent implements ShouldBroadcast
             'from' => 'other',
             'type' => $this->message->type,
             'file' => $this->message->file_path
-                ? ['url' => $this->message->fileUrl(), 'name' => $this->message->fileName()]
+                ? [
+                    'url' => $this->message->fileUrl(),
+                    'name' => $this->message->fileName(),
+                    'width' => $this->message->width,
+                    'height' => $this->message->height,
+                ]
                 : null,
             'sender_user_id' => $sender->id,
             'sender_username' => $sender->username,

@@ -12,6 +12,14 @@ export let currentChatName = null;
 
 const localMessages = {};
 
+document.addEventListener('load', function (e) {
+    const el = e.target;
+    if (el.tagName === 'IMG' && el.classList.contains('bubble-file') && !el.getAttribute('width') && el.naturalWidth) {
+        el.setAttribute('width', el.naturalWidth);
+        el.setAttribute('height', el.naturalHeight);
+    }
+}, true);
+
 export function setCurrentChat(name) {
     currentChatName = name;
 }
@@ -74,11 +82,13 @@ function mediaHtml(msg, isText) {
         ? `<p class="bubble-text text-xs text-white/85 leading-relaxed wrap-break-word">${escapeHtml(msg.text)}</p>`
         : '';
     const captionBlock = caption ? `<div class="px-3 pt-1">${caption}</div>` : '';
+    const dims = msg.file.width && msg.file.height;
+    const sizeAttrs = dims ? `width="${msg.file.width}" height="${msg.file.height}"` : '';
     if (msg.type === 'image' && msg.file) {
-        return `<img src="${msg.file.url}" alt="${escapeHtml(msg.file.name)}" title="Click to view" class="bubble-file block w-full max-h-72 object-cover cursor-pointer">${captionBlock}`;
+        return `<img src="${msg.file.url}" alt="${escapeHtml(msg.file.name)}" title="Click to view" ${sizeAttrs} class="bubble-file block w-full h-auto cursor-pointer">${captionBlock}`;
     }
     if (msg.type === 'video' && msg.file) {
-        return `<video src="${msg.file.url}" controls class="block w-full max-h-72 bg-black"></video>${captionBlock}`;
+        return `<video src="${msg.file.url}" controls ${sizeAttrs} class="block w-full h-auto bg-black"></video>${captionBlock}`;
     }
     if (msg.type === 'document' && msg.file) {
         return `
@@ -139,7 +149,7 @@ export function pushMessage(msg, animate = false) {
         );
     }
     container.scrollTop = container.scrollHeight;
-    updateConversationPreview(currentChatName, filePreviewLabel(msg));
+    updateConversationPreview(currentChatName, filePreviewLabel(msg), msg.from === 'me' ? msg.status : null);
 }
 
 export function markMessagesRead(messageIds) {
@@ -160,14 +170,39 @@ export function markMessagesRead(messageIds) {
     });
 }
 
-export function updateConversationPreview(username, text) {
+export function updateConversationPreview(username, text, status) {
     const item = document.querySelector('[data-username="' + username + '"]');
     const preview = item && item.querySelector('.conversation-last');
     if (preview) {
         preview.textContent = text;
         delete preview.dataset.draftOriginal;
     }
+    updatePreviewCheck(item, status);
     applyDraftPreview(username);
+}
+
+function updatePreviewCheck(item, status) {
+    if (!item) return;
+    const preview = item.querySelector('.conversation-last');
+    let check = item.querySelector('.conversation-check');
+    if (!status) {
+        if (check) check.remove();
+        return;
+    }
+    if (!check && preview) {
+        check = document.createElement('span');
+        check.className = 'conversation-check shrink-0 text-white/35';
+        preview.parentElement.insertBefore(check, preview);
+    }
+    if (!check) return;
+    check.dataset.check = status;
+    check.classList.toggle('text-[#E091A9]', status === 'read');
+    check.classList.toggle('text-white/35', status !== 'read');
+    check.innerHTML = status === 'read' || status === 'delivered' ? CHECK_DONE_SVG : CHECK_SENT_SVG;
+}
+
+export function markPreviewRead(username) {
+    updatePreviewCheck(document.querySelector('[data-username="' + username + '"]'), 'read');
 }
 
 function bubbleRow(target) {

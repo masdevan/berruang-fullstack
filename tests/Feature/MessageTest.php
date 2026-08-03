@@ -4,6 +4,7 @@ use App\Events\MessageSent;
 use App\Models\Message;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Event;
 
 uses(RefreshDatabase::class);
@@ -138,4 +139,34 @@ test('sidebar shows last message, time and unread badge per contact', function (
         ->assertSee('pesan kedua', false)
         ->assertSee('unread-badge', false)
         ->assertSee('>1</span>', false);
+});
+
+test('uploaded image stores its dimensions in the response', function () {
+    [$user, $other] = contactPair();
+
+    $png = base64_decode('iVBORw0KGgoAAAANSUhEUgAAAAQAAAAECAIAAAAmkwkpAAAAFElEQVR4nGP8z8AARMAgYGRk+AcAHwEC/xL2XccAAAAASUVORK5CYII=');
+
+    $this->actingAs($user)->post('/messages', [
+        'to' => $other->username,
+        'body' => 'foto',
+        'file' => UploadedFile::fake()->createWithContent('foto.png', $png),
+    ])->assertOk()
+        ->assertJsonPath('type', 'image')
+        ->assertJsonPath('file.width', 4)
+        ->assertJsonPath('file.height', 4);
+});
+
+test('uploaded svg stores its dimensions from width height or viewBox', function () {
+    [$user, $other] = contactPair();
+
+    $svg = '<svg xmlns="http://www.w3.org/2000/svg" width="640" height="480"><rect width="100%" height="100%"/></svg>';
+
+    $this->actingAs($user)->post('/messages', [
+        'to' => $other->username,
+        'body' => 'vektor',
+        'file' => UploadedFile::fake()->createWithContent('gambar.svg', $svg),
+    ])->assertOk()
+        ->assertJsonPath('type', 'image')
+        ->assertJsonPath('file.width', 640)
+        ->assertJsonPath('file.height', 480);
 });

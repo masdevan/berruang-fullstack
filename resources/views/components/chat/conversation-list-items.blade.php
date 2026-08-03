@@ -15,6 +15,8 @@
         :last-message="$itemMeta['last'] ?? ($user->bio ?: '@'.$user->username)"
         :time="$itemMeta['time'] ?? ''"
         :unread="$itemMeta['unread'] ?? 0"
+        :last-sent="$itemMeta['sent'] ?? false"
+        :last-read="$itemMeta['read'] ?? false"
         :about="$user->bio"
         :real-name="$user->name"
         :draft="$drafts[$user->username] ?? ''"
