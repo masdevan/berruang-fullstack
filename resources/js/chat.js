@@ -269,6 +269,7 @@ window.renderAttachPreview = function () {
         return;
     }
     bar.classList.remove('hidden');
+    bar.classList.add('flex');
     bar.innerHTML = '';
     items.forEach(function (item) {        const el = document.createElement('div');
         el.dataset.attachId = item.id;

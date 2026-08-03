@@ -1,5 +1,5 @@
 <div class="px-3 pt-1.5 pb-2.5 bg-[#0A0A0A]">
-    <div id="attach-preview-bar" class="hidden flex gap-1.5 overflow-x-hidden pt-1.5 pr-2 pb-1.5 select-none"></div>
+    <div id="attach-preview-bar" class="hidden gap-1.5 overflow-x-hidden pt-1.5 pr-2 pb-1.5 select-none"></div>
     <form class="flex items-end gap-1 bg-white/3 rounded-2xl px-1.5 py-1 focus-within:bg-white/5 transition-all" id="chat-form">
         <div class="relative shrink-0">
             <button type="button" onclick="toggleAttachMenu(event)" class="w-8 h-8 rounded-full flex items-center justify-center text-white/40 hover:text-white/70 transition-colors cursor-pointer" title="Attach">
