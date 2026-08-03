@@ -2,6 +2,8 @@ import './auth.js';
 import './chat-layout.js';
 import { appendMessage, currentChatName, pushMessage, updateLocalFileUrl } from './chat/bubbles.js';
 import { saveDraft, applyDraftPreview, sendDraftSync } from './chat/draft.js';
+import VIDEO_SVG from './icons/video.js';
+import DOC_SVG_LG from './icons/doc-lg.js';
 
 import.meta.glob(['../images/**']);
 
@@ -278,9 +280,7 @@ window.renderAttachPreview = function () {
         if (item.kind === 'image') {
             el.innerHTML = '<img src="' + item.url + '" class="w-full h-full object-cover rounded-lg">';
         } else {
-            const icon = item.kind === 'video'
-                ? '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" class="w-4 h-4"><path stroke-linecap="round" stroke-linejoin="round" d="M5.25 5.653c0-.856.917-1.398 1.667-.986l11.54 6.347a1.125 1.125 0 010 1.972l-11.54 6.347a1.125 1.125 0 01-1.667-.986V5.653z"/></svg>'
-                : '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" class="w-4 h-4"><path stroke-linecap="round" stroke-linejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m2.25 0H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z"/></svg>';
+            const icon = item.kind === 'video' ? VIDEO_SVG : DOC_SVG_LG;
             el.innerHTML = '<div class="w-full h-full flex flex-col items-center justify-center gap-0.5 text-white/60 px-1">' + icon + '<span class="text-[8px] text-white/40 truncate max-w-full">' + item.file.name + '</span></div>';
         }
         el.addEventListener('click', function () {

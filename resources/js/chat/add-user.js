@@ -1,5 +1,8 @@
 import { openModal } from './modal.js';
 import { currentChatName } from './bubbles.js';
+import SPINNER_SVG from '../icons/spinner.js';
+import CHECK_SVG from '../icons/check.js';
+import X_SVG from '../icons/x.js';
 
 let addUserPending = false;
 let addUserNamesPending = false;
@@ -50,10 +53,6 @@ function setTopLoader(active) {
     }
 }
 
-const STATUS_SPINNER = '<svg class="w-3.5 h-3.5 animate-spin" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path></svg>';
-const STATUS_CHECK = '<svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.5 12.75l6 6 9-13.5"/></svg>';
-const STATUS_X = '<svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>';
-
 function setAddUserStatus(html, className) {
     const status = document.getElementById('add-user-status');
     status.innerHTML = html;
@@ -71,7 +70,7 @@ function checkUsernameLive() {
         return;
     }
 
-    setAddUserStatus(STATUS_SPINNER, 'text-white/25');
+    setAddUserStatus(SPINNER_SVG, 'text-white/25');
     status.classList.remove('hidden');
 
     checkTimer = setTimeout(function () {
@@ -79,7 +78,7 @@ function checkUsernameLive() {
             .then(function (response) { return response.json(); })
             .then(function (data) {
                 if (document.getElementById('add-user-input').value.trim() !== username) return;
-                setAddUserStatus(data.taken ? STATUS_CHECK : STATUS_X, data.taken ? 'text-green-400' : 'text-red-400');
+                setAddUserStatus(data.taken ? CHECK_SVG : X_SVG, data.taken ? 'text-green-400' : 'text-red-400');
             })
             .catch(function () { status.classList.add('hidden'); });
     }, 300);

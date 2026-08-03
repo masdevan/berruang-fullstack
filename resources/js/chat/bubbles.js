@@ -1,12 +1,12 @@
 import { BUBBLE_ME, BUBBLE_OTHER, BUBBLE_MEDIA_ME, BUBBLE_MEDIA_OTHER } from './constants.js';
 import { applyDraftPreview } from './draft.js';
 import { resetSharedMedia, addSharedMedia, renderSharedMedia } from './shared-media.js';
+import PENCIL_SVG from '../icons/pencil.js';
+import CHECK_SENT_SVG from '../icons/check-sent.js';
+import CHECK_DONE_SVG from '../icons/check-done.js';
+import DOC_SVG from '../icons/doc.js';
 
 export const EMOJIS = ['👍', '❤️', '😂', '😮', '😢'];
-
-const PENCIL_SVG = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" class="w-3 h-3"><path stroke-linecap="round" stroke-linejoin="round" d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L10.582 16.07a4.5 4.5 0 01-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 011.13-1.897l8.932-8.931zm0 0L19.5 7.125"/></svg>';
-const CHECK_SENT_SVG = '<svg viewBox="0 0 12 8" fill="none" stroke="currentColor" stroke-width="1.8" class="w-2.5 h-2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M1 4.5L4.5 8L11 1"/></svg>';
-const CHECK_DONE_SVG = '<svg viewBox="0 0 18 10" fill="none" stroke="currentColor" stroke-width="1.6" class="w-3 h-2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M1 5.5L4.5 9L11.5 1.5"/><path stroke-linecap="round" stroke-linejoin="round" d="M7 5.8L10 9L17 1.5"/></svg>';
 
 export let currentChatName = null;
 
@@ -84,7 +84,7 @@ function mediaHtml(msg, isText) {
         return `
             <a href="${msg.file.url}" target="_blank" class="flex items-center gap-2 rounded-lg bg-white/5 hover:bg-white/10 transition-colors px-2.5 py-2 mb-1">
                 <div class="w-7 h-7 rounded bg-white/10 flex items-center justify-center text-white/50 shrink-0">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" class="w-3.5 h-3.5"><path stroke-linecap="round" stroke-linejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m2.25 0H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z"/></svg>
+                    ${DOC_SVG}
                 </div>
                 <span class="text-[10px] text-white/70 truncate max-w-36">${escapeHtml(msg.file.name)}</span>
             </a>${caption}`;
