@@ -6,44 +6,25 @@ use App\Http\Controllers\Auth\RegisterController;
 use App\Http\Controllers\Auth\ResetPasswordController;
 use App\Http\Controllers\Auth\SetupProfileController;
 use App\Http\Controllers\Auth\VerifyEmailController;
+use App\Http\Controllers\Chat\ChatController;
 use App\Http\Controllers\Chat\ContactController;
 use App\Http\Controllers\Chat\DraftController;
 use App\Http\Controllers\Chat\MessageController;
 use App\Http\Controllers\Chat\StatusController;
 use App\Http\Controllers\Chat\TypingController;
+use App\Http\Controllers\HomeController;
 use App\Http\Controllers\Profile\AccountController;
 use App\Http\Controllers\Profile\PasswordController;
-use App\Models\User;
 use Illuminate\Support\Facades\Route;
 
-Route::get('check-username/{username}', function ($username) {
-    return response()->json(['taken' => User::where('username', $username)->exists()]);
-});
+Route::get('/', [HomeController::class, 'index']);
 
-Route::get('/', function () {
-    if (auth()->check()) {
-        return redirect('/messages');
-    }
-
-    return view('auth.login');
-});
+Route::get('check-username/{username}', [ContactController::class, 'checkUsername']);
 
 Route::middleware(['auth', 'verified', 'onboarded'])->group(function () {
-    Route::get('/messages', function () {
-        $users = auth()->user()->contacts()->orderBy('first_name')->limit(20)->get();
+    Route::get('/messages', [ChatController::class, 'index'])->name('chat');
 
-        return view('chat.index', [
-            'users' => $users,
-            'meta' => ContactController::conversationMeta(auth()->user(), $users),
-            'drafts' => ContactController::drafts(),
-        ]);
-    })->name('chat');
-
-    Route::get('/profile', function () {
-        return view('profile.index', [
-            'users' => auth()->user()->contacts()->orderBy('first_name')->limit(20)->get(),
-        ]);
-    })->name('profile');
+    Route::get('/profile', [AccountController::class, 'index'])->name('profile');
 
     Route::get('/contacts', [ContactController::class, 'index'])->name('contacts.index');
     Route::post('/contacts', [ContactController::class, 'store'])->name('contacts.store');
@@ -79,9 +60,7 @@ Route::middleware('guest')->group(function () {
     Route::get('register', [RegisterController::class, 'create'])->name('register');
     Route::post('register', [RegisterController::class, 'store']);
 
-    Route::get('auth/google', function () {
-        return redirect('/login');
-    })->name('auth.google');
+    Route::redirect('auth/google', '/login')->name('auth.google');
 });
 
 Route::post('forgot-password', [ForgotPasswordController::class, 'sendCode'])->name('password.email');

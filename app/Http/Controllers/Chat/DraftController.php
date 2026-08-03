@@ -3,23 +3,22 @@
 namespace App\Http\Controllers\Chat;
 
 use App\Http\Controllers\Controller;
+use App\Services\ChatService;
 use Illuminate\Http\Request;
 
 class DraftController extends Controller
 {
+    public function __construct(private readonly ChatService $chat) {}
+
     public function store(Request $request)
     {
         $to = $request->query('to');
-        if (!$to) {
+
+        if (! $to) {
             return response()->noContent();
         }
 
-        $text = $request->query('text');
-        if ($text !== null && $text !== '') {
-            session()->put('chat_draft:' . $to, $text);
-        } else {
-            session()->forget('chat_draft:' . $to);
-        }
+        $this->chat->saveDraft($to, $request->query('text'));
 
         return response()->noContent();
     }

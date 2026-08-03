@@ -3,8 +3,8 @@
 namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
+use App\Services\AuthService;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Auth;
 
 class LoginController extends Controller
 {
@@ -20,32 +20,28 @@ class LoginController extends Controller
             'password' => ['required'],
         ]);
 
-        if (Auth::attempt($credentials, $request->boolean('remember'))) {
-            $request->session()->regenerate();
+        $target = app(AuthService::class)->attemptLogin($credentials, $request->boolean('remember'));
 
-            if (! $request->user()->hasVerifiedEmail()) {
-                $request->user()->sendEmailVerificationNotification();
-
-                return redirect()->route('verification.notice');
-            }
-
-            if (! $request->user()->onboarded_at) {
-                return redirect()->route('setup-profile');
-            }
-
-            return redirect()->intended('/messages');
+        if ($target === false) {
+            return back()->withErrors([
+                'email' => 'The provided credentials do not match our records.',
+            ])->onlyInput('email');
         }
 
-        return back()->withErrors([
-            'email' => 'The provided credentials do not match our records.',
-        ])->onlyInput('email');
+        if ($target === 'verification.notice') {
+            return redirect()->route('verification.notice');
+        }
+
+        if ($target === 'setup-profile') {
+            return redirect()->route('setup-profile');
+        }
+
+        return redirect()->intended('/messages');
     }
 
     public function destroy(Request $request)
     {
-        Auth::logout();
-        $request->session()->invalidate();
-        $request->session()->regenerateToken();
+        app(AuthService::class)->logout($request);
 
         return redirect('/');
     }

@@ -2,166 +2,28 @@
 
 namespace App\Http\Controllers\Chat;
 
-use App\Events\MessageRead;
-use App\Events\MessageSent;
 use App\Http\Controllers\Controller;
 use App\Models\Message;
-use App\Models\User;
+use App\Services\ChatService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
 
 class MessageController extends Controller
 {
-    private const HISTORY_LIMIT = 50;
-
-    private const DOCUMENT_MIMES = [
-        'application/pdf', 'text/plain', 'application/zip',
-        'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
-        'application/vnd.ms-excel', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-        'application/vnd.ms-powerpoint', 'application/vnd.openxmlformats-officedocument.presentationml.presentation',
-        'text/csv',
-    ];
-
-    private static function optimizeImage(string $path, string $mime): ?array
-    {
-        $size = @getimagesize($path);
-        if (is_array($size)) {
-            [$w, $h] = $size;
-            $max = 1280;
-            if ($w > $max || $h > $max) {
-                $src = match ($mime) {
-                    'image/jpeg' => @imagecreatefromjpeg($path),
-                    'image/png' => @imagecreatefrompng($path),
-                    'image/webp' => @imagecreatefromwebp($path),
-                    default => null,
-                };
-                if ($src) {
-                    $scale = $max / max($w, $h);
-                    $nw = (int) round($w * $scale);
-                    $nh = (int) round($h * $scale);
-                    $dst = imagecreatetruecolor($nw, $nh);
-                    if ($mime === 'image/png' || $mime === 'image/webp') {
-                        imagealphablending($dst, false);
-                        imagesavealpha($dst, true);
-                    }
-                    imagecopyresampled($dst, $src, 0, 0, 0, 0, $nw, $nh, $w, $h);
-                    if ($mime === 'image/jpeg') {
-                        imageinterlace($dst, 1);
-                    }
-                    $tmp = $path.'.opt';
-                    $ok = match ($mime) {
-                        'image/jpeg' => imagejpeg($dst, $tmp, 80),
-                        'image/png' => imagepng($dst, $tmp, 8),
-                        'image/webp' => imagewebp($dst, $tmp, 80),
-                        default => false,
-                    };
-                    imagedestroy($src);
-                    imagedestroy($dst);
-                    if ($ok) {
-                        @rename($tmp, $path);
-                        $w = $nw;
-                        $h = $nh;
-                    }
-                }
-            }
-
-            return ['width' => $w, 'height' => $h];
-        }
-
-        if ($mime === 'image/svg+xml') {
-            return self::svgDimensions($path);
-        }
-
-        return null;
-    }
-
-    private static function svgDimensions(string $path): ?array
-    {
-        $svg = @file_get_contents($path);
-        if ($svg === false) {
-            return null;
-        }
-
-        preg_match('/<svg[^>]*?width\s*=\s*["\']([\d.]+)["\']/', $svg, $w);
-        preg_match('/<svg[^>]*?height\s*=\s*["\']([\d.]+)["\']/', $svg, $h);
-
-        if (isset($w[1], $h[1])) {
-            return ['width' => (int) $w[1], 'height' => (int) $h[1]];
-        }
-
-        if (preg_match('/viewBox\s*=\s*["\']\s*[\d.]+\s+[\d.]+\s+([\d.]+)\s+([\d.]+)\s*["\']/', $svg, $vb)) {
-            return ['width' => (int) $vb[1], 'height' => (int) $vb[2]];
-        }
-
-        return null;
-    }
+    public function __construct(private readonly ChatService $chat) {}
 
     public function index(Request $request): JsonResponse
     {
         $request->validate(['with' => ['required', 'string']]);
 
-        $user = $request->user();
-        $other = User::where('username', $request->with)->first();
+        $messages = $this->chat->thread($request->user(), $request->with, (int) $request->input('after'));
 
-        $isContact = $other && $user->contacts()->where('contact_user_id', $other->id)->exists();
-        $hasThread = $other && Message::where(function ($q) use ($user, $other) {
-            $q->where('sender_id', $user->id)->where('receiver_id', $other->id)
-                ->orWhere(function ($q2) use ($user, $other) {
-                    $q2->where('sender_id', $other->id)->where('receiver_id', $user->id);
-                });
-        })->exists();
-
-        if (! $isContact && ! $hasThread) {
+        if ($messages === null) {
             return response()->json(['message' => 'Contact not found.'], 422);
         }
 
-        $query = Message::with('sender')->where(function ($q) use ($user, $other) {
-            $q->where('sender_id', $user->id)->where('receiver_id', $other->id)
-                ->orWhere(function ($q2) use ($user, $other) {
-                    $q2->where('sender_id', $other->id)->where('receiver_id', $user->id);
-                });
-        });
-
-        $unreadIds = Message::where('sender_id', $other->id)
-            ->where('receiver_id', $user->id)
-            ->whereNull('read_at')
-            ->pluck('id');
-
-        if ($unreadIds->isNotEmpty()) {
-            Message::whereIn('id', $unreadIds)->update(['read_at' => now()]);
-            broadcast(new MessageRead($other, $user, $unreadIds->all()));
-        }
-
-        if ($after = (int) $request->input('after')) {
-            $messages = $query->where('id', '>', $after)->orderBy('id')->get();
-        } else {
-            $messages = $query->orderByDesc('id')->limit(self::HISTORY_LIMIT)->get()->reverse()->values();
-        }
-
-        $contactNames = [];
-
-        return response()->json([
-            'messages' => $messages->map(function (Message $m) use ($user) {
-                $data = [
-                    'id' => $m->id,
-                    'body' => $m->body,
-                    'time' => $m->created_at->format('H:i'),
-                    'from' => $m->sender_id === $user->id ? 'me' : 'other',
-                    'type' => $m->type,
-                    'read_at' => $m->read_at,
-                    'file' => $m->file_path
-                        ? ['url' => $m->fileUrl(), 'name' => $m->fileName(), 'width' => $m->width, 'height' => $m->height]
-                        : null,
-                ];
-
-                if ($data['from'] === 'other') {
-                    $data += $m->senderDisplayFor($user);
-                }
-
-                return $data;
-            }),
-        ]);
+        return response()->json(['messages' => $messages]);
     }
 
     public function store(Request $request): JsonResponse
@@ -173,58 +35,18 @@ class MessageController extends Controller
             'file' => ['nullable', 'file', 'max:20480'],
         ]);
 
-        $user = $request->user();
-        $receiver = User::where('username', $request->to)->first();
+        $result = $this->chat->store(
+            $request->user(),
+            $request->to,
+            $request->body,
+            $request->file('file'),
+            $request->type,
+        );
 
-        if (! $receiver || ! $user->contacts()->where('contact_user_id', $receiver->id)->exists()) {
-            return response()->json(['message' => 'Contact not found.'], 422);
+        if (! $result['ok']) {
+            return response()->json(['message' => $result['error']], 422);
         }
 
-        $type = $request->type ?: ($request->hasFile('file') ? 'document' : 'text');
-
-        if ($request->hasFile('file')) {
-            $file = $request->file('file');
-            $mime = $file->getMimeType();
-            $type = str_starts_with($mime, 'image/') ? 'image' : (str_starts_with($mime, 'video/') ? 'video' : 'document');
-
-            if (! in_array($mime, array_merge(
-                ['image/jpeg', 'image/png', 'image/gif', 'image/webp', 'image/svg+xml'],
-                ['video/mp4', 'video/webm', 'video/ogg', 'video/quicktime'],
-                self::DOCUMENT_MIMES
-            ))) {
-                return response()->json(['message' => 'File type not allowed.'], 422);
-            }
-        }
-
-        $dimensions = null;
-        if ($request->hasFile('file') && $type === 'image') {
-            $dimensions = self::optimizeImage($file->getRealPath(), $mime);
-        }
-
-        $message = Message::create([
-            'sender_id' => $user->id,
-            'receiver_id' => $receiver->id,
-            'body' => $request->body ?: ($request->hasFile('file') ? $file->getClientOriginalName() : ''),
-            'type' => $type,
-            'file_path' => $request->hasFile('file')
-                ? $file->storeAs('uploads', ($type === 'document' ? uniqid().'-' : '').$file->getClientOriginalName(), 'public')
-                : null,
-            ...($dimensions ?? []),
-        ]);
-
-        if (! $receiver->contacts()->where('contact_user_id', $user->id)->exists()) {
-            $receiver->contacts()->attach($user->id);
-        }
-
-        broadcast(new MessageSent($message));
-
-        return response()->json([
-            'id' => $message->id,
-            'time' => $message->created_at->format('H:i'),
-            'type' => $message->type,
-            'file' => $message->file_path
-                ? ['url' => $message->fileUrl(), 'name' => $message->fileName(), 'width' => $message->width, 'height' => $message->height]
-                : null,
-        ]);
+        return response()->json($this->chat->storedPayload($result['message']));
     }
 }

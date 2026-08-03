@@ -3,68 +3,20 @@
 namespace App\Http\Controllers\Chat;
 
 use App\Http\Controllers\Controller;
-use App\Models\Message;
 use App\Models\User;
-use Illuminate\Database\QueryException;
+use App\Services\ChatService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Collection;
 
 class ContactController extends Controller
 {
     private const PER_PAGE = 20;
 
-    public static function drafts(): array
+    public function __construct(private readonly ChatService $chat) {}
+
+    public function checkUsername(string $username): JsonResponse
     {
-        return collect(session()->all())
-            ->filter(fn ($value, $key) => str_starts_with($key, 'chat_draft:'))
-            ->mapWithKeys(fn ($value, $key) => [str_replace('chat_draft:', '', $key) => $value])
-            ->all();
-    }
-
-    public static function conversationMeta(User $user, Collection $contacts): array
-    {
-        $ids = $contacts->pluck('id');
-
-        $lastMessages = Message::where(function ($q) use ($user, $ids) {
-            $q->where('sender_id', $user->id)->whereIn('receiver_id', $ids)
-                ->orWhere(function ($q2) use ($user, $ids) {
-                    $q2->whereIn('sender_id', $ids)->where('receiver_id', $user->id);
-                });
-        })->orderByDesc('id')->limit(500)->get()->groupBy(function (Message $m) use ($user) {
-            return $m->sender_id === $user->id ? $m->receiver_id : $m->sender_id;
-        });
-
-        $unread = Message::where('receiver_id', $user->id)
-            ->whereIn('sender_id', $ids)
-            ->whereNull('read_at')
-            ->selectRaw('sender_id, count(*) as total')
-            ->groupBy('sender_id')
-            ->pluck('total', 'sender_id');
-
-        $meta = [];
-        foreach ($contacts as $contact) {
-            $last = $lastMessages->get($contact->id)?->first();
-            $meta[$contact->id] = [
-                'last' => $last ? self::previewLabel($last) : '',
-                'time' => $last ? $last->created_at->format('H:i') : '',
-                'unread' => (int) ($unread[$contact->id] ?? 0),
-                'sent' => $last ? $last->sender_id === $user->id : false,
-                'read' => $last ? (bool) $last->read_at : false,
-            ];
-        }
-
-        return $meta;
-    }
-
-    private static function previewLabel(Message $m): string
-    {
-        return match ($m->type) {
-            'image' => 'Photo',
-            'video' => 'Video',
-            'document' => 'Document',
-            default => $m->body,
-        };
+        return response()->json(['taken' => User::where('username', $username)->exists()]);
     }
 
     public function index(Request $request): JsonResponse
@@ -75,8 +27,8 @@ class ContactController extends Controller
 
         $html = view('components.chat.conversation-list-items', [
             'users' => $contacts->items(),
-            'meta' => self::conversationMeta($request->user(), $contacts->getCollection()),
-            'drafts' => self::drafts(),
+            'meta' => $this->chat->conversationMeta($request->user(), $contacts->getCollection()),
+            'drafts' => $this->chat->drafts(),
         ])->render();
 
         return response()->json([
@@ -88,62 +40,39 @@ class ContactController extends Controller
 
     public function store(Request $request): JsonResponse
     {
-        $username = trim((string) $request->input('username'));
+        $result = $this->chat->addContact($request->user(), trim((string) $request->input('username')));
 
-        $target = $username !== ''
-            ? User::where('username', $username)->first()
-            : null;
-
-        if (! $target) {
-            return response()->json(['message' => 'User not found.'], 422);
-        }
-
-        if ($target->is($request->user())) {
-            return response()->json(['message' => 'You cannot add yourself.'], 422);
-        }
-
-        if ($request->user()->contacts()->where('contact_user_id', $target->id)->exists()) {
-            return response()->json(['message' => 'This user is already in your contacts.'], 422);
-        }
-
-        try {
-            $request->user()->contacts()->attach($target->id);
-        } catch (QueryException) {
-            return response()->json(['message' => 'This user is already in your contacts.'], 422);
+        if (! $result['ok']) {
+            return response()->json(['message' => $result['error']], 422);
         }
 
         $html = view('components.chat.conversation-list-items', [
-            'users' => collect([$target]),
-            'meta' => self::conversationMeta($request->user(), collect([$target])),
+            'users' => collect([$result['target']]),
+            'meta' => $this->chat->conversationMeta($request->user(), collect([$result['target']])),
         ])->render();
 
         return response()->json([
-            'id' => $target->id,
+            'id' => $result['target']->id,
             'html' => $html,
         ]);
     }
 
     public function updateNames(Request $request, int $id): JsonResponse
     {
-        $first = trim((string) $request->input('first_name'));
-        $last = trim((string) $request->input('last_name'));
+        $result = $this->chat->updateContactNames(
+            $request->user(),
+            $id,
+            trim((string) $request->input('first_name')),
+            trim((string) $request->input('last_name')),
+        );
 
-        $contact = $request->user()->contacts()
-            ->where('contact_user_id', $id)
-            ->first();
-
-        if (! $contact) {
+        if (! $result['ok']) {
             return response()->json(['message' => 'Contact not found.'], 404);
         }
 
-        $contact->pivot->update([
-            'first_name' => $first !== '' ? $first : null,
-            'last_name' => $last !== '' ? $last : null,
-        ]);
-
         $html = view('components.chat.conversation-list-items', [
-            'users' => collect([$contact]),
-            'meta' => self::conversationMeta($request->user(), collect([$contact])),
+            'users' => collect([$result['contact']]),
+            'meta' => $this->chat->conversationMeta($request->user(), collect([$result['contact']])),
         ])->render();
 
         return response()->json(['html' => $html]);

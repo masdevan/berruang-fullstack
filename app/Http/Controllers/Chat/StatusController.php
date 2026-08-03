@@ -2,45 +2,27 @@
 
 namespace App\Http\Controllers\Chat;
 
-use App\Events\UserStatusChanged;
 use App\Http\Controllers\Controller;
-use App\Models\User;
+use App\Services\ChatService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Cache;
 
 class StatusController extends Controller
 {
+    public function __construct(private readonly ChatService $chat) {}
+
     public function index(Request $request): JsonResponse
     {
-        $usernames = collect(explode(',', (string) $request->query('users')))->filter();
+        $usernames = collect(explode(',', (string) $request->query('users')))->filter()->values()->all();
 
-        if ($usernames->isEmpty()) {
-            return response()->json([]);
-        }
-
-        $ids = User::whereIn('username', $usernames)->pluck('id', 'username');
-
-        $statuses = [];
-        foreach ($ids as $username => $id) {
-            $status = Cache::get("presence.status.{$id}");
-            if ($status) {
-                $statuses[$username] = $status;
-            }
-        }
-
-        return response()->json($statuses);
+        return response()->json($this->chat->presenceStatuses($usernames));
     }
 
     public function store(Request $request): JsonResponse
     {
         $data = $request->validate(['status' => 'required|in:online,idle']);
 
-        $user = $request->user();
-
-        Cache::put("presence.status.{$user->id}", $data['status'], now()->addMinutes(2));
-
-        broadcast(new UserStatusChanged($user->username, $data['status']));
+        $this->chat->setPresence($request->user(), $data['status']);
 
         return response()->json(['ok' => true]);
     }

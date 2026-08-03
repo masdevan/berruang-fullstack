@@ -3,11 +3,8 @@
 namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
-use App\Models\User;
-use App\Services\EmailCodeService;
+use App\Services\PasswordResetService;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Hash;
-use Illuminate\Support\Str;
 
 class ResetPasswordController extends Controller
 {
@@ -28,18 +25,10 @@ class ResetPasswordController extends Controller
             'code.*' => ['required', 'string', 'size:1', 'digits:1'],
         ]);
 
-        $result = app(EmailCodeService::class)->attemptVerify(
-            $request->email,
-            EmailCodeService::PURPOSE_RESET_PASSWORD,
-            $request->input('code'),
-        );
+        $error = app(PasswordResetService::class)->verifyCode($request->email, $request->input('code'));
 
-        if ($result !== EmailCodeService::STATUS_SUCCESS) {
-            $message = $result === EmailCodeService::STATUS_THROTTLED
-                ? 'Too many attempts. Please wait a minute and try again.'
-                : 'Invalid or expired code. Please try again.';
-
-            return back()->withErrors(['code' => $message]);
+        if ($error) {
+            return back()->withErrors(['code' => $error]);
         }
 
         $request->session()->put('reset_email', $request->email);
@@ -60,14 +49,7 @@ class ResetPasswordController extends Controller
             return redirect()->route('password.request');
         }
 
-        $user = User::where('email', $email)->firstOrFail();
-
-        $user->forceFill([
-            'password' => Hash::make($request->password),
-        ])->save();
-
-        $user->setRememberToken(Str::random(60));
-        $user->save();
+        app(PasswordResetService::class)->resetPassword($email, $request->password);
 
         $request->session()->forget(['reset_email', 'reset_code_verified']);
 

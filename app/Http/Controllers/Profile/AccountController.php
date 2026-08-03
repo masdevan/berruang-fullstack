@@ -3,13 +3,20 @@
 namespace App\Http\Controllers\Profile;
 
 use App\Http\Controllers\Controller;
+use App\Services\ProfileService;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\Rule;
 
 class AccountController extends Controller
 {
-    private const USERNAME_CHANGE_INTERVAL_DAYS = 7;
+    public function __construct(private readonly ProfileService $profile) {}
+
+    public function index()
+    {
+        return view('profile.index', [
+            'users' => auth()->user()->contacts()->orderBy('first_name')->limit(20)->get(),
+        ]);
+    }
 
     public function update(Request $request)
     {
@@ -22,36 +29,11 @@ class AccountController extends Controller
             'avatar' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:2048'],
         ]);
 
-        $usernameChanged = $request->username !== $user->username;
+        $error = $this->profile->updateAccount($user, $request->only(['name', 'username', 'bio']), $request->file('avatar'));
 
-        if ($usernameChanged) {
-            $lastChange = $user->username_changed_at;
-
-            if ($lastChange && $lastChange->gt(now()->subDays(self::USERNAME_CHANGE_INTERVAL_DAYS))) {
-                $daysLeft = (int) ceil(now()->diffInDays($lastChange->copy()->addDays(self::USERNAME_CHANGE_INTERVAL_DAYS), false));
-
-                return back()->withErrors([
-                    'username' => 'Username can only be changed once every '.self::USERNAME_CHANGE_INTERVAL_DAYS." days. You can change it again in {$daysLeft} day(s).",
-                ])->withInput();
-            }
+        if ($error) {
+            return back()->withErrors(['username' => $error])->withInput();
         }
-
-        $data = [
-            'name' => $request->name,
-            'username' => $request->username,
-            'bio' => $request->bio,
-            'username_changed_at' => $usernameChanged ? now() : $user->username_changed_at,
-        ];
-
-        if ($request->hasFile('avatar')) {
-            if ($user->avatar) {
-                Storage::disk('public')->delete($user->avatar);
-            }
-
-            $data['avatar'] = $request->file('avatar')->store('avatars', 'public');
-        }
-
-        $user->update($data);
 
         return back()->with('account_status', 'Account details have been updated.');
     }

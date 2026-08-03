@@ -2,14 +2,15 @@
 
 namespace App\Http\Controllers\Chat;
 
-use App\Events\TypingEvent;
 use App\Http\Controllers\Controller;
-use App\Models\User;
+use App\Services\ChatService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
 class TypingController extends Controller
 {
+    public function __construct(private readonly ChatService $chat) {}
+
     public function store(Request $request): JsonResponse
     {
         $request->validate([
@@ -17,20 +18,9 @@ class TypingController extends Controller
             'typing' => ['required', 'boolean'],
         ]);
 
-        $receiver = User::where('username', $request->to)->first();
-
-        if (! $receiver) {
+        if (! $this->chat->broadcastTyping($request->user(), $request->to, (bool) $request->typing)) {
             return response()->json(['message' => 'User not found.'], 422);
         }
-
-        $user = $request->user();
-
-        broadcast(new TypingEvent(
-            $receiver->id,
-            $user->username,
-            $user->name,
-            (bool) $request->typing,
-        ));
 
         return response()->json(['ok' => true]);
     }

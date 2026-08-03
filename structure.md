@@ -25,12 +25,14 @@ berruang/
 ├── vite.config.ts
 ├── app/
 │   ├── Events/
+│   │   ├── MessageRead.php
 │   │   ├── MessageSent.php
 │   │   ├── TypingEvent.php
 │   │   └── UserStatusChanged.php
 │   ├── Http/
 │   │   ├── Controllers/
 │   │   │   ├── Controller.php
+│   │   │   ├── HomeController.php
 │   │   │   ├── Auth/
 │   │   │   │   ├── ForgotPasswordController.php
 │   │   │   │   ├── LoginController.php
@@ -39,6 +41,7 @@ berruang/
 │   │   │   │   ├── SetupProfileController.php
 │   │   │   │   └── VerifyEmailController.php
 │   │   │   ├── Chat/
+│   │   │   │   ├── ChatController.php
 │   │   │   │   ├── ContactController.php
 │   │   │   │   ├── DraftController.php
 │   │   │   │   ├── MessageController.php
@@ -59,7 +62,11 @@ berruang/
 │   ├── Providers/
 │   │   └── AppServiceProvider.php
 │   └── Services/
-│       └── EmailCodeService.php
+│       ├── AuthService.php
+│       ├── ChatService.php
+│       ├── EmailCodeService.php
+│       ├── PasswordResetService.php
+│       └── ProfileService.php
 ├── bootstrap/
 │   ├── app.php
 │   └── providers.php
@@ -96,7 +103,9 @@ berruang/
 │   │   ├── 2026_08_01_000007_create_messages_table.php
 │   │   ├── 2026_08_02_000001_add_read_at_to_messages_table.php
 │   │   ├── 2026_08_02_000002_add_indexes_to_messages_table.php
-│   │   └── 2026_08_03_000001_add_type_and_file_to_messages_table.php
+│   │   ├── 2026_08_03_000001_add_type_and_file_to_messages_table.php
+│   │   ├── 2026_08_03_000002_add_dimensions_to_messages_table.php
+│   │   └── 2026_08_03_000003_backfill_message_dimensions.php
 │   └── seeders/
 │       └── DatabaseSeeder.php
 ├── public/
@@ -127,6 +136,18 @@ berruang/
 │   │   ├── register.js
 │   │   ├── setup-profile.js
 │   │   ├── verify-email.js
+│   │   ├── icons/
+│   │   │   ├── check-done.js
+│   │   │   ├── check-sent.js
+│   │   │   ├── check.js
+│   │   │   ├── doc-lg.js
+│   │   │   ├── doc.js
+│   │   │   ├── download.js
+│   │   │   ├── pencil.js
+│   │   │   ├── play.js
+│   │   │   ├── spinner.js
+│   │   │   ├── video.js
+│   │   │   └── x.js
 │   │   └── chat/
 │   │       ├── add-user.js
 │   │       ├── bubbles.js
@@ -138,6 +159,7 @@ berruang/
 │   │       ├── realtime.js
 │   │       ├── search.js
 │   │       ├── section-info.js
+│   │       ├── shared-media.js
 │   │       ├── sidebar.js
 │   │       └── unread.js
 │   └── views/
