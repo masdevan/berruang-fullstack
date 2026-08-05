@@ -44,6 +44,17 @@ class WorkspaceController extends Controller
         ]);
     }
 
+    public function members(Request $request, string $code): JsonResponse
+    {
+        $result = $this->workspaces->members($request->user(), $code);
+
+        if (! $result['ok']) {
+            return response()->json(['message' => 'Workspace not found.'], 404);
+        }
+
+        return response()->json($result['members']);
+    }
+
     private function listHtml($user): string
     {
         return view('components.chat.workspace-list', [

@@ -20,7 +20,7 @@ class WorkspaceService
             'owner_id' => $owner->id,
         ]);
 
-        $workspace->members()->attach($owner->id);
+        $workspace->members()->attach($owner->id, ['role' => 'owner']);
 
         return $workspace;
     }
@@ -37,9 +37,36 @@ class WorkspaceService
             return ['ok' => false, 'error' => 'You are already a member of this workspace.'];
         }
 
-        $workspace->members()->attach($user->id);
+        $workspace->members()->attach($user->id, ['role' => 'user']);
 
         return ['ok' => true, 'workspace' => $workspace];
+    }
+
+    public function members(User $viewer, string $code): array
+    {
+        $workspace = Workspace::where('code', strtoupper(trim($code)))->first();
+
+        if (! $workspace || ! $workspace->members()->where('user_id', $viewer->id)->exists()) {
+            return ['ok' => false];
+        }
+
+        $rank = ['owner' => 0, 'admin' => 1, 'user' => 2];
+
+        $members = $workspace->members()
+            ->get()
+            ->sortBy(fn (User $u) => [$rank[$u->pivot->role] ?? 3, mb_strtolower($u->name)])
+            ->values()
+            ->map(fn (User $u) => [
+                'id' => $u->id,
+                'name' => $u->name,
+                'username' => $u->username,
+                'avatar' => $u->avatar ? $u->avatarUrl(36) : $u->initials(),
+                'has_avatar' => (bool) $u->avatar,
+                'role' => $u->pivot->role,
+            ])
+            ->all();
+
+        return ['ok' => true, 'members' => $members];
     }
 
     public function list(User $user): Collection

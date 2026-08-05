@@ -98,4 +98,59 @@ class WorkspaceTest extends TestCase
         expect($html)->not->toContain('Punya Orang');
         expect($html)->not->toContain($theirs->code);
     }
+
+    public function test_creator_is_owner_and_joiners_are_users(): void
+    {
+        $owner = User::factory()->create();
+        $joiner = User::factory()->create();
+        $workspace = app(WorkspaceService::class)->create($owner, 'Tim Dev');
+
+        expect($workspace->members()->where('user_id', $owner->id)->first()->pivot->role)->toBe('owner');
+
+        app(WorkspaceService::class)->join($joiner, $workspace->code);
+
+        expect($workspace->members()->where('user_id', $joiner->id)->first()->pivot->role)->toBe('user');
+    }
+
+    public function test_members_endpoint_returns_owner_first_with_roles(): void
+    {
+        $owner = User::factory()->create(['name' => 'Budi Owner']);
+        $joiner = User::factory()->create(['name' => 'Ayu Member']);
+        $workspace = app(WorkspaceService::class)->create($owner, 'Tim Dev');
+        app(WorkspaceService::class)->join($joiner, $workspace->code);
+
+        $members = $this->actingAs($joiner)->getJson('/workspaces/'.$workspace->code.'/members')
+            ->assertOk()
+            ->json();
+
+        expect($members)->toHaveCount(2);
+        expect($members[0]['role'])->toBe('owner');
+        expect($members[0]['name'])->toBe('Budi Owner');
+        expect($members[1]['role'])->toBe('user');
+        expect($members[1]['name'])->toBe('Ayu Member');
+    }
+
+    public function test_members_endpoint_rejects_non_members(): void
+    {
+        $owner = User::factory()->create();
+        $stranger = User::factory()->create();
+        $workspace = app(\App\Services\WorkspaceService::class)->create($owner, 'Tim Dev');
+
+        $this->actingAs($stranger)->getJson('/workspaces/'.$workspace->code.'/members')
+            ->assertStatus(404);
+    }
+
+    public function test_owner_is_included_in_members_list(): void
+    {
+        $owner = User::factory()->create(['name' => 'Boss Owner']);
+        $workspace = app(\App\Services\WorkspaceService::class)->create($owner, 'Tim Dev');
+
+        $members = $this->actingAs($owner)->getJson('/workspaces/'.$workspace->code.'/members')
+            ->assertOk()
+            ->json();
+
+        expect($members)->toHaveCount(1);
+        expect($members[0]['name'])->toBe('Boss Owner');
+        expect($members[0]['role'])->toBe('owner');
+    }
 }

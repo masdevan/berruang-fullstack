@@ -38,8 +38,9 @@
                 </div>
             </div>
         </div>
-        <div id="ws-rb-members-pane" class="hidden flex-1 overflow-y-auto">
-            <div class="empty-state flex flex-col items-center justify-center min-h-full gap-2 py-10 text-center">
+        <div id="ws-rb-members-pane" class="hidden flex-1 flex-col min-h-0 relative overflow-y-auto">
+            <div id="ws-rb-members-list"></div>
+            <div id="ws-rb-members-empty" class="empty-state absolute inset-0 flex flex-col items-center justify-center gap-2 text-center">
                 <x-icons.ghost class="w-8 h-8 text-white/15" />
                 <p class="text-[11px] text-white/20">No members yet</p>
             </div>

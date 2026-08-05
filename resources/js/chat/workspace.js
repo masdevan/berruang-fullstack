@@ -73,6 +73,9 @@ window.openWorkspace = function (el, name, code) {
         wsPanel.classList.add('flex');
     }
 
+    currentWsCode = code;
+    loadWorkspaceMembers(code);
+
     const workspaceTabs = document.getElementById('workspace-tabs');
     if (workspaceTabs) {
         workspaceTabs.classList.remove('hidden');
@@ -101,7 +104,58 @@ window.switchWorkspaceRightbarTab = function (kind) {
     members.className = 'flex-1 py-2.5 text-xs font-medium cursor-pointer border-b-2 -mb-px transition-colors ' + (!isGeneral ? 'text-white border-[#E091A9]' : 'text-white/40 border-transparent');
     generalPane.classList.toggle('hidden', !isGeneral);
     membersPane.classList.toggle('hidden', isGeneral);
+    if (!isGeneral && currentWsCode) loadWorkspaceMembers(currentWsCode);
 };
+
+let currentWsCode = null;
+
+function loadWorkspaceMembers(code) {
+    fetch('/workspaces/' + encodeURIComponent(code) + '/members')
+        .then(function (response) { return response.json(); })
+        .then(function (members) { renderWorkspaceMembers(members); })
+        .catch(function () {});
+}
+
+function renderWorkspaceMembers(members) {
+    const list = document.getElementById('ws-rb-members-list');
+    const empty = document.getElementById('ws-rb-members-empty');
+    if (!list || !empty) return;
+    if (!members || !members.length) {
+        empty.classList.remove('hidden');
+        empty.classList.add('flex');
+        list.innerHTML = '';
+        return;
+    }
+    empty.classList.add('hidden');
+    empty.classList.remove('flex');
+    const ROLE_CLASS = {
+        owner: 'text-yellow-400 bg-yellow-400/10',
+        admin: 'text-red-400 bg-red-400/10',
+        user: 'text-white/40 bg-white/8',
+    };
+    list.innerHTML = members.map(function (m) {
+        const avatar = m.has_avatar
+            ? '<img src="' + m.avatar + '" alt="" class="w-9 h-9 rounded-full object-cover">'
+            : '<div class="w-9 h-9 rounded-full bg-white/8 flex items-center justify-center text-[10px] font-medium text-white/60">' + m.avatar + '</div>';
+        const roleLabel = m.role.charAt(0).toUpperCase() + m.role.slice(1);
+        return '<div class="flex items-center gap-2.5 px-3 py-2.5 rounded hover:bg-white/5">'
+            + '<div class="relative shrink-0">' + avatar + '</div>'
+            + '<div class="flex-1 min-w-0">'
+            + '<div class="flex items-center gap-1.5">'
+            + '<p class="text-xs font-medium truncate text-white/80">' + escapeHtml(m.name) + '</p>'
+            + '<span class="shrink-0 text-[9px] font-medium rounded-full px-2 py-0.5 ' + (ROLE_CLASS[m.role] || ROLE_CLASS.user) + '">' + roleLabel + '</span>'
+            + '</div>'
+            + '<p class="text-[10px] text-white/30 truncate mt-0.5">@' + escapeHtml(m.username) + '</p>'
+            + '</div>'
+            + '</div>';
+    }).join('');
+}
+
+function escapeHtml(text) {
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
+}
 
 window.submitCreateWorkspace = function () {
     const input = document.getElementById('workspace-name-input');

@@ -111,7 +111,9 @@ berruang/
 │   │   ├── 2026_08_03_000003_backfill_message_dimensions.php
 │   │   ├── 2026_08_04_000001_add_preview_paths.php
 │   │   ├── 2026_08_04_000002_backfill_preview_paths.php
-│   │   └── 2026_08_05_000001_create_workspaces_tables.php
+│   │   ├── 2026_08_05_000001_create_workspaces_tables.php
+│   │   ├── 2026_08_05_000002_add_role_to_workspace_user.php
+│   │   └── 2026_08_05_000003_backfill_workspace_owner_roles.php
 │   └── seeders/
 │       └── DatabaseSeeder.php
 ├── public/
