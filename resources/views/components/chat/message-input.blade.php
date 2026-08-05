@@ -1,4 +1,4 @@
-<div class="px-3 pt-1.5 pb-2.5 bg-[#0A0A0A]">
+<div class="px-3 pt-1.5 pb-2.5 bg-[#0A0A0A]" id="chat-input-bar">
     <div id="attach-preview-bar" class="hidden gap-1.5 overflow-x-hidden pt-1.5 pr-2 pb-1.5 select-none"></div>
     <form class="flex items-end gap-1 bg-white/3 rounded-2xl px-1.5 py-1 focus-within:bg-white/5 transition-all" id="chat-form">
         <div class="relative shrink-0">

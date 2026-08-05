@@ -149,6 +149,8 @@ window.openConversation = function (name, avatar, status, about, customName, rea
     openChat(username);
     container.innerHTML = '';
     container.scrollTop = container.scrollHeight;
+    const inputBar = document.getElementById('chat-input-bar');
+    if (inputBar) inputBar.classList.remove('hidden');
     const input = document.getElementById('message-input');
     if (input) {
         input.value = getDraft(username);

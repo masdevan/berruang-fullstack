@@ -46,7 +46,8 @@ berruang/
 │   │   │   │   ├── DraftController.php
 │   │   │   │   ├── MessageController.php
 │   │   │   │   ├── StatusController.php
-│   │   │   │   └── TypingController.php
+│   │   │   │   ├── TypingController.php
+│   │   │   │   └── WorkspaceController.php
 │   │   │   └── Profile/
 │   │   │       ├── AccountController.php
 │   │   │       └── PasswordController.php
@@ -58,7 +59,8 @@ berruang/
 │   ├── Models/
 │   │   ├── EmailCode.php
 │   │   ├── Message.php
-│   │   └── User.php
+│   │   ├── User.php
+│   │   └── Workspace.php
 │   ├── Providers/
 │   │   └── AppServiceProvider.php
 │   └── Services/
@@ -66,7 +68,8 @@ berruang/
 │       ├── ChatService.php
 │       ├── EmailCodeService.php
 │       ├── PasswordResetService.php
-│       └── ProfileService.php
+│       ├── ProfileService.php
+│       └── WorkspaceService.php
 ├── bootstrap/
 │   ├── app.php
 │   └── providers.php
@@ -107,7 +110,8 @@ berruang/
 │   │   ├── 2026_08_03_000002_add_dimensions_to_messages_table.php
 │   │   ├── 2026_08_03_000003_backfill_message_dimensions.php
 │   │   ├── 2026_08_04_000001_add_preview_paths.php
-│   │   └── 2026_08_04_000002_backfill_preview_paths.php
+│   │   ├── 2026_08_04_000002_backfill_preview_paths.php
+│   │   └── 2026_08_05_000001_create_workspaces_tables.php
 │   └── seeders/
 │       └── DatabaseSeeder.php
 ├── public/
@@ -163,7 +167,8 @@ berruang/
 │   │       ├── section-info.js
 │   │       ├── shared-media.js
 │   │       ├── sidebar.js
-│   │       └── unread.js
+│   │       ├── unread.js
+│   │       └── workspace.js
 │   └── views/
 │       ├── auth/
 │       │   ├── forgot-password.blade.php
@@ -180,14 +185,15 @@ berruang/
 │       │   │   ├── button.blade.php
 │       │   │   ├── code-input.blade.php
 │       │   │   └── input.blade.php
-│       │   ├── chat/
-│       │   │   ├── conversation-item.blade.php
-│       │   │   ├── conversation-list.blade.php
-│       │   │   ├── conversation-list-items.blade.php
-│       │   │   ├── message-area.blade.php
-│       │   │   ├── message-input.blade.php
-│       │   │   ├── right-sidebar.blade.php
-│       │   │   └── section-label.blade.php
+│   │       ├── chat/
+│   │       │   ├── conversation-item.blade.php
+│   │       │   ├── conversation-list.blade.php
+│   │       │   ├── conversation-list-items.blade.php
+│   │       │   ├── message-area.blade.php
+│   │       │   ├── message-input.blade.php
+│   │       │   ├── right-sidebar.blade.php
+│   │       │   ├── section-label.blade.php
+│   │       │   └── workspace-list.blade.php
 │       │   ├── emails/
 │       │   │   └── layout.blade.php
 │       │   ├── icons/
@@ -261,12 +267,15 @@ berruang/
     │   │   └── ResetStatusDuplicateTest.php
     │   ├── ChatTest.php
     │   ├── ContactTest.php
+    │   ├── DraftTest.php
     │   ├── ExampleTest.php
     │   ├── MessageTest.php
+    │   ├── PageTest.php
     │   ├── ProfileTest.php
     │   ├── SetupProfileTest.php
     │   ├── StatusTest.php
-    │   └── TypingTest.php
+    │   ├── TypingTest.php
+    │   └── WorkspaceTest.php
     ├── Unit/
     │   └── ExampleTest.php
     ├── Pest.php

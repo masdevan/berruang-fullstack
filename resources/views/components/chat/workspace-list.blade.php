@@ -1,6 +1,6 @@
 @props(['workspaces' => collect()])
 @foreach ($workspaces as $workspace)
-    <div class="flex items-center gap-2.5 px-3 py-2.5 cursor-pointer transition-all duration-150 hover:bg-white/5">
+    <div data-workspace="{{ $workspace->code }}" onclick="openWorkspace(this, '{{ addslashes($workspace->name) }}', '{{ $workspace->code }}')" class="flex items-center gap-2.5 px-3 py-2.5 cursor-pointer transition-all duration-150 hover:bg-white/5">
         <div class="shrink-0 w-9 h-9 rounded-full bg-[#E091A9]/15 flex items-center justify-center text-xs font-medium text-[#E091A9]">{{ \Illuminate\Support\Str::upper(\Illuminate\Support\Str::substr($workspace->name, 0, 1)) }}</div>
         <div class="flex-1 min-w-0">
             <div class="flex items-center justify-between">

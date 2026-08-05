@@ -1,3 +1,6 @@
+import { setCurrentChat } from './bubbles.js';
+import { setRightbarVisible } from './sidebar.js';
+
 function workspaceError(id, message) {
     const el = document.getElementById(id);
     if (!el) return;
@@ -15,6 +18,58 @@ function replaceWorkspaceList(html) {
     const empty = document.getElementById('workspace-empty');
     if (empty) empty.classList.toggle('hidden', html.trim().length > 0);
 }
+
+window.openWorkspace = function (el, name, code) {
+    document.querySelectorAll('#workspace-list [data-workspace]').forEach(function (item) {
+        item.classList.remove('bg-white/5');
+    });
+    el.classList.add('bg-white/5');
+    document.querySelectorAll('[data-name]').forEach(function (item) {
+        item.classList.remove('bg-white/5');
+    });
+
+    setCurrentChat(null);
+
+    const workspace = document.getElementById('chat-workspace');
+    const noChat = document.getElementById('no-chat');
+    if (!workspace) return;
+    workspace.classList.remove('hidden');
+    workspace.classList.add('flex');
+    noChat.classList.add('hidden');
+    noChat.classList.remove('flex');
+
+    const headerName = document.getElementById('chat-header-name');
+    const headerAvatar = document.getElementById('chat-header-avatar');
+    const headerStatus = document.getElementById('chat-header-status');
+    if (headerName) headerName.textContent = name;
+    if (headerAvatar) {
+        headerAvatar.innerHTML = '<div class="w-7 h-7 rounded-full bg-[#E091A9]/15 flex items-center justify-center text-[10px] font-medium text-[#E091A9]">' + (name.charAt(0) || '?').toUpperCase() + '</div>';
+    }
+    if (headerStatus) {
+        headerStatus.className = 'flex items-center gap-1 text-[10px] leading-none text-white/30 mt-1';
+        headerStatus.innerHTML = '<span class="tracking-widest">' + code + '</span>';
+    }
+
+    const emptyRightbar = document.getElementById('rightbar-empty');
+    if (emptyRightbar) {
+        emptyRightbar.classList.remove('hidden');
+        emptyRightbar.classList.add('flex');
+    }
+    setRightbarVisible(false);
+
+    const inputBar = document.getElementById('chat-input-bar');
+    if (inputBar) inputBar.classList.add('hidden');
+
+    const container = document.getElementById('messages-container');
+    if (container) {
+        container.innerHTML = '<div class="flex flex-col items-center justify-center h-full gap-2.5">'
+            + '<p class="text-xs font-medium text-white/40">' + name + '</p>'
+            + '<p class="text-[10px] tracking-widest text-white/25">' + code + '</p>'
+            + '<p class="text-[10px] text-white/10">Workspace features coming soon</p>'
+            + '</div>';
+        container.scrollTop = 0;
+    }
+};
 
 window.submitCreateWorkspace = function () {
     const input = document.getElementById('workspace-name-input');
