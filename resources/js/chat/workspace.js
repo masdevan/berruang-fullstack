@@ -57,8 +57,11 @@ window.openWorkspace = function (el, name, code) {
     }
     setRightbarVisible(false);
 
-    const inputBar = document.getElementById('chat-input-bar');
-    if (inputBar) inputBar.classList.add('hidden');
+    const workspaceTabs = document.getElementById('workspace-tabs');
+    if (workspaceTabs) {
+        workspaceTabs.classList.remove('hidden');
+        workspaceTabs.classList.add('flex');
+    }
 
     const container = document.getElementById('messages-container');
     if (container) {

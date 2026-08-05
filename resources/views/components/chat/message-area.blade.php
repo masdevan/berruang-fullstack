@@ -19,6 +19,13 @@
         </button>
     </div>
 
+    <div id="workspace-tabs" class="hidden items-center border-b border-white/6 bg-[#0A0A0A]">
+        <button type="button" class="py-2.75 px-4 text-xs font-medium cursor-pointer border-b-2 -mb-px text-white border-[#E091A9] transition-colors">Message</button>
+        <button type="button" class="ml-auto shrink-0 w-6 h-6 mr-2 rounded-full border border-white/10 flex items-center justify-center text-white/40 hover:text-white hover:border-white/20 transition-colors cursor-pointer" title="Add">
+            <x-icons.plus class="w-3 h-3" />
+        </button>
+    </div>
+
     <div class="flex-1 overflow-y-auto px-4 py-3" id="messages-container"></div>
 
     <x-chat.message-input />

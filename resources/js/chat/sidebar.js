@@ -151,6 +151,11 @@ window.openConversation = function (name, avatar, status, about, customName, rea
     container.scrollTop = container.scrollHeight;
     const inputBar = document.getElementById('chat-input-bar');
     if (inputBar) inputBar.classList.remove('hidden');
+    const workspaceTabs = document.getElementById('workspace-tabs');
+    if (workspaceTabs) {
+        workspaceTabs.classList.add('hidden');
+        workspaceTabs.classList.remove('flex');
+    }
     const input = document.getElementById('message-input');
     if (input) {
         input.value = getDraft(username);
