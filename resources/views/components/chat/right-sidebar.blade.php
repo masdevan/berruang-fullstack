@@ -18,9 +18,9 @@
             <x-chat.section-label title="About" info="Workspace information." />
             <p id="rightbar-ws-about" onclick="openWorkspaceBio()" title="Click to read more" class="text-[11px] text-white/60 leading-relaxed cursor-pointer hover:text-white/80 transition-colors"></p>
         </div>
-        <div class="flex border-b border-white/6">
-            <button type="button" onclick="switchWorkspaceRightbarTab('general')" id="ws-rb-general" class="flex-1 py-2.5 text-xs font-medium cursor-pointer border-b-2 -mb-px text-white border-[#E091A9] transition-colors">General</button>
-            <button type="button" onclick="switchWorkspaceRightbarTab('members')" id="ws-rb-members" class="flex-1 py-2.5 text-xs font-medium cursor-pointer border-b-2 -mb-px text-white/40 border-transparent transition-colors">Members</button>
+        <div class="flex overflow-hidden border-b border-white/6">
+            <button type="button" onclick="switchWorkspaceRightbarTab('general')" id="ws-rb-general" class="flex-1 py-2.5 text-xs font-medium whitespace-nowrap cursor-pointer border-b-2 -mb-px text-white border-[#E091A9] transition-colors">General</button>
+            <button type="button" onclick="switchWorkspaceRightbarTab('members')" id="ws-rb-members" class="flex-1 py-2.5 text-xs font-medium whitespace-nowrap cursor-pointer border-b-2 -mb-px text-white/40 border-transparent transition-colors">Members</button>
         </div>
         <div id="ws-rb-general-pane" class="flex-1 overflow-y-auto">
             <div class="p-3 border-b border-white/6">
