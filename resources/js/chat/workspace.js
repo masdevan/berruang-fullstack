@@ -157,6 +157,14 @@ function escapeHtml(text) {
     return div.innerHTML;
 }
 
+window.openWorkspaceBio = function () {
+    const text = document.getElementById('rightbar-ws-about');
+    const target = document.getElementById('bio-modal-text');
+    if (!text || !target || !text.textContent.trim()) return;
+    target.textContent = text.textContent;
+    openModal('bio-modal');
+};
+
 window.submitCreateWorkspace = function () {
     const input = document.getElementById('workspace-name-input');
     const name = input.value.trim();
