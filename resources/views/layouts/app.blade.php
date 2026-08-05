@@ -73,6 +73,14 @@
             <button type="button" onclick="submitJoinWorkspace()" class="px-2.5 py-1.5 text-xs font-medium bg-[#E091A9] text-[#0A0A0A] rounded-lg hover:bg-[#E8A8BC] transition-colors cursor-pointer">Join</button>
         </div>
     </x-modal>
+    <x-modal id="ws-code-confirm-modal" title="Change workspace code?" maxWidth="max-w-xs">
+        <p class="text-[11px] text-white/50 leading-relaxed">Members will need the new code to join this workspace. Continue?</p>
+        <div class="flex gap-2 mt-4">
+            <button type="button" onclick="closeModal('ws-code-confirm-modal')" class="flex-1 py-1.5 rounded-sm border border-white/6 text-[11px] text-white/60 hover:text-white hover:bg-white/5 transition-colors cursor-pointer">Cancel</button>
+            <button type="button" onclick="confirmWorkspaceCodeChange()" class="flex-1 py-1.5 rounded-sm bg-[#E091A9] text-[#0A0A0A] text-[11px] font-medium hover:bg-[#E8A8BC] transition-colors cursor-pointer">Continue</button>
+        </div>
+    </x-modal>
+    <x-avatar-picker />
     @stack('scripts')
 </body>
 </html>

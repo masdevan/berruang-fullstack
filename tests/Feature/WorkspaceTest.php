@@ -6,6 +6,8 @@ use App\Models\User;
 use App\Models\Workspace;
 use App\Services\WorkspaceService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use Tests\TestCase;
 
@@ -134,8 +136,8 @@ class WorkspaceTest extends TestCase
     {
         $owner = User::factory()->create();
         $joiner = User::factory()->create();
-        $workspace = app(\App\Services\WorkspaceService::class)->create($owner, 'Tim Dev');
-        app(\App\Services\WorkspaceService::class)->join($joiner, $workspace->code);
+        $workspace = app(WorkspaceService::class)->create($owner, 'Tim Dev');
+        app(WorkspaceService::class)->join($joiner, $workspace->code);
 
         $ownerHtml = $this->actingAs($owner)->get('/messages')->getContent();
         expect($ownerHtml)->toContain('data-my-role="owner"');
@@ -144,11 +146,81 @@ class WorkspaceTest extends TestCase
         expect($joinerHtml)->toContain('data-my-role="user"');
     }
 
+    public function test_owner_can_update_bio_and_code(): void
+    {
+        $owner = User::factory()->create();
+        $workspace = app(WorkspaceService::class)->create($owner, 'Tim Dev');
+
+        $this->actingAs($owner)->postJson('/workspaces/'.$workspace->code.'/configure', [
+            'bio' => 'Tim pengembangan aplikasi',
+            'code' => 'ABCDEF12',
+        ])->assertOk()
+            ->assertJsonPath('code', 'ABCDEF12')
+            ->assertJsonPath('bio', 'Tim pengembangan aplikasi')
+            ->assertJsonPath('html', fn ($html) => str_contains($html, 'ABCDEF12'));
+
+        expect($workspace->refresh()->code)->toBe('ABCDEF12');
+        expect($workspace->bio)->toBe('Tim pengembangan aplikasi');
+    }
+
+    public function test_configure_rejects_taken_code(): void
+    {
+        $owner = User::factory()->create();
+        $other = User::factory()->create();
+        $workspace = app(WorkspaceService::class)->create($owner, 'Tim Dev');
+        app(WorkspaceService::class)->create($other, 'Tim Lain');
+
+        $this->actingAs($owner)->postJson('/workspaces/'.$workspace->code.'/configure', [
+            'code' => 'ABC1', // invalid format
+        ])->assertStatus(422);
+
+        $existing = Workspace::where('owner_id', $other->id)->first();
+
+        $this->actingAs($owner)->postJson('/workspaces/'.$workspace->code.'/configure', [
+            'code' => $existing->code,
+        ])->assertStatus(422)
+            ->assertJsonPath('message', 'That code is already taken.');
+    }
+
+    public function test_regular_user_cannot_configure_workspace(): void
+    {
+        $owner = User::factory()->create();
+        $joiner = User::factory()->create();
+        $workspace = app(WorkspaceService::class)->create($owner, 'Tim Dev');
+        app(WorkspaceService::class)->join($joiner, $workspace->code);
+
+        $this->actingAs($joiner)->postJson('/workspaces/'.$workspace->code.'/configure', [
+            'bio' => 'ubah',
+        ])->assertStatus(422)
+            ->assertJsonPath('message', 'Only the owner or an admin can configure this workspace.');
+    }
+
+    public function test_owner_can_update_workspace_avatar(): void
+    {
+        Storage::fake('public');
+        $owner = User::factory()->create();
+        $workspace = app(WorkspaceService::class)->create($owner, 'Tim Dev');
+
+        $this->actingAs($owner)->postJson('/workspaces/'.$workspace->code.'/configure', [
+            'avatar' => UploadedFile::fake()->image('logo.jpg', 200, 200),
+        ])->assertOk()
+            ->assertJsonPath('avatar', fn ($url) => is_string($url) && $url !== '');
+
+        $workspace->refresh();
+
+        expect($workspace->avatar)->not->toBeNull();
+        Storage::disk('public')->assertExists($workspace->avatar);
+
+        $preview = app(WorkspaceService::class)->avatarPreviewPath($workspace->avatar);
+        expect(Storage::disk('public')->exists($preview))->toBeTrue();
+        expect(Storage::disk('public')->size($preview))->toBeLessThanOrEqual(10 * 1024);
+    }
+
     public function test_members_endpoint_rejects_non_members(): void
     {
         $owner = User::factory()->create();
         $stranger = User::factory()->create();
-        $workspace = app(\App\Services\WorkspaceService::class)->create($owner, 'Tim Dev');
+        $workspace = app(WorkspaceService::class)->create($owner, 'Tim Dev');
 
         $this->actingAs($stranger)->getJson('/workspaces/'.$workspace->code.'/members')
             ->assertStatus(404);
@@ -157,7 +229,7 @@ class WorkspaceTest extends TestCase
     public function test_owner_is_included_in_members_list(): void
     {
         $owner = User::factory()->create(['name' => 'Boss Owner']);
-        $workspace = app(\App\Services\WorkspaceService::class)->create($owner, 'Tim Dev');
+        $workspace = app(WorkspaceService::class)->create($owner, 'Tim Dev');
 
         $members = $this->actingAs($owner)->getJson('/workspaces/'.$workspace->code.'/members')
             ->assertOk()

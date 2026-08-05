@@ -1,7 +1,11 @@
 @props(['workspaces' => collect()])
 @foreach ($workspaces as $workspace)
-    <div data-workspace="{{ $workspace->code }}" data-my-role="{{ $workspace->pivot->role ?? 'user' }}" data-created="{{ $workspace->created_at->format('d M Y') }}" onclick="openWorkspace(this, '{{ addslashes($workspace->name) }}', '{{ $workspace->code }}', '{{ $workspace->created_at->format('d M Y') }}')" class="flex items-center gap-2.5 px-3 py-2.5 cursor-pointer transition-all duration-150 hover:bg-white/5">
-        <div class="shrink-0 w-9 h-9 rounded-full bg-[#E091A9]/15 flex items-center justify-center text-xs font-medium text-[#E091A9]">{{ \Illuminate\Support\Str::upper(\Illuminate\Support\Str::substr($workspace->name, 0, 1)) }}</div>
+    <div data-workspace="{{ $workspace->code }}" data-my-role="{{ $workspace->pivot->role ?? 'user' }}" data-bio="{{ addslashes($workspace->bio ?? '') }}" data-avatar="{{ $workspace->avatar ? $workspace->avatarPreviewUrl() : '' }}" data-full-avatar="{{ $workspace->avatarFullUrl() }}" data-created="{{ $workspace->created_at->format('d M Y') }}" onclick="openWorkspace(this, '{{ addslashes($workspace->name) }}', '{{ $workspace->code }}', '{{ $workspace->created_at->format('d M Y') }}')" class="flex items-center gap-2.5 px-3 py-2.5 cursor-pointer transition-all duration-150 hover:bg-white/5">
+        @if ($workspace->avatar)
+            <img src="{{ $workspace->avatarPreviewUrl() }}" alt="" class="shrink-0 w-9 h-9 rounded-full object-cover">
+        @else
+            <div class="shrink-0 w-9 h-9 rounded-full bg-[#E091A9]/15 flex items-center justify-center text-xs font-medium text-[#E091A9]">{{ \Illuminate\Support\Str::upper(\Illuminate\Support\Str::substr($workspace->name, 0, 1)) }}</div>
+        @endif
         <div class="flex-1 min-w-0">
             <div class="flex items-center justify-between">
                 <p class="text-xs font-medium truncate text-white/80">{{ $workspace->name }}</p>

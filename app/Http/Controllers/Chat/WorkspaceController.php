@@ -55,6 +55,34 @@ class WorkspaceController extends Controller
         return response()->json($result['members']);
     }
 
+    public function configure(Request $request, string $code): JsonResponse
+    {
+        $request->validate([
+            'bio' => ['nullable', 'string', 'max:500'],
+            'code' => ['nullable', 'string', 'max:8', 'regex:/^[A-Z0-9]+$/i'],
+            'avatar' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:2048'],
+        ]);
+
+        $result = $this->workspaces->configure($request->user(), $code, $request->input('bio'), $request->input('code'));
+
+        if (! $result['ok']) {
+            return response()->json(['message' => $result['error']], 422);
+        }
+
+        $workspace = $result['workspace'];
+
+        if ($request->hasFile('avatar')) {
+            $this->workspaces->updateAvatar($workspace, $request->file('avatar'));
+        }
+
+        return response()->json([
+            'code' => $workspace->code,
+            'bio' => $workspace->bio,
+            'avatar' => $workspace->avatar ? $workspace->avatarPreviewUrl() : '',
+            'html' => $this->listHtml($request->user()),
+        ]);
+    }
+
     private function listHtml($user): string
     {
         return view('components.chat.workspace-list', [

@@ -12,7 +12,7 @@
             <p id="rightbar-ws-name" class="text-xs font-medium mt-1.5 text-white/80"></p>
             <p id="rightbar-ws-code" class="text-[10px] text-white/40 mt-0.5"></p>
             <p id="rightbar-ws-created" class="text-[10px] text-white/20 mt-0.5"></p>
-            <button type="button" id="rightbar-ws-configure" class="hidden mt-2.5 px-3 py-1.5 rounded-sm bg-white/5 hover:bg-white/10 text-[10px] font-medium text-white/60 hover:text-white transition-colors cursor-pointer">Configure workspace</button>
+            <button type="button" id="rightbar-ws-configure" onclick="openWorkspaceConfig()" class="hidden mt-2.5 px-3 py-1.5 rounded-sm bg-white/5 hover:bg-white/10 text-[10px] font-medium text-white/60 hover:text-white transition-colors cursor-pointer">Configure workspace</button>
         </div>
         <div class="p-3 border-b border-white/6">
             <x-chat.section-label title="About" info="Workspace information." />
@@ -46,6 +46,44 @@
                 <x-icons.ghost class="w-8 h-8 text-white/15" />
                 <p class="text-[11px] text-white/20">No members yet</p>
             </div>
+        </div>
+    </div>
+    <div id="rightbar-workspace-config" class="hidden absolute inset-0 z-30 bg-[#0F0F0F] flex-col">
+        <div class="flex items-center gap-2 px-4 py-3 border-b border-white/6 bg-[#0A0A0A] shrink-0">
+            <button type="button" onclick="closeWorkspaceConfig()" class="w-7 h-7 flex items-center justify-center text-white/30 hover:text-white/60 transition-colors cursor-pointer shrink-0" title="Back">
+                <x-icons.chevron-left class="w-4 h-4" />
+            </button>
+            <p class="text-xs font-medium leading-none">Configure workspace</p>
+            <button type="button" onclick="closeWorkspaceConfig()" class="w-7 h-7 flex items-center justify-center text-white/30 hover:text-white/60 transition-colors cursor-pointer shrink-0 ml-auto" title="Close">
+                <x-icons.x class="w-4 h-4" />
+            </button>
+        </div>
+        <div class="flex-1 overflow-y-auto p-3 space-y-3">
+            <div>
+                <p class="text-[10px] font-medium text-white/35 uppercase tracking-wider mb-1.5">Workspace avatar</p>
+                <div class="flex items-center gap-3">
+                    <div class="relative shrink-0 w-12 h-12">
+                        <span id="ws-config-avatar-fallback" class="w-full h-full rounded-full bg-[#E091A9]/15 flex items-center justify-center text-sm font-medium text-[#E091A9]"></span>
+                        <img id="ws-config-avatar" alt="" class="hidden absolute inset-0 w-full h-full rounded-full object-cover">
+                    </div>
+                    <button type="button" onclick="openAvatarModal()" class="px-2.5 py-1.5 rounded-sm bg-white/5 hover:bg-white/10 text-[10px] font-medium text-white/60 hover:text-white transition-colors cursor-pointer">Change picture</button>
+                </div>
+            </div>
+            <div>
+                <p class="text-[10px] font-medium text-white/35 uppercase tracking-wider mb-1.5">About</p>
+                <textarea id="ws-config-bio" rows="3" maxlength="500" placeholder="Tell people what this workspace is about" class="w-full px-3 py-2.5 pb-5 bg-white/3 border border-white/6 text-xs text-white placeholder-white/20 focus:outline-none focus:border-[#E091A9]/50 focus:bg-white/5 transition-all duration-200 rounded-sm resize-none"></textarea>
+            </div>
+            <div>
+                <p class="text-[10px] font-medium text-white/35 uppercase tracking-wider mb-1.5">Workspace code</p>
+                <div class="relative">
+                    <input type="text" id="ws-config-code" maxlength="8" autocomplete="off" oninput="this.value = this.value.toUpperCase().replace(/[^A-Z0-9]/g, '')" class="w-full px-3 py-2.5 pr-10 tracking-[0.25em] text-center text-xs bg-white/3 border border-white/6 text-white placeholder-white/20 focus:outline-none focus:border-[#E091A9]/50 focus:bg-white/5 transition-all duration-200 rounded-sm">
+                    <button type="button" onclick="rollWorkspaceCode()" class="absolute right-2 top-1/2 -translate-y-1/2 text-white/30 hover:text-white/70 transition-colors cursor-pointer" title="Random code">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" class="w-4 h-4"><path stroke-linecap="round" stroke-linejoin="round" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0l3.181 3.183a8.25 8.25 0 0013.803-3.7M4.031 9.865a8.25 8.25 0 0113.803-3.7l3.181 3.182m0-4.991v4.99"/></svg>
+                    </button>
+                </div>
+            </div>
+            <p id="ws-config-error" class="hidden text-[10px] text-red-400"></p>
+            <button type="button" onclick="saveWorkspaceConfig()" class="w-full py-2 rounded-sm bg-[#E091A9] text-[#0A0A0A] text-xs font-medium hover:bg-[#E8A8BC] transition-colors cursor-pointer">Save changes</button>
         </div>
     </div>
     <div id="rightbar-view" class="hidden absolute inset-0 z-20 bg-[#0F0F0F] flex-col">

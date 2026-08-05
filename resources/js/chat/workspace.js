@@ -1,5 +1,6 @@
 import { setCurrentChat } from './bubbles.js';
 import { setRightbarVisible, setRightbarHasChat } from './sidebar.js';
+import { initAvatarPicker } from '../avatar-picker.js';
 
 function workspaceError(id, message) {
     const el = document.getElementById(id);
@@ -63,11 +64,25 @@ window.openWorkspace = function (el, name, code, created) {
     const wsCode = document.getElementById('rightbar-ws-code');
     const wsCreated = document.getElementById('rightbar-ws-created');
     const wsAbout = document.getElementById('rightbar-ws-about');
-    if (wsAvatar) wsAvatar.textContent = (name.charAt(0) || '?').toUpperCase();
+    if (wsAvatar) {
+        wsAvatar.innerHTML = el.dataset.avatar
+            ? '<img src="' + el.dataset.avatar + '" alt="" class="w-full h-full rounded-full object-cover">'
+            : (name.charAt(0) || '?').toUpperCase();
+        if (el.dataset.fullAvatar) {
+            wsAvatar.onclick = function () { window.openMediaModal(el.dataset.fullAvatar); };
+            wsAvatar.title = 'View workspace photo';
+            wsAvatar.classList.add('cursor-pointer');
+        } else {
+            wsAvatar.onclick = null;
+            wsAvatar.title = '';
+            wsAvatar.classList.remove('cursor-pointer');
+        }
+    }
     if (wsName) wsName.textContent = name;
     if (wsCode) wsCode.textContent = 'Code: ' + code;
     if (wsCreated) wsCreated.textContent = 'Created ' + (created || '');
-    if (wsAbout) wsAbout.textContent = 'Workspace';
+    if (wsAbout) wsAbout.textContent = el.dataset.bio || 'Workspace';
+    currentWsConfig = { name: name, code: code, bio: el.dataset.bio || '', avatar: el.dataset.avatar || '' };
 
     const wsPanel = document.getElementById('rightbar-workspace');
     if (wsPanel) {
@@ -116,6 +131,159 @@ window.switchWorkspaceRightbarTab = function (kind) {
 };
 
 let currentWsCode = null;
+let currentWsConfig = { name: '', code: '', bio: '', avatar: '' };
+let wsAvatarFile = null;
+let wsSaveConfirmed = false;
+
+function setWsConfigAvatar(url) {
+    const img = document.getElementById('ws-config-avatar');
+    const fallback = document.getElementById('ws-config-avatar-fallback');
+    if (!img || !fallback) return;
+    if (url) {
+        img.src = url;
+        img.classList.remove('hidden');
+        fallback.classList.add('hidden');
+    } else {
+        img.classList.add('hidden');
+        fallback.classList.remove('hidden');
+    }
+}
+
+initAvatarPicker({
+    previewId: 'ws-config-avatar',
+    onUpload: function (blob) {
+        wsAvatarFile = blob;
+        const img = document.getElementById('ws-config-avatar');
+        if (img) img.classList.remove('hidden');
+        const fallback = document.getElementById('ws-config-avatar-fallback');
+        if (fallback) fallback.classList.add('hidden');
+    },
+});
+
+window.openWorkspaceConfig = function () {
+    const panel = document.getElementById('rightbar-workspace-config');
+    const bio = document.getElementById('ws-config-bio');
+    const codeInput = document.getElementById('ws-config-code');
+    const error = document.getElementById('ws-config-error');
+    if (!panel || !bio || !codeInput) return;
+    bio.value = currentWsConfig.bio || '';
+    codeInput.value = currentWsConfig.code;
+    wsAvatarFile = null;
+    const fallback = document.getElementById('ws-config-avatar-fallback');
+    if (fallback) fallback.textContent = (currentWsConfig.name.charAt(0) || '?').toUpperCase();
+    setWsConfigAvatar(currentWsConfig.avatar || '');
+    if (error) error.classList.add('hidden');
+    panel.classList.remove('hidden');
+    panel.classList.add('flex');
+    panel.animate(
+        [{ transform: 'translateX(100%)' }, { transform: 'translateX(0)' }],
+        { duration: 180, easing: 'ease-out' }
+    );
+};
+
+window.confirmWorkspaceCodeChange = function () {
+    closeModal('ws-code-confirm-modal');
+    wsSaveConfirmed = true;
+    saveWorkspaceConfig();
+};
+
+window.saveWorkspaceConfig = function () {
+    const bio = document.getElementById('ws-config-bio');
+    const codeInput = document.getElementById('ws-config-code');
+    const error = document.getElementById('ws-config-error');
+    if (!bio || !codeInput || !currentWsConfig.code) return;
+    if (error) error.classList.add('hidden');
+
+    if (!wsSaveConfirmed && codeInput.value !== currentWsConfig.code) {
+        openModal('ws-code-confirm-modal');
+        return;
+    }
+    wsSaveConfirmed = false;
+
+    const form = new FormData();
+    form.append('bio', bio.value);
+    form.append('code', codeInput.value);
+    if (wsAvatarFile) form.append('avatar', wsAvatarFile);
+
+    fetch('/workspaces/' + encodeURIComponent(currentWsConfig.code) + '/configure', {
+        method: 'POST',
+        headers: { 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content },
+        body: form,
+    })
+        .then(function (response) { return response.json().then(function (data) { return { ok: response.ok, data: data }; }); })
+        .then(function ({ ok, data }) {
+            if (!ok) {
+                if (error) {
+                    error.textContent = data.message || 'Failed to save changes.';
+                    error.classList.remove('hidden');
+                }
+                return;
+            }
+            closeWorkspaceConfig();
+            currentWsConfig.code = data.code;
+            currentWsConfig.bio = data.bio || '';
+            currentWsConfig.avatar = data.avatar || '';
+            wsAvatarFile = null;
+            replaceWorkspaceList(data.html);
+            updateWorkspaceInfo(currentWsConfig.name, data.code, data.bio || '', data.avatar || '');
+        })
+        .catch(function () {
+            if (error) {
+                error.textContent = 'Something went wrong. Please try again.';
+                error.classList.remove('hidden');
+            }
+        });
+};
+
+function updateWorkspaceInfo(name, code, bio, avatar) {
+    const wsName = document.getElementById('rightbar-ws-name');
+    const wsCode = document.getElementById('rightbar-ws-code');
+    const wsAbout = document.getElementById('rightbar-ws-about');
+    const wsAvatar = document.getElementById('rightbar-ws-avatar');
+    const headerName = document.getElementById('chat-header-name');
+    const headerStatus = document.getElementById('chat-header-status');
+    if (wsName) wsName.textContent = name;
+    if (wsCode) wsCode.textContent = 'Code: ' + code;
+    if (wsAbout) wsAbout.textContent = bio || 'Workspace';
+    if (wsAvatar) {
+        wsAvatar.innerHTML = avatar
+            ? '<img src="' + avatar + '" alt="" class="w-full h-full rounded-full object-cover">'
+            : (name.charAt(0) || '?').toUpperCase();
+    }
+    if (headerName) headerName.textContent = name;
+    if (headerStatus) {
+        headerStatus.className = 'flex items-center gap-1 text-[10px] leading-none text-white/30 mt-1';
+        headerStatus.innerHTML = '<span class="tracking-widest">' + code + '</span>';
+    }
+    const container = document.getElementById('messages-container');
+    if (container) {
+        const codeEl = container.querySelector('.tracking-widest');
+        if (codeEl) codeEl.textContent = 'Code: ' + code;
+    }
+}
+
+window.closeWorkspaceConfig = function () {
+    const panel = document.getElementById('rightbar-workspace-config');
+    if (!panel || panel.classList.contains('hidden')) return;
+    panel.animate(
+        [{ transform: 'translateX(0)' }, { transform: 'translateX(100%)' }],
+        { duration: 150, easing: 'ease-in' }
+    ).addEventListener('finish', function () {
+        panel.classList.add('hidden');
+        panel.classList.remove('flex');
+    });
+};
+
+window.rollWorkspaceCode = function () {
+    const input = document.getElementById('ws-config-code');
+    if (!input) return;
+    const CHARS = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+    let code = '';
+    for (let i = 0; i < 8; i++) {
+        code += CHARS[Math.floor(Math.random() * CHARS.length)];
+    }
+    input.value = code;
+};
 
 function loadWorkspaceMembers(code) {
     fetch('/workspaces/' + encodeURIComponent(code) + '/members')

@@ -43,6 +43,7 @@ Route::middleware(['auth', 'verified', 'onboarded'])->group(function () {
     Route::post('/workspaces', [WorkspaceController::class, 'store'])->name('workspaces.store');
     Route::post('/workspaces/join', [WorkspaceController::class, 'join'])->name('workspaces.join');
     Route::get('/workspaces/{code}/members', [WorkspaceController::class, 'members'])->name('workspaces.members');
+    Route::post('/workspaces/{code}/configure', [WorkspaceController::class, 'configure'])->name('workspaces.configure');
 
     Route::post('/profile/password', [PasswordController::class, 'update'])->name('profile.password');
     Route::post('/profile/account', [AccountController::class, 'update'])->name('profile.account');

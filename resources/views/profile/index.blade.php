@@ -88,8 +88,6 @@
                     </div>
                 </form>
 
-                <x-avatar-picker />
-
                 <div id="username-confirm" class="hidden fixed inset-0 z-60 items-center justify-center bg-black/70 p-4" onclick="hideUsernameConfirm()">
                     <div class="w-full max-w-xs bg-[#1A1A1A] border border-white/10 rounded-sm p-4" onclick="event.stopPropagation()">
                         <p class="text-xs font-medium">Change username?</p>
