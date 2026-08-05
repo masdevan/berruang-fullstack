@@ -415,20 +415,6 @@ function hideAllPills() {
     });
 }
 
-document.addEventListener('contextmenu', function (e) {
-    const row = e.target.closest('[data-chat]');
-    if (!row) return;
-
-    e.preventDefault();
-    const pill = row.querySelector('.bubble-pill');
-    if (!pill) return;
-
-    hideAllPills();
-    if (!pill.classList.contains('pill-visible')) {
-        pill.classList.add('pill-visible');
-    }
-});
-
 document.addEventListener('click', function (e) {
     if (!e.target.closest('.bubble-pill')) {
         hideAllPills();

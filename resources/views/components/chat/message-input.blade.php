@@ -12,25 +12,25 @@
                     </div>
                     <span class="text-[10px] text-white/70">Photo & Video Library</span>
                 </button>
-                <button type="button" class="w-full flex items-center gap-2 px-2 py-1.5 rounded-sm hover:bg-white/5 transition-colors cursor-pointer">
+                <button type="button" class="hidden w-full flex items-center gap-2 px-2 py-1.5 rounded-sm hover:bg-white/5 transition-colors cursor-pointer">
                     <div class="w-5 h-5 rounded-sm bg-white/5 flex items-center justify-center text-white/50 shrink-0">
                         <x-icons.camera class="w-3 h-3" />
                     </div>
                     <span class="text-[10px] text-white/70">Camera</span>
                 </button>
-                <button type="button" onclick="triggerAttach('document')" class="w-full flex items-center gap-2 px-2 py-1.5 rounded-sm hover:bg-white/5 transition-colors cursor-pointer">
+                <button type="button" onclick="triggerAttach('document')" class="hidden w-full flex items-center gap-2 px-2 py-1.5 rounded-sm hover:bg-white/5 transition-colors cursor-pointer">
                     <div class="w-5 h-5 rounded-sm bg-white/5 flex items-center justify-center text-white/50 shrink-0">
                         <x-icons.file-doc class="w-3 h-3" />
                     </div>
                     <span class="text-[10px] text-white/70">Document</span>
                 </button>
-                <button type="button" class="w-full flex items-center gap-2 px-2 py-1.5 rounded-sm hover:bg-white/5 transition-colors cursor-pointer">
+                <button type="button" class="hidden w-full flex items-center gap-2 px-2 py-1.5 rounded-sm hover:bg-white/5 transition-colors cursor-pointer">
                     <div class="w-5 h-5 rounded-sm bg-white/5 flex items-center justify-center text-white/50 shrink-0">
                         <x-icons.location class="w-3 h-3" />
                     </div>
                     <span class="text-[10px] text-white/70">Location</span>
                 </button>
-                <button type="button" class="w-full flex items-center gap-2 px-2 py-1.5 rounded-sm hover:bg-white/5 transition-colors cursor-pointer">
+                <button type="button" class="hidden w-full flex items-center gap-2 px-2 py-1.5 rounded-sm hover:bg-white/5 transition-colors cursor-pointer">
                     <div class="w-5 h-5 rounded-sm bg-white/5 flex items-center justify-center text-white/50 shrink-0">
                         <x-icons.contact class="w-3 h-3" />
                     </div>
