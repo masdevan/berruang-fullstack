@@ -2,6 +2,7 @@ import { BUBBLE_ME, BUBBLE_OTHER, BUBBLE_MEDIA_ME, BUBBLE_MEDIA_OTHER } from './
 import { applyDraftPreview } from './draft.js';
 import { resetSharedMedia, addSharedMedia, renderSharedMedia } from './shared-media.js';
 import PENCIL_SVG from '../icons/pencil.js';
+import SPINNER_SVG from '../icons/spinner.js';
 import CHECK_SENT_SVG from '../icons/check-sent.js';
 import CHECK_DONE_SVG from '../icons/check-done.js';
 import DOC_SVG from '../icons/doc.js';
@@ -12,6 +13,8 @@ export let currentChatName = null;
 
 const localMessages = {};
 const pendingReadIds = new Set();
+const olderHasMore = {};
+const olderLoading = {};
 
 document.addEventListener('load', function (e) {
     const el = e.target;
@@ -72,9 +75,9 @@ function bubbleInnerHtml(msg, chatName, index) {
 }
 
 function checksHtml(status) {
-    if (status === 'read') return `<span class="text-[#E091A9] shrink-0 mr-2">${CHECK_DONE_SVG}</span>`;
-    if (status === 'delivered') return `<span class="text-white/25 shrink-0 mr-2">${CHECK_DONE_SVG}</span>`;
-    return `<span class="text-white/25 shrink-0 mr-2">${CHECK_SENT_SVG}</span>`;
+    const cls = status === 'read' ? 'text-[#E091A9]' : 'text-white/25';
+    const svg = status === 'read' || status === 'delivered' ? CHECK_DONE_SVG : CHECK_SENT_SVG;
+    return `<span class="bubble-checks ${cls} shrink-0 mr-2">${svg}</span>`;
 }
 
 function mediaHtml(msg, isText) {
@@ -119,7 +122,7 @@ export function updateLocalFileUrl(username, id, url, width, height) {
             msgs[i].id = id;
             if (pendingReadIds.delete(String(id))) {
                 msgs[i].status = 'read';
-                renderAllMessages();
+                patchChecks();
             }
             if (width && height) {
                 msgs[i].file.width = width;
@@ -186,18 +189,131 @@ export function markMessagesRead(messageIds) {
         }
     });
     if (!changed) return;
-    renderAllMessages();
+    patchChecks();
+}
+
+function patchChecks() {
+    const msgs = localMessages[currentChatName];
+    if (!msgs) return;
+    document.querySelectorAll('#messages-container [data-chat="' + currentChatName + '"]').forEach(function (row) {
+        const message = msgs[Number(row.dataset.index)];
+        if (!message || message.from !== 'me') return;
+        const check = row.querySelector('.bubble-checks');
+        if (check) check.outerHTML = checksHtml(message.status);
+    });
 }
 
 function renderAllMessages() {
     const container = document.getElementById('messages-container');
     const msgs = localMessages[currentChatName];
     if (!container || !msgs) return;
-    const scroll = container.scrollTop;
+    const prevScroll = container.scrollTop;
+    const prevHeight = container.scrollHeight;
     container.innerHTML = msgs.map(function (m, i) {
         return messageHtml(m, currentChatName, i);
     }).join('');
-    container.scrollTop = scroll;
+    container.scrollTop = prevScroll + (container.scrollHeight - prevHeight);
+}
+
+export function normalizeMessage(msg) {
+    return {
+        id: msg.id,
+        from: msg.from,
+        text: msg.body,
+        time: msg.time,
+        type: msg.type || 'text',
+        read_at: msg.read_at || null,
+        file: msg.file || null,
+    };
+}
+
+export function setOlderHasMore(username, hasMore) {
+    olderHasMore[username] = !!hasMore;
+}
+
+export function getOlderHasMore(username) {
+    return !!olderHasMore[username];
+}
+
+const OLDER_LOADING_HTML = '<div id="messages-older-loading" class="flex items-center justify-center gap-2 py-3 text-white/30 text-[10px]">' + SPINNER_SVG + 'Memuat pesan lama…</div>';
+
+function showOlderLoading() {
+    const container = document.getElementById('messages-container');
+    if (container && !document.getElementById('messages-older-loading')) {
+        container.insertAdjacentHTML('afterbegin', OLDER_LOADING_HTML);
+    }
+}
+
+function hideOlderLoading() {
+    const el = document.getElementById('messages-older-loading');
+    if (el) el.remove();
+}
+
+export function loadOlderMessages(username) {
+    if (olderLoading[username] || !olderHasMore[username]) return;
+    const msgs = localMessages[username];
+    const first = msgs && msgs[0];
+    if (!first || !first.id) return;
+    olderLoading[username] = true;
+    if (username === currentChatName) showOlderLoading();
+    fetch('/messages/thread?with=' + encodeURIComponent(username) + '&before=' + first.id)
+        .then(function (response) { return response.json(); })
+        .then(function (data) {
+            olderLoading[username] = false;
+            hideOlderLoading();
+            if (!data.messages || !data.messages.length) {
+                olderHasMore[username] = false;
+                return;
+            }
+            prependOlder(username, data.messages.map(normalizeMessage), data.has_more);
+        })
+        .catch(function () {
+            olderLoading[username] = false;
+            hideOlderLoading();
+        });
+}
+
+function prependOlder(username, older, hasMore) {
+    if (!localMessages[username]) localMessages[username] = [];
+    const messages = localMessages[username];
+    const known = {};
+    messages.forEach(function (m) { if (m.id) known[String(m.id)] = true; });
+    const fresh = older.filter(function (m) { return !m.id || !known[String(m.id)]; });
+    if (!fresh.length) {
+        olderHasMore[username] = !!hasMore;
+        return;
+    }
+    fresh.forEach(function (m) {
+        if (m.from === 'me' && !m.status) {
+            if (m.read_at || pendingReadIds.has(String(m.id))) {
+                m.status = 'read';
+                if (m.id) pendingReadIds.delete(String(m.id));
+            } else {
+                m.status = 'sent';
+            }
+        }
+        addSharedMedia(m, username);
+    });
+    messages.unshift.apply(messages, fresh);
+    olderHasMore[username] = !!hasMore;
+    if (currentChatName !== username) return;
+
+    const container = document.getElementById('messages-container');
+    if (!container) return;
+    container.insertAdjacentHTML('afterbegin', fresh.map(function (m, i) {
+        return messageHtml(m, username, i);
+    }).join(''));
+    container.querySelectorAll('[data-chat="' + username + '"]').forEach(function (row) {
+        const index = Number(row.dataset.index);
+        if (!isNaN(index)) row.dataset.index = index + fresh.length;
+    });
+}
+
+const containerEl = document.getElementById('messages-container');
+if (containerEl) {
+    containerEl.addEventListener('scroll', function () {
+        if (containerEl.scrollTop < 60) loadOlderMessages(currentChatName);
+    });
 }
 
 export function updateConversationPreview(username, text, status) {

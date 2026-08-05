@@ -69,7 +69,7 @@ class ChatTest extends TestCase
             );
     }
 
-    public function test_thread_returns_last_50_messages_in_ascending_order_without_gaps(): void
+    public function test_thread_returns_last_25_messages_in_ascending_order_without_gaps(): void
     {
         $me = User::factory()->create();
         $alice = User::factory()->create();
@@ -86,12 +86,40 @@ class ChatTest extends TestCase
         }
 
         $data = $this->actingAs($me)->getJson('/messages/thread?with='.$alice->username)
-            ->assertOk()->json('messages');
+            ->assertOk()->json();
 
-        $this->assertCount(50, $data);
-        $this->assertSame(range(71, 120), array_column($data, 'id'));
-        $this->assertSame('pesan-70', $data[0]['body']);
-        $this->assertSame('pesan-119', $data[49]['body']);
+        $this->assertCount(25, $data['messages']);
+        $this->assertTrue($data['has_more']);
+        $this->assertSame(range(96, 120), array_column($data['messages'], 'id'));
+        $this->assertSame('pesan-95', $data['messages'][0]['body']);
+        $this->assertSame('pesan-119', $data['messages'][24]['body']);
+    }
+
+    public function test_thread_paginates_older_messages_with_before(): void
+    {
+        $me = User::factory()->create();
+        $alice = User::factory()->create();
+        $me->contacts()->attach($alice->id);
+
+        for ($i = 0; $i < 120; $i++) {
+            $sender = $i % 2 === 0 ? $me : $alice;
+            Message::create([
+                'sender_id' => $sender->id,
+                'receiver_id' => $sender->is($me) ? $alice->id : $me->id,
+                'body' => "pesan-$i",
+            ]);
+        }
+
+        $before = 121;
+        $seen = [];
+        do {
+            $data = $this->actingAs($me)->getJson('/messages/thread?with='.$alice->username.'&before='.$before)
+                ->assertOk()->json();
+            $seen = array_merge(array_column($data['messages'], 'id'), $seen);
+            $before = $data['messages'][0]['id'] ?? 0;
+        } while ($data['has_more']);
+
+        $this->assertSame(range(1, 120), $seen);
     }
 
     public function test_conversation_preview_renders_read_check_when_last_message_was_sent_and_read(): void

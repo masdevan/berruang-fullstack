@@ -1,6 +1,10 @@
 import PLAY_SVG from '../icons/play.js';
 import DOC_SVG from '../icons/doc.js';
 import DOWNLOAD_SVG from '../icons/download.js';
+import SPINNER_SVG from '../icons/spinner.js';
+import { loadOlderMessages, getOlderHasMore } from './bubbles.js';
+
+const VIEW_LOADING_HTML = '<div data-view-loading class="flex items-center justify-center gap-2 py-3 text-white/30 text-[10px]">' + SPINNER_SVG + 'Memuat…</div>';
 
 const sharedByChat = {};
 let activeUsername = null;
@@ -8,10 +12,15 @@ let currentViewKind = null;
 
 const MEDIA_LIMIT = 5;
 const FILES_LIMIT = 15;
+const VIEW_BATCH = 24;
+const viewOffsets = {};
+
+let viewObserver = null;
 
 export function resetSharedMedia(username) {
     activeUsername = username;
     sharedByChat[username] = { media: [], files: [] };
+    viewOffsets[username] = { media: VIEW_BATCH, files: VIEW_BATCH };
     closeSharedView();
     renderSharedMedia();
 }
@@ -95,13 +104,61 @@ function renderView(kind) {
     const container = document.getElementById('rightbar-view-list');
     if (!title || !container) return;
     const list = sharedByChat[activeUsername] || { media: [], files: [] };
+    const items = kind === 'media' ? list.media : list.files;
+    const offset = (viewOffsets[activeUsername] || {})[kind] || VIEW_BATCH;
+    const shown = items.slice(0, offset);
+
+    const prevScroll = container.scrollTop;
+    const prevHeight = container.scrollHeight;
+
     if (kind === 'media') {
         title.textContent = 'Shared Media';
-        container.innerHTML = '<div class="grid grid-cols-3 gap-1.5">' + list.media.map(mediaItemHtml).join('') + '</div>';
+        container.innerHTML = '<div class="grid grid-cols-3 gap-1.5">' + shown.map(mediaItemHtml).join('') + '</div>';
     } else {
         title.textContent = 'Shared Files';
-        container.innerHTML = '<div class="space-y-1.5">' + list.files.map(fileItemHtml).join('') + '</div>';
+        container.innerHTML = '<div class="space-y-1.5">' + shown.map(fileItemHtml).join('') + '</div>';
     }
+
+    container.scrollTop = prevScroll + (container.scrollHeight - prevHeight);
+
+    const canGrow = items.length > shown.length || getOlderHasMore(activeUsername);
+    if (canGrow) {
+        container.insertAdjacentHTML('beforeend', '<div data-view-sentinel class="h-2"></div>');
+        observeSentinel(container);
+    }
+}
+
+function observeSentinel(container) {
+    if (viewObserver) {
+        viewObserver.disconnect();
+        viewObserver = null;
+    }
+    const sentinel = container.querySelector('[data-view-sentinel]');
+    if (!sentinel) return;
+    viewObserver = new IntersectionObserver(function (entries) {
+        entries.forEach(function (entry) {
+            if (!entry.isIntersecting) return;
+            const kind = currentViewKind;
+            if (!kind) return;
+            const list = sharedByChat[activeUsername] || { media: [], files: [] };
+            const items = kind === 'media' ? list.media : list.files;
+            const offset = (viewOffsets[activeUsername] || {})[kind] || VIEW_BATCH;
+            if (items.length > offset) {
+                viewOffsets[activeUsername][kind] = offset + VIEW_BATCH;
+                renderView(kind);
+            } else if (getOlderHasMore(activeUsername)) {
+                if (!container.querySelector('[data-view-loading]')) {
+                    container.insertAdjacentHTML('beforeend', VIEW_LOADING_HTML);
+                    setTimeout(function () {
+                        const el = container.querySelector('[data-view-loading]');
+                        if (el) el.remove();
+                    }, 8000);
+                }
+                loadOlderMessages(activeUsername);
+            }
+        });
+    }, { root: container, rootMargin: '80px' });
+    viewObserver.observe(sentinel);
 }
 
 window.openSharedView = function (kind) {

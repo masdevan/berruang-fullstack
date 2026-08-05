@@ -16,7 +16,7 @@ use Illuminate\Support\Facades\Storage;
 
 class ChatService
 {
-    private const HISTORY_LIMIT = 50;
+    private const HISTORY_LIMIT = 25;
 
     private const DOCUMENT_MIMES = [
         'application/pdf', 'text/plain', 'application/zip',
@@ -31,7 +31,7 @@ class ChatService
         'video/mp4', 'video/webm', 'video/ogg', 'video/quicktime',
     ];
 
-    public function thread(User $viewer, string $with, int $after = 0): ?array
+    public function thread(User $viewer, string $with, int $after = 0, int $before = 0): ?array
     {
         $other = User::where('username', $with)->first();
 
@@ -58,11 +58,22 @@ class ChatService
 
         if ($after > 0) {
             $messages = $query->where('id', '>', $after)->orderBy('id')->get();
-        } else {
-            $messages = $query->orderByDesc('id')->limit(self::HISTORY_LIMIT)->get()->reverse()->values();
+
+            return ['messages' => $messages->map(fn (Message $m) => $this->messagePayload($m, $viewer))->all(), 'has_more' => false];
         }
 
-        return $messages->map(fn (Message $m) => $this->messagePayload($m, $viewer))->all();
+        if ($before > 0) {
+            $query->where('id', '<', $before);
+        }
+
+        $batch = $query->orderByDesc('id')->limit(self::HISTORY_LIMIT + 1)->get()->reverse()->values();
+        $hasMore = $batch->count() > self::HISTORY_LIMIT;
+        $messages = $hasMore ? $batch->slice(-self::HISTORY_LIMIT)->values() : $batch;
+
+        return [
+            'messages' => $messages->map(fn (Message $m) => $this->messagePayload($m, $viewer))->all(),
+            'has_more' => $hasMore,
+        ];
     }
 
     public function markRead(User $reader, string $with): void

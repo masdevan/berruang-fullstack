@@ -17,13 +17,18 @@ class MessageController extends Controller
     {
         $request->validate(['with' => ['required', 'string']]);
 
-        $messages = $this->chat->thread($request->user(), $request->with, (int) $request->input('after'));
+        $result = $this->chat->thread(
+            $request->user(),
+            $request->with,
+            (int) $request->input('after'),
+            (int) $request->input('before'),
+        );
 
-        if ($messages === null) {
+        if ($result === null) {
             return response()->json(['message' => 'Contact not found.'], 422);
         }
 
-        return response()->json(['messages' => $messages]);
+        return response()->json($result);
     }
 
     public function markRead(Request $request): JsonResponse

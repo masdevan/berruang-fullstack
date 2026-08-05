@@ -1,4 +1,4 @@
-import { pushMessage, clearMessages, currentChatName } from './bubbles.js';
+import { pushMessage, clearMessages, currentChatName, normalizeMessage, setOlderHasMore } from './bubbles.js';
 
 let openSeq = 0;
 let historyLoading = false;
@@ -14,8 +14,9 @@ export function openChat(username) {
         .then(function (data) {
             historyLoading = false;
             if (seq !== openSeq || currentChatName !== username) return;
+            setOlderHasMore(username, !!data.has_more);
             data.messages.forEach(function (msg) {
-                pushMessage(normalize(msg));
+                pushMessage(normalizeMessage(msg));
             });
             const unreadItem = document.querySelector('[data-username="' + username + '"] .unread-badge');
             if (unreadItem) {
@@ -34,16 +35,4 @@ export function openChat(username) {
         .catch(function () {
             historyLoading = false;
         });
-}
-
-function normalize(msg) {
-    return {
-        id: msg.id,
-        from: msg.from,
-        text: msg.body,
-        time: msg.time,
-        type: msg.type || 'text',
-        read_at: msg.read_at || null,
-        file: msg.file || null,
-    };
 }
