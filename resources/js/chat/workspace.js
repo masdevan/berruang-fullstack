@@ -1,5 +1,5 @@
 import { setCurrentChat } from './bubbles.js';
-import { setRightbarVisible } from './sidebar.js';
+import { setRightbarVisible, setRightbarHasChat } from './sidebar.js';
 
 function workspaceError(id, message) {
     const el = document.getElementById(id);
@@ -52,10 +52,26 @@ window.openWorkspace = function (el, name, code) {
 
     const emptyRightbar = document.getElementById('rightbar-empty');
     if (emptyRightbar) {
-        emptyRightbar.classList.remove('hidden');
-        emptyRightbar.classList.add('flex');
+        emptyRightbar.classList.add('hidden');
+        emptyRightbar.classList.remove('flex');
     }
-    setRightbarVisible(false);
+    setRightbarVisible(true);
+    setRightbarHasChat(true);
+
+    const wsAvatar = document.getElementById('rightbar-ws-avatar');
+    const wsName = document.getElementById('rightbar-ws-name');
+    const wsCode = document.getElementById('rightbar-ws-code');
+    const wsAbout = document.getElementById('rightbar-ws-about');
+    if (wsAvatar) wsAvatar.textContent = (name.charAt(0) || '?').toUpperCase();
+    if (wsName) wsName.textContent = name;
+    if (wsCode) wsCode.textContent = 'Code: ' + code;
+    if (wsAbout) wsAbout.textContent = 'Workspace';
+
+    const wsPanel = document.getElementById('rightbar-workspace');
+    if (wsPanel) {
+        wsPanel.classList.remove('hidden');
+        wsPanel.classList.add('flex');
+    }
 
     const workspaceTabs = document.getElementById('workspace-tabs');
     if (workspaceTabs) {
@@ -72,6 +88,19 @@ window.openWorkspace = function (el, name, code) {
             + '</div>';
         container.scrollTop = 0;
     }
+};
+
+window.switchWorkspaceRightbarTab = function (kind) {
+    const general = document.getElementById('ws-rb-general');
+    const members = document.getElementById('ws-rb-members');
+    const generalPane = document.getElementById('ws-rb-general-pane');
+    const membersPane = document.getElementById('ws-rb-members-pane');
+    if (!general || !members || !generalPane || !membersPane) return;
+    const isGeneral = kind === 'general';
+    general.className = 'flex-1 py-2.5 text-xs font-medium cursor-pointer border-b-2 -mb-px transition-colors ' + (isGeneral ? 'text-white border-[#E091A9]' : 'text-white/40 border-transparent');
+    members.className = 'flex-1 py-2.5 text-xs font-medium cursor-pointer border-b-2 -mb-px transition-colors ' + (!isGeneral ? 'text-white border-[#E091A9]' : 'text-white/40 border-transparent');
+    generalPane.classList.toggle('hidden', !isGeneral);
+    membersPane.classList.toggle('hidden', isGeneral);
 };
 
 window.submitCreateWorkspace = function () {

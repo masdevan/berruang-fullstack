@@ -53,6 +53,10 @@ window.toggleRight = function () {
 
 let rightbarHasChat = false;
 
+export function setRightbarHasChat(hasChat) {
+    rightbarHasChat = !!hasChat;
+}
+
 function showRightbarEmptyState(empty) {
     const el = document.getElementById('rightbar-empty');
     if (!el) return;
@@ -155,6 +159,11 @@ window.openConversation = function (name, avatar, status, about, customName, rea
     if (workspaceTabs) {
         workspaceTabs.classList.add('hidden');
         workspaceTabs.classList.remove('flex');
+    }
+    const wsPanel = document.getElementById('rightbar-workspace');
+    if (wsPanel) {
+        wsPanel.classList.add('hidden');
+        wsPanel.classList.remove('flex');
     }
     const input = document.getElementById('message-input');
     if (input) {

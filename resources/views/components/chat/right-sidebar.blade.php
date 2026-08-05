@@ -4,6 +4,47 @@
         <p class="text-[11px] text-white/20">Pick a conversation</p>
         <p class="text-[10px] text-white/10 leading-relaxed">Profile, shared media<br>and files will appear here</p>
     </div>
+    <div id="rightbar-workspace" class="hidden absolute inset-0 z-20 bg-[#0F0F0F] flex-col">
+        <div class="p-4 text-center border-b border-white/6">
+            <div class="relative w-12 h-12 mx-auto">
+                <span id="rightbar-ws-avatar" class="w-full h-full rounded-full bg-[#E091A9]/15 flex items-center justify-center text-sm font-medium text-[#E091A9] block"></span>
+            </div>
+            <p id="rightbar-ws-name" class="text-xs font-medium mt-1.5 text-white/80"></p>
+            <p id="rightbar-ws-code" class="text-[10px] text-white/40 mt-0.5"></p>
+        </div>
+        <div class="p-3 border-b border-white/6">
+            <x-chat.section-label title="About" info="Workspace information." />
+            <p id="rightbar-ws-about" class="text-[11px] text-white/60 leading-relaxed"></p>
+        </div>
+        <div class="flex border-b border-white/6">
+            <button type="button" onclick="switchWorkspaceRightbarTab('general')" id="ws-rb-general" class="flex-1 py-2.5 text-xs font-medium cursor-pointer border-b-2 -mb-px text-white border-[#E091A9] transition-colors">General</button>
+            <button type="button" onclick="switchWorkspaceRightbarTab('members')" id="ws-rb-members" class="flex-1 py-2.5 text-xs font-medium cursor-pointer border-b-2 -mb-px text-white/40 border-transparent transition-colors">Members</button>
+        </div>
+        <div id="ws-rb-general-pane" class="flex-1 overflow-y-auto">
+            <div class="p-3 border-b border-white/6">
+                <x-chat.section-label title="Shared Media" info="Images and videos shared in this workspace." />
+                <div class="empty-state flex flex-col items-center justify-center gap-2 py-8 text-center">
+                    <x-icons.ghost class="w-8 h-8 text-white/15" />
+                    <p class="text-[11px] text-white/20">No shared media yet</p>
+                    <p class="text-[10px] text-white/10">Photos and videos will appear here</p>
+                </div>
+            </div>
+            <div class="px-3 pt-3 pb-2">
+                <x-chat.section-label title="Shared Files" info="All files shared in this workspace." />
+                <div class="empty-state flex flex-col items-center justify-center gap-2 py-8 text-center">
+                    <x-icons.ghost class="w-8 h-8 text-white/15" />
+                    <p class="text-[11px] text-white/20">No shared files yet</p>
+                    <p class="text-[10px] text-white/10">All attachments will appear here</p>
+                </div>
+            </div>
+        </div>
+        <div id="ws-rb-members-pane" class="hidden flex-1 overflow-y-auto">
+            <div class="empty-state flex flex-col items-center justify-center min-h-full gap-2 py-10 text-center">
+                <x-icons.ghost class="w-8 h-8 text-white/15" />
+                <p class="text-[11px] text-white/20">No members yet</p>
+            </div>
+        </div>
+    </div>
     <div id="rightbar-view" class="hidden absolute inset-0 z-20 bg-[#0F0F0F] flex-col">
         <div class="flex items-center gap-2 px-4 py-3 border-b border-white/6 bg-[#0A0A0A] shrink-0">
             <button type="button" onclick="closeSharedView()" class="w-7 h-7 flex items-center justify-center text-white/30 hover:text-white/60 transition-colors cursor-pointer shrink-0" title="Back">
