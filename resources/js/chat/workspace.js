@@ -19,7 +19,7 @@ function replaceWorkspaceList(html) {
     if (empty) empty.classList.toggle('hidden', html.trim().length > 0);
 }
 
-window.openWorkspace = function (el, name, code) {
+window.openWorkspace = function (el, name, code, created) {
     document.querySelectorAll('#workspace-list [data-workspace]').forEach(function (item) {
         item.classList.remove('bg-white/5');
     });
@@ -61,16 +61,23 @@ window.openWorkspace = function (el, name, code) {
     const wsAvatar = document.getElementById('rightbar-ws-avatar');
     const wsName = document.getElementById('rightbar-ws-name');
     const wsCode = document.getElementById('rightbar-ws-code');
+    const wsCreated = document.getElementById('rightbar-ws-created');
     const wsAbout = document.getElementById('rightbar-ws-about');
     if (wsAvatar) wsAvatar.textContent = (name.charAt(0) || '?').toUpperCase();
     if (wsName) wsName.textContent = name;
     if (wsCode) wsCode.textContent = 'Code: ' + code;
+    if (wsCreated) wsCreated.textContent = 'Created ' + (created || '');
     if (wsAbout) wsAbout.textContent = 'Workspace';
 
     const wsPanel = document.getElementById('rightbar-workspace');
     if (wsPanel) {
         wsPanel.classList.remove('hidden');
         wsPanel.classList.add('flex');
+    }
+
+    const configureBtn = document.getElementById('rightbar-ws-configure');
+    if (configureBtn) {
+        configureBtn.classList.toggle('hidden', el.dataset.myRole !== 'owner' && el.dataset.myRole !== 'admin');
     }
 
     currentWsCode = code;
@@ -85,9 +92,10 @@ window.openWorkspace = function (el, name, code) {
     const container = document.getElementById('messages-container');
     if (container) {
         container.innerHTML = '<div class="flex flex-col items-center justify-center h-full gap-2.5">'
+            + '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" class="w-9 h-9 text-white/15"><path stroke-linecap="round" stroke-linejoin="round" d="m12.83 2.18a2 2 0 0 0-1.66 0L2.6 6.08a1 1 0 0 0 0 1.83l8.58 3.91a2 2 0 0 0 1.66 0l8.58-3.9a1 1 0 0 0 0-1.83Z"/><path stroke-linecap="round" stroke-linejoin="round" d="m22 17.65-9.17 4.16a2 2 0 0 1-1.66 0L2 17.65"/><path stroke-linecap="round" stroke-linejoin="round" d="m22 12.65-9.17 4.16a2 2 0 0 1-1.66 0L2 12.65"/></svg>'
             + '<p class="text-xs font-medium text-white/40">' + name + '</p>'
-            + '<p class="text-[10px] tracking-widest text-white/25">' + code + '</p>'
-            + '<p class="text-[10px] text-white/10">Workspace features coming soon</p>'
+            + '<p class="text-[10px] tracking-widest text-white/25">Code: ' + code + '</p>'
+            + '<p class="text-[10px] text-white/20">Created ' + (created || '') + '</p>'
             + '</div>';
         container.scrollTop = 0;
     }

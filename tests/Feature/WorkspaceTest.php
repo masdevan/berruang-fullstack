@@ -130,6 +130,20 @@ class WorkspaceTest extends TestCase
         expect($members[1]['name'])->toBe('Ayu Member');
     }
 
+    public function test_workspace_list_renders_my_role_server_side(): void
+    {
+        $owner = User::factory()->create();
+        $joiner = User::factory()->create();
+        $workspace = app(\App\Services\WorkspaceService::class)->create($owner, 'Tim Dev');
+        app(\App\Services\WorkspaceService::class)->join($joiner, $workspace->code);
+
+        $ownerHtml = $this->actingAs($owner)->get('/messages')->getContent();
+        expect($ownerHtml)->toContain('data-my-role="owner"');
+
+        $joinerHtml = $this->actingAs($joiner)->get('/messages')->getContent();
+        expect($joinerHtml)->toContain('data-my-role="user"');
+    }
+
     public function test_members_endpoint_rejects_non_members(): void
     {
         $owner = User::factory()->create();

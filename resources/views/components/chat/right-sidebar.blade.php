@@ -11,6 +11,8 @@
             </div>
             <p id="rightbar-ws-name" class="text-xs font-medium mt-1.5 text-white/80"></p>
             <p id="rightbar-ws-code" class="text-[10px] text-white/40 mt-0.5"></p>
+            <p id="rightbar-ws-created" class="text-[10px] text-white/20 mt-0.5"></p>
+            <button type="button" id="rightbar-ws-configure" class="hidden mt-2.5 px-3 py-1.5 rounded-sm bg-white/5 hover:bg-white/10 text-[10px] font-medium text-white/60 hover:text-white transition-colors cursor-pointer">Configure workspace</button>
         </div>
         <div class="p-3 border-b border-white/6">
             <x-chat.section-label title="About" info="Workspace information." />
