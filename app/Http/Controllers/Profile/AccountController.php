@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Profile;
 
 use App\Http\Controllers\Controller;
 use App\Services\ProfileService;
+use App\Services\WorkspaceService;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
 
@@ -15,6 +16,7 @@ class AccountController extends Controller
     {
         return view('profile.index', [
             'users' => auth()->user()->contacts()->orderBy('first_name')->limit(20)->get(),
+            'workspaces' => app(WorkspaceService::class)->list(auth()->user()),
         ]);
     }
 

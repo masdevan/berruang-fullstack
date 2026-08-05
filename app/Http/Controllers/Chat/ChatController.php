@@ -4,10 +4,14 @@ namespace App\Http\Controllers\Chat;
 
 use App\Http\Controllers\Controller;
 use App\Services\ChatService;
+use App\Services\WorkspaceService;
 
 class ChatController extends Controller
 {
-    public function __construct(private readonly ChatService $chat) {}
+    public function __construct(
+        private readonly ChatService $chat,
+        private readonly WorkspaceService $workspaces,
+    ) {}
 
     public function index()
     {
@@ -17,6 +21,7 @@ class ChatController extends Controller
             'users' => $users,
             'meta' => $this->chat->conversationMeta(auth()->user(), $users),
             'drafts' => $this->chat->drafts(),
+            'workspaces' => $this->workspaces->list(auth()->user()),
         ]);
     }
 }

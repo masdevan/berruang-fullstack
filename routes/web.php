@@ -12,6 +12,7 @@ use App\Http\Controllers\Chat\DraftController;
 use App\Http\Controllers\Chat\MessageController;
 use App\Http\Controllers\Chat\StatusController;
 use App\Http\Controllers\Chat\TypingController;
+use App\Http\Controllers\Chat\WorkspaceController;
 use App\Http\Controllers\HomeController;
 use App\Http\Controllers\Profile\AccountController;
 use App\Http\Controllers\Profile\PasswordController;
@@ -38,6 +39,9 @@ Route::middleware(['auth', 'verified', 'onboarded'])->group(function () {
 
     Route::post('/typing', [TypingController::class, 'store'])->name('typing.store');
     Route::post('/chat/draft', [DraftController::class, 'store'])->name('chat.draft.store');
+
+    Route::post('/workspaces', [WorkspaceController::class, 'store'])->name('workspaces.store');
+    Route::post('/workspaces/join', [WorkspaceController::class, 'join'])->name('workspaces.join');
 
     Route::post('/profile/password', [PasswordController::class, 'update'])->name('profile.password');
     Route::post('/profile/account', [AccountController::class, 'update'])->name('profile.account');

@@ -1,5 +1,6 @@
 import './chat/modal.js';
 import './chat/add-user.js';
+import './chat/workspace.js';
 import './chat/search.js';
 import './chat/realtime.js';
 import './chat/idle.js';

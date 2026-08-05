@@ -50,6 +50,29 @@
             <button type="button" onclick="submitAddUser()" class="px-2.5 py-1.5 text-xs font-medium bg-[#E091A9] text-[#0A0A0A] rounded-lg hover:bg-[#E8A8BC] transition-colors cursor-pointer">Add</button>
         </div>
     </x-modal>
+    <x-modal id="create-workspace-modal" title="Create workspace">
+        <div class="relative">
+            <input type="text" id="workspace-name-input" placeholder="Workspace name" autocomplete="off" data-autofocus maxlength="100"
+                   class="w-full px-3 py-2 bg-white/3 border border-white/6 text-sm text-white placeholder-white/20 focus:outline-none focus:border-[#E091A9]/50 rounded-lg">
+        </div>
+        <p id="create-workspace-error" class="hidden text-[10px] text-red-400 mt-2"></p>
+        <div class="flex justify-end gap-2 mt-3">
+            <button type="button" onclick="closeModal('create-workspace-modal')" class="px-2.5 py-1.5 text-xs font-medium text-white/60 hover:text-white transition-colors cursor-pointer">Cancel</button>
+            <button type="button" onclick="submitCreateWorkspace()" class="px-2.5 py-1.5 text-xs font-medium bg-[#E091A9] text-[#0A0A0A] rounded-lg hover:bg-[#E8A8BC] transition-colors cursor-pointer">Create</button>
+        </div>
+    </x-modal>
+    <x-modal id="join-workspace-modal" title="Join workspace">
+        <div class="relative">
+            <input type="text" id="workspace-code-input" placeholder="XXXXXXXX" autocomplete="off" data-autofocus maxlength="8"
+                   oninput="this.value = this.value.toUpperCase().replace(/[^A-Z0-9]/g, '')"
+                   class="w-full px-3 py-2 tracking-[0.3em] text-center text-sm bg-white/3 border border-white/6 text-white placeholder-white/20 focus:outline-none focus:border-[#E091A9]/50 rounded-lg">
+        </div>
+        <p id="join-workspace-error" class="hidden text-[10px] text-red-400 mt-2"></p>
+        <div class="flex justify-end gap-2 mt-3">
+            <button type="button" onclick="closeModal('join-workspace-modal')" class="px-2.5 py-1.5 text-xs font-medium text-white/60 hover:text-white transition-colors cursor-pointer">Cancel</button>
+            <button type="button" onclick="submitJoinWorkspace()" class="px-2.5 py-1.5 text-xs font-medium bg-[#E091A9] text-[#0A0A0A] rounded-lg hover:bg-[#E8A8BC] transition-colors cursor-pointer">Join</button>
+        </div>
+    </x-modal>
     @stack('scripts')
 </body>
 </html>

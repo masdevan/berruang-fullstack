@@ -1,4 +1,4 @@
-@props(['users' => [], 'meta' => [], 'drafts' => []])
+@props(['users' => [], 'meta' => [], 'drafts' => [], 'workspaces' => collect()])
 <div id="leftbar-root" class="relative h-full border-r border-white/6 flex flex-col bg-[#0F0F0F]">
     <div class="flex items-center justify-between px-4 py-3 border-b border-white/6">
         <a href="{{ url('/messages') }}" class="hover:opacity-80 transition-opacity" title="Messages">
@@ -64,11 +64,16 @@
 
     <div id="tab-pane-workspace" class="hidden flex-1 flex-col min-h-0">
         <div class="flex-1 overflow-y-auto">
-            <div class="empty-state flex flex-col items-center justify-center h-full gap-2 px-8 text-center">
-                <x-icons.ghost class="w-9 h-9 text-white/15" />
-                <p class="text-[11px] text-white/20">No workspaces yet</p>
-                <p class="text-[10px] text-white/10 leading-relaxed">Create or join a workspace<br>to collaborate with your team</p>
+            <div id="workspace-list">
+                <x-chat.workspace-list :workspaces="$workspaces" />
             </div>
+            @if ($workspaces->isEmpty())
+                <div id="workspace-empty" class="empty-state flex flex-col items-center justify-center h-full gap-2 px-8 text-center">
+                    <x-icons.ghost class="w-9 h-9 text-white/15" />
+                    <p class="text-[11px] text-white/20">No workspaces yet</p>
+                    <p class="text-[10px] text-white/10 leading-relaxed">Create or join a workspace<br>to collaborate with your team</p>
+                </div>
+            @endif
         </div>
     </div>
 
@@ -77,11 +82,11 @@
             <x-icons.contact class="w-3.5 h-3.5 text-[#E091A9]/70 shrink-0" />
             Add user
         </button>
-        <button type="button" class="w-full flex items-center gap-2 px-2.5 py-2 rounded hover:bg-white/5 transition-colors cursor-pointer text-xs text-white/80">
+        <button type="button" onclick="openModal('create-workspace-modal')" class="w-full flex items-center gap-2 px-2.5 py-2 rounded hover:bg-white/5 transition-colors cursor-pointer text-xs text-white/80">
             <x-icons.workspace class="w-3.5 h-3.5 text-[#E091A9]/70 shrink-0" />
             Create workspace
         </button>
-        <button type="button" class="w-full flex items-center gap-2 px-2.5 py-2 rounded hover:bg-white/5 transition-colors cursor-pointer text-xs text-white/80">
+        <button type="button" onclick="openModal('join-workspace-modal')" class="w-full flex items-center gap-2 px-2.5 py-2 rounded hover:bg-white/5 transition-colors cursor-pointer text-xs text-white/80">
             <x-icons.join class="w-3.5 h-3.5 text-[#E091A9]/70 shrink-0" />
             Join workspace
         </button>
