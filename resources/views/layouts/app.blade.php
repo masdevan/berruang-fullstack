@@ -25,6 +25,31 @@
     <div class="flex h-screen">
         @yield('content')
     </div>
+    <x-modal id="add-user-names-modal" title="Set contact name" maxWidth="max-w-sm">
+        <div class="space-y-2.5">
+            <input type="text" id="add-user-first-name" placeholder="First name" autocomplete="off" data-autofocus
+                   class="w-full px-3 py-2 bg-white/3 border border-white/6 text-sm text-white placeholder-white/20 focus:outline-none focus:border-[#E091A9]/50 rounded-lg">
+            <input type="text" id="add-user-last-name" placeholder="Last name" autocomplete="off"
+                   class="w-full px-3 py-2 bg-white/3 border border-white/6 text-sm text-white placeholder-white/20 focus:outline-none focus:border-[#E091A9]/50 rounded-lg">
+        </div>
+        <p id="add-user-names-error" class="hidden text-[10px] text-red-400 mt-2"></p>
+        <div class="flex justify-end gap-2 mt-3">
+            <button type="button" onclick="submitAddUserNames(true)" class="px-2.5 py-1.5 text-xs font-medium text-white/60 hover:text-white transition-colors cursor-pointer">Skip</button>
+            <button type="button" onclick="submitAddUserNames()" class="px-2.5 py-1.5 text-xs font-medium bg-[#E091A9] text-[#0A0A0A] rounded-lg hover:bg-[#E8A8BC] transition-colors cursor-pointer">Save</button>
+        </div>
+    </x-modal>
+    <x-modal id="add-user-modal" title="Add user">
+        <div class="relative">
+            <input type="text" id="add-user-input" placeholder="Username" autocomplete="off" data-autofocus
+                   class="w-full px-3 py-2 pr-8 bg-white/3 border border-white/6 text-sm text-white placeholder-white/20 focus:outline-none focus:border-[#E091A9]/50 rounded-lg">
+            <span id="add-user-status" class="absolute right-2.5 top-1/2 -translate-y-1/2 hidden text-white/25"></span>
+        </div>
+        <p id="add-user-error" class="hidden text-[10px] text-red-400 mt-2"></p>
+        <div class="flex justify-end gap-2 mt-3">
+            <button type="button" onclick="closeModal('add-user-modal')" class="px-2.5 py-1.5 text-xs font-medium text-white/60 hover:text-white transition-colors cursor-pointer">Cancel</button>
+            <button type="button" onclick="submitAddUser()" class="px-2.5 py-1.5 text-xs font-medium bg-[#E091A9] text-[#0A0A0A] rounded-lg hover:bg-[#E8A8BC] transition-colors cursor-pointer">Add</button>
+        </div>
+    </x-modal>
     @stack('scripts')
 </body>
 </html>
