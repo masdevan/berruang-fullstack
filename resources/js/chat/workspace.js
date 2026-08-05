@@ -146,7 +146,7 @@ function renderWorkspaceMembers(members) {
             ? '<img src="' + m.avatar + '" alt="" class="w-9 h-9 rounded-full object-cover">'
             : '<div class="w-9 h-9 rounded-full bg-white/8 flex items-center justify-center text-[10px] font-medium text-white/60">' + m.avatar + '</div>';
         const roleLabel = m.role.charAt(0).toUpperCase() + m.role.slice(1);
-        return '<div class="flex items-center gap-2.5 px-3 py-2.5 rounded hover:bg-white/5">'
+        return '<div class="flex items-center gap-2.5 px-3 py-2.5 hover:bg-white/5">'
             + '<div class="relative shrink-0">' + avatar + '</div>'
             + '<div class="flex-1 min-w-0">'
             + '<div class="flex items-center gap-1.5">'
