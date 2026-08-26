@@ -300,13 +300,16 @@ function prependOlder(username, older, hasMore) {
 
     const container = document.getElementById('messages-container');
     if (!container) return;
+    const prevHeight = container.scrollHeight;
     container.insertAdjacentHTML('afterbegin', fresh.map(function (m, i) {
         return messageHtml(m, username, i);
     }).join(''));
-    container.querySelectorAll('[data-chat="' + username + '"]').forEach(function (row) {
-        const index = Number(row.dataset.index);
-        if (!isNaN(index)) row.dataset.index = index + fresh.length;
-    });
+    container.scrollTop += container.scrollHeight - prevHeight;
+    const rows = container.querySelectorAll('[data-chat="' + username + '"]');
+    for (let r = fresh.length; r < rows.length; r++) {
+        const index = Number(rows[r].dataset.index);
+        if (!isNaN(index)) rows[r].dataset.index = index + fresh.length;
+    }
 }
 
 const containerEl = document.getElementById('messages-container');
