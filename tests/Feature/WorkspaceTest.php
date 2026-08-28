@@ -2,11 +2,13 @@
 
 namespace Tests\Feature;
 
+use App\Events\WorkspaceMembersChanged;
 use App\Models\User;
 use App\Models\Workspace;
 use App\Services\WorkspaceService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use Tests\TestCase;
@@ -49,7 +51,8 @@ class WorkspaceTest extends TestCase
         $workspace = app(WorkspaceService::class)->create($owner, 'Tim Dev');
 
         $this->actingAs($joiner)->postJson('/workspaces/join', ['code' => strtolower($workspace->code)])
-            ->assertOk();
+            ->assertOk()
+            ->assertJsonPath('code', $workspace->code);
 
         expect($joiner->workspaces()->where('workspace_id', $workspace->id)->exists())->toBeTrue();
     }
@@ -573,5 +576,32 @@ class WorkspaceTest extends TestCase
         expect($members[0]['joined'])->not->toBe('');
         expect($members[1]['creator'])->toBeFalse();
         expect($members[1]['is_me'])->toBeFalse();
+    }
+
+    public function test_joining_broadcasts_members_changed(): void
+    {
+        Event::fake([WorkspaceMembersChanged::class]);
+
+        $owner = User::factory()->create();
+        $joiner = User::factory()->create();
+        $workspace = app(WorkspaceService::class)->create($owner, 'Tim Dev');
+
+        app(WorkspaceService::class)->join($joiner, $workspace->code);
+
+        Event::assertDispatched(WorkspaceMembersChanged::class, fn ($event) => $event->workspace->id === $workspace->id);
+    }
+
+    public function test_accepting_invite_broadcasts_members_changed(): void
+    {
+        Event::fake([WorkspaceMembersChanged::class]);
+
+        $owner = User::factory()->create();
+        $invitee = User::factory()->create(['username' => 'budi']);
+        $workspace = app(WorkspaceService::class)->create($owner, 'Tim Dev');
+        app(WorkspaceService::class)->invite($owner, $workspace->code, 'budi');
+
+        app(WorkspaceService::class)->respondInvite($invitee, $workspace->code, true);
+
+        Event::assertDispatched(WorkspaceMembersChanged::class, fn ($event) => $event->workspace->id === $workspace->id);
     }
 }

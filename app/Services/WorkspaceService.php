@@ -45,6 +45,8 @@ class WorkspaceService
 
         $workspace->members()->attach($user->id, ['role' => 'user']);
 
+        broadcast(new WorkspaceMembersChanged($workspace));
+
         return ['ok' => true, 'workspace' => $workspace];
     }
 
@@ -226,6 +228,7 @@ class WorkspaceService
 
         if ($accept) {
             $workspace->members()->updateExistingPivot($user->id, ['status' => 'member']);
+            broadcast(new WorkspaceMembersChanged($workspace));
         } else {
             $workspace->members()->detach($user->id);
         }

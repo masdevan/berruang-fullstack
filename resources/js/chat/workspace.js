@@ -31,7 +31,7 @@ window.openWorkspace = function (el, name, code, created) {
         item.classList.remove('bg-white/5');
     });
     el.classList.add('bg-white/5');
-    document.querySelectorAll('[data-name]').forEach(function (item) {
+    document.querySelectorAll('#tab-pane-chat [data-name]').forEach(function (item) {
         item.classList.remove('bg-white/5');
     });
 
@@ -975,6 +975,8 @@ window.submitJoinWorkspace = function () {
             input.value = '';
             replaceWorkspaceList(data.html);
             switchTab('workspace');
+            const row = data.code ? document.querySelector('[data-workspace="' + data.code + '"]') : null;
+            if (row) window.openWorkspace(row, row.dataset.name, data.code, row.dataset.created);
         })
         .catch(function () {
             workspaceError('join-workspace-error', 'Something went wrong. Please try again.');
