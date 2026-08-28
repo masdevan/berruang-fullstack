@@ -301,7 +301,8 @@ class WorkspaceTest extends TestCase
 
         $this->actingAs($invitee)->postJson('/workspaces/'.$workspace->code.'/invite-response', ['accept' => true])
             ->assertOk()
-            ->assertJsonPath('ok', true);
+            ->assertJsonPath('ok', true)
+            ->assertJsonPath('code', $workspace->code);
 
         expect($workspace->members()->where('user_id', $invitee->id)->first()->pivot->status)->toBe('member');
     }

@@ -835,7 +835,11 @@ window.respondWorkspaceInvite = function (code, accept) {
         .then(function ({ ok, data }) {
             if (!ok) return;
             replaceWorkspaceList(data.html);
-            if (accept) switchTab('workspace');
+            if (accept) {
+                switchTab('workspace');
+                const row = data.code ? document.querySelector('[data-workspace="' + data.code + '"]') : null;
+                if (row) window.openWorkspace(row, row.dataset.name, data.code, row.dataset.created);
+            }
         })
         .catch(function () {});
 };

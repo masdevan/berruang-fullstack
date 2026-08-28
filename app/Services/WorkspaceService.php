@@ -235,7 +235,7 @@ class WorkspaceService
 
         broadcast(new WorkspaceInviteResponse($workspace, $user, $accept));
 
-        return ['ok' => true];
+        return ['ok' => true, 'workspace' => $workspace];
     }
 
     public function promote(User $actor, string $code, int $userId): array

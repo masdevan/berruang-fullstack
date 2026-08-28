@@ -85,6 +85,7 @@ class WorkspaceController extends Controller
 
         return response()->json([
             'ok' => true,
+            'code' => $result['workspace']->code,
             'html' => $this->listHtml($request->user()),
         ]);
     }
