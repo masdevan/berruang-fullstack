@@ -40,6 +40,18 @@ if (userId) {
                 markMessagesRead(e.message_ids);
             }
             markPreviewRead(e.reader_username);
+        })
+        .listen('WorkspaceInvitation', function (e) {
+            if (window.addPendingWorkspace) window.addPendingWorkspace(e);
+        })
+        .listen('WorkspaceInviteResponse', function (e) {
+            if (window.refreshWorkspaceMembers) window.refreshWorkspaceMembers(e.workspace_code);
+        })
+        .listen('WorkspaceMembersChanged', function (e) {
+            if (window.refreshWorkspaceMembers) window.refreshWorkspaceMembers(e.workspace_code);
+        })
+        .listen('WorkspaceMemberRemoved', function (e) {
+            if (window.removeWorkspaceRow) window.removeWorkspaceRow(e.workspace_code);
         });
 }
 

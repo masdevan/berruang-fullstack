@@ -2,6 +2,10 @@
 
 namespace App\Services;
 
+use App\Events\WorkspaceInvitation;
+use App\Events\WorkspaceInviteResponse;
+use App\Events\WorkspaceMemberRemoved;
+use App\Events\WorkspaceMembersChanged;
 use App\Models\User;
 use App\Models\Workspace;
 use Illuminate\Http\UploadedFile;
@@ -138,13 +142,13 @@ class WorkspaceService
     {
         $workspace = Workspace::where('code', strtoupper(trim($code)))->first();
 
-        if (! $workspace || ! $workspace->members()->where('user_id', $viewer->id)->exists()) {
+        if (! $workspace || ! $workspace->activeMembers()->where('user_id', $viewer->id)->exists()) {
             return ['ok' => false];
         }
 
         $rank = ['owner' => 0, 'admin' => 1, 'user' => 2];
 
-        $members = $workspace->members()
+        $members = $workspace->activeMembers()
             ->get()
             ->sortBy(fn (User $u) => [$rank[$u->pivot->role] ?? 3, mb_strtolower($u->name)])
             ->values()
@@ -155,15 +159,225 @@ class WorkspaceService
                 'avatar' => $u->avatar ? $u->avatarUrl(36) : $u->initials(),
                 'has_avatar' => (bool) $u->avatar,
                 'role' => $u->pivot->role,
+                'creator' => $u->id === $workspace->owner_id,
+                'is_me' => $u->id === $viewer->id,
+                'bio' => $u->bio ?? '',
+                'joined' => $u->pivot->created_at?->format('d M Y') ?? '',
             ])
             ->all();
 
         return ['ok' => true, 'members' => $members];
     }
 
+    public function invite(User $actor, string $code, string $identifier): array
+    {
+        $workspace = Workspace::where('code', strtoupper(trim($code)))->first();
+
+        if (! $workspace) {
+            return ['ok' => false, 'error' => 'Workspace not found.'];
+        }
+
+        $role = $workspace->members()->where('user_id', $actor->id)->first()?->pivot->role;
+
+        if (! in_array($role, ['owner', 'admin'], true)) {
+            return ['ok' => false, 'error' => 'Only the owner or an admin can add members.'];
+        }
+
+        $target = User::where('username', $identifier)
+            ->orWhere('email', $identifier)
+            ->first();
+
+        if (! $target) {
+            return ['ok' => false, 'error' => 'User not found.'];
+        }
+
+        $existing = $workspace->members()->where('user_id', $target->id)->first();
+
+        if ($existing) {
+            return ['ok' => false, 'error' => $existing->pivot->status === 'pending'
+                ? 'This user has already been invited.'
+                : 'This user is already a member.'];
+        }
+
+        $workspace->members()->attach($target->id, [
+            'role' => 'user',
+            'status' => 'pending',
+            'inviter_id' => $actor->id,
+        ]);
+
+        broadcast(new WorkspaceInvitation($workspace, $target, $actor));
+
+        return ['ok' => true];
+    }
+
+    public function respondInvite(User $user, string $code, bool $accept): array
+    {
+        $workspace = Workspace::where('code', strtoupper(trim($code)))->first();
+
+        if (! $workspace) {
+            return ['ok' => false, 'error' => 'Workspace not found.'];
+        }
+
+        $pivot = $workspace->members()->where('user_id', $user->id)->first();
+
+        if (! $pivot || $pivot->pivot->status !== 'pending') {
+            return ['ok' => false, 'error' => 'No pending invitation.'];
+        }
+
+        if ($accept) {
+            $workspace->members()->updateExistingPivot($user->id, ['status' => 'member']);
+        } else {
+            $workspace->members()->detach($user->id);
+        }
+
+        broadcast(new WorkspaceInviteResponse($workspace, $user, $accept));
+
+        return ['ok' => true];
+    }
+
+    public function promote(User $actor, string $code, int $userId): array
+    {
+        $workspace = Workspace::where('code', strtoupper(trim($code)))->first();
+
+        if (! $workspace || ! $this->isManager($workspace, $actor)) {
+            return ['ok' => false, 'error' => 'Only an owner can manage members.'];
+        }
+
+        $target = $workspace->activeMembers()->where('user_id', $userId)->first();
+
+        if (! $target) {
+            return ['ok' => false, 'error' => 'Member not found.'];
+        }
+
+        if ($target->pivot->role === 'owner') {
+            return ['ok' => false, 'error' => 'This user is already an owner.'];
+        }
+
+        $workspace->members()->updateExistingPivot($target->id, ['role' => 'owner']);
+        broadcast(new WorkspaceMembersChanged($workspace));
+
+        return ['ok' => true];
+    }
+
+    public function demote(User $actor, string $code, int $userId): array
+    {
+        $workspace = Workspace::where('code', strtoupper(trim($code)))->first();
+
+        if (! $workspace || ! $this->isManager($workspace, $actor)) {
+            return ['ok' => false, 'error' => 'Only an owner can manage members.'];
+        }
+
+        $target = $workspace->activeMembers()->where('user_id', $userId)->first();
+
+        if (! $target) {
+            return ['ok' => false, 'error' => 'Member not found.'];
+        }
+
+        if ($target->id === $workspace->owner_id) {
+            return ['ok' => false, 'error' => 'The workspace creator cannot be demoted.'];
+        }
+
+        if ($target->pivot->role !== 'owner') {
+            return ['ok' => false, 'error' => 'This user is not an owner.'];
+        }
+
+        $workspace->members()->updateExistingPivot($target->id, ['role' => 'user']);
+        broadcast(new WorkspaceMembersChanged($workspace));
+
+        return ['ok' => true];
+    }
+
+    public function kick(User $actor, string $code, array $userIds): array
+    {
+        $workspace = Workspace::where('code', strtoupper(trim($code)))->first();
+
+        if (! $workspace || ! $this->isManager($workspace, $actor)) {
+            return ['ok' => false, 'error' => 'Only an owner can manage members.'];
+        }
+
+        $targets = $workspace->activeMembers()
+            ->whereIn('users.id', array_values(array_unique($userIds)))
+            ->get();
+
+        if ($targets->isEmpty()) {
+            return ['ok' => false, 'error' => 'No members to remove.'];
+        }
+
+        $removed = [];
+        foreach ($targets as $target) {
+            if ($target->id === $workspace->owner_id || $target->id === $actor->id) {
+                continue;
+            }
+            $removed[] = $target;
+        }
+
+        if (empty($removed)) {
+            return ['ok' => false, 'error' => 'No members to remove.'];
+        }
+
+        $removedIds = array_map(fn (User $u) => $u->id, $removed);
+        $workspace->members()->detach($removedIds);
+
+        foreach ($removed as $target) {
+            broadcast(new WorkspaceMemberRemoved($workspace, $target));
+        }
+
+        broadcast(new WorkspaceMembersChanged($workspace));
+
+        return ['ok' => true];
+    }
+
+    public function leave(User $user, string $code, ?int $successorId): array
+    {
+        $workspace = Workspace::where('code', strtoupper(trim($code)))->first();
+
+        if (! $workspace) {
+            return ['ok' => false, 'error' => 'Workspace not found.'];
+        }
+
+        if (! $workspace->activeMembers()->where('user_id', $user->id)->exists()) {
+            return ['ok' => false, 'error' => 'You are not a member of this workspace.'];
+        }
+
+        if ($workspace->owner_id === $user->id) {
+            if (! $successorId) {
+                return ['ok' => false, 'error' => 'You must delegate ownership before leaving.'];
+            }
+
+            $successor = $workspace->activeMembers()->where('user_id', $successorId)->first();
+
+            if (! $successor || $successor->id === $user->id) {
+                return ['ok' => false, 'error' => 'Choose a valid member to delegate ownership to.'];
+            }
+
+            if ($successor->pivot->role !== 'owner') {
+                $workspace->members()->updateExistingPivot($successor->id, ['role' => 'owner']);
+            }
+
+            $workspace->update(['owner_id' => $successor->id]);
+            $workspace->members()->detach($user->id);
+
+            broadcast(new WorkspaceMembersChanged($workspace));
+
+            return ['ok' => true];
+        }
+
+        $workspace->members()->detach($user->id);
+        broadcast(new WorkspaceMembersChanged($workspace));
+
+        return ['ok' => true];
+    }
+
     public function list(User $user): Collection
     {
         return $user->workspaces()->orderBy('name')->get();
+    }
+
+    private function isManager(Workspace $workspace, User $user): bool
+    {
+        $role = $workspace->members()->where('user_id', $user->id)->first()?->pivot->role;
+
+        return in_array($role, ['owner', 'admin'], true);
     }
 
     private function generateCode(): string

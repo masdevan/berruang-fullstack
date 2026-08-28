@@ -25,6 +25,23 @@ document.addEventListener('DOMContentLoaded', function () {
     makeResizable('sidebar-left', 'resize-left', 200, 500);
     makeResizable('sidebar-right', 'resize-right', 200, 400);
 
+    const params = new URLSearchParams(window.location.search);
+    const wsParam = params.get('ws');
+    if (wsParam && document.getElementById('chat-workspace')) {
+        const row = document.querySelector('[data-workspace="' + wsParam + '"]');
+        if (row) {
+            window.openWorkspace(row, row.dataset.name, wsParam, row.dataset.created);
+            window.switchTab('workspace');
+        }
+    }
+    const chatParam = params.get('chat');
+    if (chatParam && document.getElementById('chat-header-avatar')) {
+        const item = document.querySelector('[data-username="' + chatParam + '"]');
+        if (item) {
+            window.openConversation(item.dataset.name, item.dataset.avatar, item.dataset.status, item.dataset.about, item.dataset.customName, item.dataset.realName, item.dataset.username, item.dataset.hasAvatar === '1');
+        }
+    }
+
     let contactsPage = 1;
     let contactsLoading = false;
     const contactsSentinel = document.getElementById('contacts-sentinel');

@@ -55,6 +55,99 @@ class WorkspaceController extends Controller
         return response()->json($result['members']);
     }
 
+    public function inviteMember(Request $request, string $code): JsonResponse
+    {
+        $request->validate([
+            'identifier' => ['required', 'string', 'max:255'],
+        ]);
+
+        $result = $this->workspaces->invite($request->user(), $code, trim($request->identifier));
+
+        if (! $result['ok']) {
+            return response()->json(['message' => $result['error']], 422);
+        }
+
+        return response()->json(['ok' => true]);
+    }
+
+    public function respondInvite(Request $request, string $code): JsonResponse
+    {
+        $request->validate([
+            'accept' => ['required', 'boolean'],
+        ]);
+
+        $result = $this->workspaces->respondInvite($request->user(), $code, (bool) $request->accept);
+
+        if (! $result['ok']) {
+            return response()->json(['message' => $result['error']], 422);
+        }
+
+        return response()->json([
+            'ok' => true,
+            'html' => $this->listHtml($request->user()),
+        ]);
+    }
+
+    public function promoteMember(Request $request, string $code, int $id): JsonResponse
+    {
+        $result = $this->workspaces->promote($request->user(), $code, $id);
+
+        if (! $result['ok']) {
+            return response()->json(['message' => $result['error']], 422);
+        }
+
+        return response()->json(['ok' => true]);
+    }
+
+    public function demoteMember(Request $request, string $code, int $id): JsonResponse
+    {
+        $result = $this->workspaces->demote($request->user(), $code, $id);
+
+        if (! $result['ok']) {
+            return response()->json(['message' => $result['error']], 422);
+        }
+
+        return response()->json(['ok' => true]);
+    }
+
+    public function kickMembers(Request $request, string $code): JsonResponse
+    {
+        $request->validate([
+            'ids' => ['required', 'array', 'min:1'],
+            'ids.*' => ['required', 'integer'],
+        ]);
+
+        $result = $this->workspaces->kick($request->user(), $code, $request->input('ids'));
+
+        if (! $result['ok']) {
+            return response()->json(['message' => $result['error']], 422);
+        }
+
+        return response()->json(['ok' => true]);
+    }
+
+    public function leave(Request $request, string $code): JsonResponse
+    {
+        $request->validate([
+            'successor_id' => ['nullable', 'integer'],
+        ]);
+
+        $result = $this->workspaces->leave(
+            $request->user(),
+            $code,
+            $request->has('successor_id') ? (int) $request->successor_id : null,
+        );
+
+        if (! $result['ok']) {
+            return response()->json(['message' => $result['error']], 422);
+        }
+
+        return response()->json([
+            'ok' => true,
+            'html' => $this->listHtml($request->user()),
+        ]);
+    }
+
     public function configure(Request $request, string $code): JsonResponse
     {
         $request->validate([

@@ -43,6 +43,12 @@ Route::middleware(['auth', 'verified', 'onboarded'])->group(function () {
     Route::post('/workspaces', [WorkspaceController::class, 'store'])->name('workspaces.store');
     Route::post('/workspaces/join', [WorkspaceController::class, 'join'])->name('workspaces.join');
     Route::get('/workspaces/{code}/members', [WorkspaceController::class, 'members'])->name('workspaces.members');
+    Route::post('/workspaces/{code}/members', [WorkspaceController::class, 'inviteMember'])->name('workspaces.members.add');
+    Route::post('/workspaces/{code}/members/kick', [WorkspaceController::class, 'kickMembers'])->name('workspaces.members.kick');
+    Route::post('/workspaces/{code}/members/{id}/promote', [WorkspaceController::class, 'promoteMember'])->name('workspaces.members.promote');
+    Route::post('/workspaces/{code}/members/{id}/demote', [WorkspaceController::class, 'demoteMember'])->name('workspaces.members.demote');
+    Route::post('/workspaces/{code}/invite-response', [WorkspaceController::class, 'respondInvite'])->name('workspaces.invite-response');
+    Route::post('/workspaces/{code}/leave', [WorkspaceController::class, 'leave'])->name('workspaces.leave');
     Route::post('/workspaces/{code}/configure', [WorkspaceController::class, 'configure'])->name('workspaces.configure');
 
     Route::post('/profile/password', [PasswordController::class, 'update'])->name('profile.password');

@@ -239,4 +239,339 @@ class WorkspaceTest extends TestCase
         expect($members[0]['name'])->toBe('Boss Owner');
         expect($members[0]['role'])->toBe('owner');
     }
+
+    public function test_owner_can_invite_a_user_as_pending(): void
+    {
+        $owner = User::factory()->create();
+        $invitee = User::factory()->create(['username' => 'budi']);
+        $workspace = app(WorkspaceService::class)->create($owner, 'Tim Dev');
+
+        $this->actingAs($owner)->postJson('/workspaces/'.$workspace->code.'/members', ['identifier' => 'budi'])
+            ->assertOk()
+            ->assertJsonPath('ok', true);
+
+        $pivot = $workspace->members()->where('user_id', $invitee->id)->first();
+
+        expect($pivot)->not->toBeNull();
+        expect($pivot->pivot->role)->toBe('user');
+        expect($pivot->pivot->status)->toBe('pending');
+        expect($pivot->pivot->inviter_id)->toBe($owner->id);
+        expect($invitee->workspaces()->where('workspace_id', $workspace->id)->first()->pivot->status)->toBe('pending');
+    }
+
+    public function test_members_endpoint_excludes_pending_invitees(): void
+    {
+        $owner = User::factory()->create(['name' => 'Boss Owner']);
+        $invitee = User::factory()->create(['username' => 'budi']);
+        $workspace = app(WorkspaceService::class)->create($owner, 'Tim Dev');
+        app(WorkspaceService::class)->invite($owner, $workspace->code, 'budi');
+
+        $members = $this->actingAs($owner)->getJson('/workspaces/'.$workspace->code.'/members')
+            ->assertOk()
+            ->json();
+
+        expect($members)->toHaveCount(1);
+        expect($members[0]['name'])->toBe('Boss Owner');
+    }
+
+    public function test_invited_user_sees_pending_workspace_with_accept_reject(): void
+    {
+        $owner = User::factory()->create(['name' => 'Rina']);
+        $invitee = User::factory()->create(['username' => 'budi']);
+        $workspace = app(WorkspaceService::class)->create($owner, 'Tim Dev');
+        app(WorkspaceService::class)->invite($owner, $workspace->code, 'budi');
+
+        $html = $this->actingAs($invitee)->get('/messages')->getContent();
+
+        expect($html)->toContain('Tim Dev');
+        expect($html)->toContain('Rina invited you');
+        expect($html)->toContain('Accept');
+        expect($html)->toContain('Reject');
+    }
+
+    public function test_invitee_can_accept_invitation(): void
+    {
+        $owner = User::factory()->create();
+        $invitee = User::factory()->create(['username' => 'budi']);
+        $workspace = app(WorkspaceService::class)->create($owner, 'Tim Dev');
+        app(WorkspaceService::class)->invite($owner, $workspace->code, 'budi');
+
+        $this->actingAs($invitee)->postJson('/workspaces/'.$workspace->code.'/invite-response', ['accept' => true])
+            ->assertOk()
+            ->assertJsonPath('ok', true);
+
+        expect($workspace->members()->where('user_id', $invitee->id)->first()->pivot->status)->toBe('member');
+    }
+
+    public function test_invitee_can_reject_invitation(): void
+    {
+        $owner = User::factory()->create();
+        $invitee = User::factory()->create(['username' => 'budi']);
+        $workspace = app(WorkspaceService::class)->create($owner, 'Tim Dev');
+        app(WorkspaceService::class)->invite($owner, $workspace->code, 'budi');
+
+        $this->actingAs($invitee)->postJson('/workspaces/'.$workspace->code.'/invite-response', ['accept' => false])
+            ->assertOk();
+
+        expect($workspace->members()->where('user_id', $invitee->id)->exists())->toBeFalse();
+    }
+
+    public function test_regular_user_cannot_invite(): void
+    {
+        $owner = User::factory()->create();
+        $joiner = User::factory()->create();
+        $stranger = User::factory()->create(['username' => 'susi']);
+        $workspace = app(WorkspaceService::class)->create($owner, 'Tim Dev');
+        app(WorkspaceService::class)->join($joiner, $workspace->code);
+
+        $this->actingAs($joiner)->postJson('/workspaces/'.$workspace->code.'/members', ['identifier' => 'susi'])
+            ->assertStatus(422)
+            ->assertJsonPath('message', 'Only the owner or an admin can add members.');
+    }
+
+    public function test_inviting_unknown_user_is_rejected(): void
+    {
+        $owner = User::factory()->create();
+        $workspace = app(WorkspaceService::class)->create($owner, 'Tim Dev');
+
+        $this->actingAs($owner)->postJson('/workspaces/'.$workspace->code.'/members', ['identifier' => 'nobody'])
+            ->assertStatus(422)
+            ->assertJsonPath('message', 'User not found.');
+    }
+
+    public function test_inviting_existing_member_is_rejected(): void
+    {
+        $owner = User::factory()->create();
+        $joiner = User::factory()->create(['username' => 'budi']);
+        $workspace = app(WorkspaceService::class)->create($owner, 'Tim Dev');
+        app(WorkspaceService::class)->join($joiner, $workspace->code);
+
+        $this->actingAs($owner)->postJson('/workspaces/'.$workspace->code.'/members', ['identifier' => 'budi'])
+            ->assertStatus(422)
+            ->assertJsonPath('message', 'This user is already a member.');
+    }
+
+    public function test_duplicate_invite_is_rejected(): void
+    {
+        $owner = User::factory()->create();
+        $invitee = User::factory()->create(['username' => 'budi']);
+        $workspace = app(WorkspaceService::class)->create($owner, 'Tim Dev');
+        app(WorkspaceService::class)->invite($owner, $workspace->code, 'budi');
+
+        $this->actingAs($owner)->postJson('/workspaces/'.$workspace->code.'/members', ['identifier' => 'budi'])
+            ->assertStatus(422)
+            ->assertJsonPath('message', 'This user has already been invited.');
+    }
+
+    public function test_owner_can_invite_a_user_by_email(): void
+    {
+        $owner = User::factory()->create();
+        $invitee = User::factory()->create(['email' => 'budi@example.com']);
+        $workspace = app(WorkspaceService::class)->create($owner, 'Tim Dev');
+
+        $this->actingAs($owner)->postJson('/workspaces/'.$workspace->code.'/members', ['identifier' => 'budi@example.com'])
+            ->assertOk()
+            ->assertJsonPath('ok', true);
+
+        expect($workspace->members()->where('user_id', $invitee->id)->first()->pivot->status)->toBe('pending');
+    }
+
+    public function test_respond_without_invitation_is_rejected(): void
+    {
+        $owner = User::factory()->create();
+        $stranger = User::factory()->create();
+        $workspace = app(WorkspaceService::class)->create($owner, 'Tim Dev');
+
+        $this->actingAs($stranger)->postJson('/workspaces/'.$workspace->code.'/invite-response', ['accept' => true])
+            ->assertStatus(422)
+            ->assertJsonPath('message', 'No pending invitation.');
+    }
+
+    public function test_owner_can_promote_user_to_owner(): void
+    {
+        $owner = User::factory()->create();
+        $member = User::factory()->create();
+        $workspace = app(WorkspaceService::class)->create($owner, 'Tim Dev');
+        app(WorkspaceService::class)->join($member, $workspace->code);
+
+        $this->actingAs($owner)->postJson('/workspaces/'.$workspace->code.'/members/'.$member->id.'/promote')
+            ->assertOk();
+
+        expect($workspace->members()->where('user_id', $member->id)->first()->pivot->role)->toBe('owner');
+    }
+
+    public function test_co_owner_can_promote_user_to_owner(): void
+    {
+        $owner = User::factory()->create();
+        $co = User::factory()->create();
+        $member = User::factory()->create();
+        $workspace = app(WorkspaceService::class)->create($owner, 'Tim Dev');
+        app(WorkspaceService::class)->join($co, $workspace->code);
+        $workspace->members()->updateExistingPivot($co->id, ['role' => 'owner']);
+        app(WorkspaceService::class)->join($member, $workspace->code);
+
+        $this->actingAs($co)->postJson('/workspaces/'.$workspace->code.'/members/'.$member->id.'/promote')
+            ->assertOk();
+
+        expect($workspace->members()->where('user_id', $member->id)->first()->pivot->role)->toBe('owner');
+    }
+
+    public function test_regular_user_cannot_promote(): void
+    {
+        $owner = User::factory()->create();
+        $member = User::factory()->create();
+        $stranger = User::factory()->create();
+        $workspace = app(WorkspaceService::class)->create($owner, 'Tim Dev');
+        app(WorkspaceService::class)->join($member, $workspace->code);
+        app(WorkspaceService::class)->join($stranger, $workspace->code);
+
+        $this->actingAs($stranger)->postJson('/workspaces/'.$workspace->code.'/members/'.$member->id.'/promote')
+            ->assertStatus(422)
+            ->assertJsonPath('message', 'Only an owner can manage members.');
+    }
+
+    public function test_owner_can_demote_co_owner(): void
+    {
+        $owner = User::factory()->create();
+        $co = User::factory()->create();
+        $workspace = app(WorkspaceService::class)->create($owner, 'Tim Dev');
+        app(WorkspaceService::class)->join($co, $workspace->code);
+        $workspace->members()->updateExistingPivot($co->id, ['role' => 'owner']);
+
+        $this->actingAs($owner)->postJson('/workspaces/'.$workspace->code.'/members/'.$co->id.'/demote')
+            ->assertOk();
+
+        expect($workspace->members()->where('user_id', $co->id)->first()->pivot->role)->toBe('user');
+    }
+
+    public function test_creator_cannot_be_demoted(): void
+    {
+        $owner = User::factory()->create();
+        $co = User::factory()->create();
+        $workspace = app(WorkspaceService::class)->create($owner, 'Tim Dev');
+        app(WorkspaceService::class)->join($co, $workspace->code);
+        $workspace->members()->updateExistingPivot($co->id, ['role' => 'owner']);
+
+        $this->actingAs($co)->postJson('/workspaces/'.$workspace->code.'/members/'.$owner->id.'/demote')
+            ->assertStatus(422)
+            ->assertJsonPath('message', 'The workspace creator cannot be demoted.');
+    }
+
+    public function test_owner_can_kick_a_member(): void
+    {
+        $owner = User::factory()->create();
+        $member = User::factory()->create();
+        $workspace = app(WorkspaceService::class)->create($owner, 'Tim Dev');
+        app(WorkspaceService::class)->join($member, $workspace->code);
+
+        $this->actingAs($owner)->postJson('/workspaces/'.$workspace->code.'/members/kick', ['ids' => [$member->id]])
+            ->assertOk();
+
+        expect($workspace->members()->where('user_id', $member->id)->exists())->toBeFalse();
+    }
+
+    public function test_owner_can_bulk_kick_members(): void
+    {
+        $owner = User::factory()->create();
+        $a = User::factory()->create();
+        $b = User::factory()->create();
+        $workspace = app(WorkspaceService::class)->create($owner, 'Tim Dev');
+        app(WorkspaceService::class)->join($a, $workspace->code);
+        app(WorkspaceService::class)->join($b, $workspace->code);
+
+        $this->actingAs($owner)->postJson('/workspaces/'.$workspace->code.'/members/kick', ['ids' => [$a->id, $b->id]])
+            ->assertOk();
+
+        expect($workspace->members()->where('user_id', $a->id)->exists())->toBeFalse();
+        expect($workspace->members()->where('user_id', $b->id)->exists())->toBeFalse();
+        expect($workspace->members()->where('user_id', $owner->id)->exists())->toBeTrue();
+    }
+
+    public function test_creator_cannot_be_kicked(): void
+    {
+        $owner = User::factory()->create();
+        $co = User::factory()->create();
+        $workspace = app(WorkspaceService::class)->create($owner, 'Tim Dev');
+        app(WorkspaceService::class)->join($co, $workspace->code);
+        $workspace->members()->updateExistingPivot($co->id, ['role' => 'owner']);
+
+        $this->actingAs($co)->postJson('/workspaces/'.$workspace->code.'/members/kick', ['ids' => [$owner->id]])
+            ->assertStatus(422)
+            ->assertJsonPath('message', 'No members to remove.');
+
+        expect($workspace->members()->where('user_id', $owner->id)->exists())->toBeTrue();
+    }
+
+    public function test_user_can_leave_workspace(): void
+    {
+        $owner = User::factory()->create();
+        $member = User::factory()->create();
+        $workspace = app(WorkspaceService::class)->create($owner, 'Tim Dev');
+        app(WorkspaceService::class)->join($member, $workspace->code);
+
+        $this->actingAs($member)->postJson('/workspaces/'.$workspace->code.'/leave')
+            ->assertOk();
+
+        expect($workspace->members()->where('user_id', $member->id)->exists())->toBeFalse();
+    }
+
+    public function test_co_owner_can_leave_workspace(): void
+    {
+        $owner = User::factory()->create();
+        $co = User::factory()->create();
+        $workspace = app(WorkspaceService::class)->create($owner, 'Tim Dev');
+        app(WorkspaceService::class)->join($co, $workspace->code);
+        $workspace->members()->updateExistingPivot($co->id, ['role' => 'owner']);
+
+        $this->actingAs($co)->postJson('/workspaces/'.$workspace->code.'/leave')
+            ->assertOk();
+
+        expect($workspace->members()->where('user_id', $co->id)->exists())->toBeFalse();
+        expect($workspace->refresh()->owner_id)->toBe($owner->id);
+    }
+
+    public function test_creator_must_delegate_before_leaving(): void
+    {
+        $owner = User::factory()->create();
+        $workspace = app(WorkspaceService::class)->create($owner, 'Tim Dev');
+
+        $this->actingAs($owner)->postJson('/workspaces/'.$workspace->code.'/leave')
+            ->assertStatus(422)
+            ->assertJsonPath('message', 'You must delegate ownership before leaving.');
+    }
+
+    public function test_creator_can_delegate_ownership_and_leave(): void
+    {
+        $owner = User::factory()->create();
+        $member = User::factory()->create();
+        $workspace = app(WorkspaceService::class)->create($owner, 'Tim Dev');
+        app(WorkspaceService::class)->join($member, $workspace->code);
+
+        $this->actingAs($owner)->postJson('/workspaces/'.$workspace->code.'/leave', ['successor_id' => $member->id])
+            ->assertOk();
+
+        expect($workspace->refresh()->owner_id)->toBe($member->id);
+        expect($workspace->members()->where('user_id', $member->id)->first()->pivot->role)->toBe('owner');
+        expect($workspace->members()->where('user_id', $owner->id)->exists())->toBeFalse();
+    }
+
+    public function test_members_payload_includes_creator_profile_and_joined(): void
+    {
+        $owner = User::factory()->create(['name' => 'Boss Owner', 'bio' => 'Hello']);
+        $member = User::factory()->create(['name' => 'Ayu Member']);
+        $workspace = app(WorkspaceService::class)->create($owner, 'Tim Dev');
+        app(WorkspaceService::class)->join($member, $workspace->code);
+
+        $members = $this->actingAs($owner)->getJson('/workspaces/'.$workspace->code.'/members')
+            ->assertOk()
+            ->json();
+
+        expect($members)->toHaveCount(2);
+        expect($members[0]['creator'])->toBeTrue();
+        expect($members[0]['is_me'])->toBeTrue();
+        expect($members[0]['bio'])->toBe('Hello');
+        expect($members[0]['joined'])->not->toBe('');
+        expect($members[1]['creator'])->toBeFalse();
+        expect($members[1]['is_me'])->toBeFalse();
+    }
 }

@@ -13,14 +13,15 @@
             <p id="rightbar-ws-code" class="text-[10px] text-white/40 mt-0.5"></p>
             <p id="rightbar-ws-created" class="text-[10px] text-white/20 mt-0.5"></p>
             <button type="button" id="rightbar-ws-configure" onclick="openWorkspaceConfig()" class="hidden mt-2.5 px-3 py-1.5 rounded-sm bg-white/5 hover:bg-white/10 text-[10px] font-medium text-white/60 hover:text-white transition-colors cursor-pointer">Configure workspace</button>
+            <button type="button" id="rightbar-ws-leave" onclick="openLeaveWorkspace()" class="mt-2 px-3 py-1.5 rounded-sm bg-white/5 hover:bg-white/10 text-[10px] font-medium text-red-400/80 hover:text-red-400 transition-colors cursor-pointer">Leave workspace</button>
         </div>
         <div class="p-3 border-b border-white/6">
             <x-chat.section-label title="About" info="Workspace information." />
             <p id="rightbar-ws-about" onclick="openWorkspaceBio()" title="Click to read more" class="text-[11px] text-white/60 leading-relaxed cursor-pointer hover:text-white/80 transition-colors"></p>
         </div>
-        <div class="flex overflow-hidden border-b border-white/6">
-            <button type="button" onclick="switchWorkspaceRightbarTab('general')" id="ws-rb-general" class="flex-1 py-2.5 text-xs font-medium whitespace-nowrap cursor-pointer border-b-2 -mb-px text-white border-[#E091A9] transition-colors">General</button>
-            <button type="button" onclick="switchWorkspaceRightbarTab('members')" id="ws-rb-members" class="flex-1 py-2.5 text-xs font-medium whitespace-nowrap cursor-pointer border-b-2 -mb-px text-white/40 border-transparent transition-colors">Members</button>
+        <div class="flex overflow-hidden">
+            <button type="button" onclick="switchWorkspaceRightbarTab('general')" id="ws-rb-general" class="flex-1 py-2.5 text-xs font-medium whitespace-nowrap cursor-pointer border-b-2 text-white border-[#E091A9] transition-colors">General</button>
+            <button type="button" onclick="switchWorkspaceRightbarTab('members')" id="ws-rb-members" class="flex-1 py-2.5 text-xs font-medium whitespace-nowrap cursor-pointer border-b-2 text-white/40 border-white/6 transition-colors">Members</button>
         </div>
         <div id="ws-rb-general-pane" class="flex-1 overflow-y-auto">
             <div class="p-3 border-b border-white/6">
@@ -40,11 +41,22 @@
                 </div>
             </div>
         </div>
-        <div id="ws-rb-members-pane" class="hidden flex-1 flex-col min-h-0 relative overflow-y-auto">
-            <div id="ws-rb-members-list"></div>
-            <div id="ws-rb-members-empty" class="empty-state absolute inset-0 flex flex-col items-center justify-center gap-2 text-center">
-                <x-icons.ghost class="w-8 h-8 text-white/15" />
-                <p class="text-[11px] text-white/20">No members yet</p>
+        <div id="ws-rb-members-pane" class="hidden flex-1 flex-col min-h-0">
+            <div id="ws-rb-members-header" class="hidden items-center justify-start gap-2 pl-2 pr-3 py-2 border-b border-white/6 shrink-0">
+                <button type="button" id="ws-add-member-btn" onclick="openAddWorkspaceMemberModal()" class="inline-flex items-center gap-1 px-2 py-1 rounded-sm bg-[#E091A9]/10 hover:bg-[#E091A9]/20 text-[#E091A9] text-[10px] font-medium transition-colors cursor-pointer">
+                    <x-icons.plus class="w-3 h-3" /> Add member
+                </button>
+                <button type="button" id="ws-bulk-kick-btn" data-bulk="toggle" class="inline-flex items-center gap-1 px-2 py-1 rounded-sm bg-white/5 hover:bg-white/10 text-white/50 hover:text-white text-[10px] font-medium transition-colors cursor-pointer" title="Remove members">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" class="w-3 h-3"><path stroke-linecap="round" stroke-linejoin="round" d="M9.75 9.75l4.5 4.5m0-4.5l-4.5 4.5M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0z"/></svg>
+                    <span id="ws-bulk-label">Remove</span>
+                </button>
+            </div>
+            <div class="flex-1 min-h-0 relative overflow-y-auto">
+                <div id="ws-rb-members-list"></div>
+                <div id="ws-rb-members-empty" class="empty-state absolute inset-0 flex flex-col items-center justify-center gap-2 text-center">
+                    <x-icons.ghost class="w-8 h-8 text-white/15" />
+                    <p class="text-[11px] text-white/20">No members yet</p>
+                </div>
             </div>
         </div>
     </div>

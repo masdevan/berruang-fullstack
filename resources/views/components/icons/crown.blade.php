@@ -1,0 +1,1 @@
+<svg viewBox="0 0 24 24" fill="currentColor" {{ $attributes->merge(['class' => '']) }}><path d="M5 16l-2.6-6.9a.5.5 0 0 1 .83-.54L7 11.2l3.8-5.7a.5.5 0 0 1 .84 0l3.8 5.7 3.77-2.44a.5.5 0 0 1 .83.54L17 16H5zm-1 2.5h14a1 1 0 1 1 0 2H4a1 1 0 1 1 0-2z"/></svg>
