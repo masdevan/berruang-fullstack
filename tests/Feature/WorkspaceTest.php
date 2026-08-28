@@ -534,10 +534,24 @@ class WorkspaceTest extends TestCase
         expect($workspace->refresh()->owner_id)->toBe($owner->id);
     }
 
-    public function test_creator_must_delegate_before_leaving(): void
+    public function test_solo_creator_can_leave_and_workspace_is_deleted(): void
     {
         $owner = User::factory()->create();
         $workspace = app(WorkspaceService::class)->create($owner, 'Tim Dev');
+
+        $this->actingAs($owner)->postJson('/workspaces/'.$workspace->code.'/leave')
+            ->assertOk();
+
+        expect(Workspace::find($workspace->id))->toBeNull();
+        expect($owner->workspaces()->where('workspace_id', $workspace->id)->exists())->toBeFalse();
+    }
+
+    public function test_creator_with_members_must_delegate_before_leaving(): void
+    {
+        $owner = User::factory()->create();
+        $member = User::factory()->create();
+        $workspace = app(WorkspaceService::class)->create($owner, 'Tim Dev');
+        app(WorkspaceService::class)->join($member, $workspace->code);
 
         $this->actingAs($owner)->postJson('/workspaces/'.$workspace->code.'/leave')
             ->assertStatus(422)

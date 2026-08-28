@@ -364,6 +364,14 @@ class WorkspaceService
         }
 
         if ($workspace->owner_id === $user->id) {
+            $hasOtherMembers = $workspace->activeMembers()->where('user_id', '!=', $user->id)->exists();
+
+            if (! $hasOtherMembers) {
+                $workspace->delete();
+
+                return ['ok' => true];
+            }
+
             if (! $successorId) {
                 return ['ok' => false, 'error' => 'You must delegate ownership before leaving.'];
             }

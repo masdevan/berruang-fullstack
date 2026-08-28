@@ -317,6 +317,17 @@ function loadWorkspaceMembers(code) {
         .catch(function () {});
 }
 
+function applyRoleUi(role) {
+    const isManager = role === 'owner' || role === 'admin';
+    const addMemberHeader = document.getElementById('ws-rb-members-header');
+    if (addMemberHeader) {
+        addMemberHeader.classList.toggle('hidden', !isManager);
+        addMemberHeader.classList.toggle('flex', isManager);
+    }
+    const configureBtn = document.getElementById('rightbar-ws-configure');
+    if (configureBtn) configureBtn.classList.toggle('hidden', !isManager);
+}
+
 function renderWorkspaceMembers(members) {
     const list = document.getElementById('ws-rb-members-list');
     const empty = document.getElementById('ws-rb-members-empty');
@@ -365,6 +376,14 @@ function renderWorkspaceMembers(members) {
             + '</div>'
             + '</div>';
     }).join('');
+    const me = members.find(function (m) { return m.is_me; });
+    if (me && me.role !== currentWsRole) {
+        currentWsRole = me.role;
+        applyRoleUi(me.role);
+        if (bulkMode) toggleBulkKick(false);
+        const row = document.querySelector('[data-workspace="' + currentWsCode + '"]');
+        if (row) row.setAttribute('data-my-role', me.role);
+    }
     updateBulkCount();
 }
 
@@ -643,6 +662,16 @@ window.openLeaveWorkspace = function () {
     const me = currentWsMembers.find(function (m) { return m.is_me; });
     const isCreator = me && me.creator;
     if (isCreator) {
+        const hasOthers = currentWsMembers.some(function (m) { return !m.is_me; });
+        if (!hasOthers) {
+            const text = document.getElementById('ws-member-action-text');
+            pendingMemberAction = { type: 'leave' };
+            if (text) text.textContent = 'You are the only member. Leave this workspace?';
+            const modalCancel = document.getElementById('ws-member-action-cancel');
+            if (modalCancel) modalCancel.classList.remove('hidden');
+            openModal('ws-member-action-modal');
+            return;
+        }
         populateLeaveDelegate();
         openModal('ws-leave-delegate-modal');
         return;
