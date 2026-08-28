@@ -471,7 +471,7 @@ class WorkspaceTest extends TestCase
         $this->actingAs($owner)->postJson('/workspaces/'.$workspace->code.'/members/kick', ['ids' => [$member->id]])
             ->assertOk();
 
-        expect($workspace->members()->where('user_id', $member->id)->exists())->toBeFalse();
+        expect($workspace->members()->where('user_id', $member->id)->first()->pivot->status)->toBe('kicked');
     }
 
     public function test_owner_can_bulk_kick_members(): void
@@ -486,9 +486,9 @@ class WorkspaceTest extends TestCase
         $this->actingAs($owner)->postJson('/workspaces/'.$workspace->code.'/members/kick', ['ids' => [$a->id, $b->id]])
             ->assertOk();
 
-        expect($workspace->members()->where('user_id', $a->id)->exists())->toBeFalse();
-        expect($workspace->members()->where('user_id', $b->id)->exists())->toBeFalse();
-        expect($workspace->members()->where('user_id', $owner->id)->exists())->toBeTrue();
+        expect($workspace->members()->where('user_id', $a->id)->first()->pivot->status)->toBe('kicked');
+        expect($workspace->members()->where('user_id', $b->id)->first()->pivot->status)->toBe('kicked');
+        expect($workspace->members()->where('user_id', $owner->id)->first()->pivot->status)->toBe('member');
     }
 
     public function test_creator_cannot_be_kicked(): void
@@ -604,5 +604,66 @@ class WorkspaceTest extends TestCase
         app(WorkspaceService::class)->respondInvite($invitee, $workspace->code, true);
 
         Event::assertDispatched(WorkspaceMembersChanged::class, fn ($event) => $event->workspace->id === $workspace->id);
+    }
+
+    public function test_kicked_user_cannot_rejoin_by_code(): void
+    {
+        $owner = User::factory()->create();
+        $member = User::factory()->create();
+        $workspace = app(WorkspaceService::class)->create($owner, 'Tim Dev');
+        app(WorkspaceService::class)->join($member, $workspace->code);
+        app(WorkspaceService::class)->kick($owner, $workspace->code, [$member->id]);
+
+        $this->actingAs($member)->postJson('/workspaces/join', ['code' => $workspace->code])
+            ->assertStatus(422)
+            ->assertJsonPath('message', 'You have been removed from this workspace. You can only rejoin if you are invited again.');
+
+        expect($workspace->members()->where('user_id', $member->id)->first()->pivot->status)->toBe('kicked');
+    }
+
+    public function test_kicked_user_can_be_reinvited_and_accept(): void
+    {
+        $owner = User::factory()->create();
+        $member = User::factory()->create();
+        $workspace = app(WorkspaceService::class)->create($owner, 'Tim Dev');
+        app(WorkspaceService::class)->join($member, $workspace->code);
+        app(WorkspaceService::class)->kick($owner, $workspace->code, [$member->id]);
+
+        $result = app(WorkspaceService::class)->invite($owner, $workspace->code, $member->username);
+
+        expect($result['ok'])->toBeTrue();
+        expect($workspace->members()->where('user_id', $member->id)->first()->pivot->status)->toBe('pending');
+
+        app(WorkspaceService::class)->respondInvite($member, $workspace->code, true);
+
+        expect($workspace->members()->where('user_id', $member->id)->first()->pivot->status)->toBe('member');
+    }
+
+    public function test_kicked_workspace_is_not_listed(): void
+    {
+        $owner = User::factory()->create();
+        $member = User::factory()->create();
+        $workspace = app(WorkspaceService::class)->create($owner, 'Tim Dev');
+        app(WorkspaceService::class)->join($member, $workspace->code);
+        app(WorkspaceService::class)->kick($owner, $workspace->code, [$member->id]);
+
+        $html = $this->actingAs($member)->get('/messages')->getContent();
+
+        expect($html)->not->toContain($workspace->code);
+        expect($member->workspaces()->where('workspace_id', $workspace->id)->exists())->toBeTrue();
+    }
+
+    public function test_kicked_owner_cannot_configure_workspace(): void
+    {
+        $owner = User::factory()->create();
+        $co = User::factory()->create();
+        $workspace = app(WorkspaceService::class)->create($owner, 'Tim Dev');
+        app(WorkspaceService::class)->join($co, $workspace->code);
+        $workspace->members()->updateExistingPivot($co->id, ['role' => 'owner']);
+        app(WorkspaceService::class)->kick($owner, $workspace->code, [$co->id]);
+
+        $this->actingAs($co)->postJson('/workspaces/'.$workspace->code.'/configure', ['bio' => 'ubah'])
+            ->assertStatus(422)
+            ->assertJsonPath('message', 'Only the owner or an admin can configure this workspace.');
     }
 }

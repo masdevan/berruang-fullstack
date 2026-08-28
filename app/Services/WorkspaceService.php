@@ -39,7 +39,13 @@ class WorkspaceService
             return ['ok' => false, 'error' => 'Workspace not found.'];
         }
 
-        if ($workspace->members()->where('user_id', $user->id)->exists()) {
+        $pivot = $workspace->members()->where('user_id', $user->id)->first();
+
+        if ($pivot) {
+            if ($pivot->pivot->status === 'kicked') {
+                return ['ok' => false, 'error' => 'You have been removed from this workspace. You can only rejoin if you are invited again.'];
+            }
+
             return ['ok' => false, 'error' => 'You are already a member of this workspace.'];
         }
 
@@ -58,7 +64,7 @@ class WorkspaceService
             return ['ok' => false, 'error' => 'Workspace not found.'];
         }
 
-        $role = $workspace->members()->where('user_id', $user->id)->first()?->pivot->role;
+        $role = $workspace->activeMembers()->where('user_id', $user->id)->first()?->pivot->role;
 
         if (! in_array($role, ['owner', 'admin'], true)) {
             return ['ok' => false, 'error' => 'Only the owner or an admin can configure this workspace.'];
@@ -196,6 +202,18 @@ class WorkspaceService
         $existing = $workspace->members()->where('user_id', $target->id)->first();
 
         if ($existing) {
+            if ($existing->pivot->status === 'kicked') {
+                $workspace->members()->updateExistingPivot($target->id, [
+                    'role' => 'user',
+                    'status' => 'pending',
+                    'inviter_id' => $actor->id,
+                ]);
+
+                broadcast(new WorkspaceInvitation($workspace, $target, $actor));
+
+                return ['ok' => true];
+            }
+
             return ['ok' => false, 'error' => $existing->pivot->status === 'pending'
                 ? 'This user has already been invited.'
                 : 'This user is already a member.'];
@@ -319,7 +337,10 @@ class WorkspaceService
         }
 
         $removedIds = array_map(fn (User $u) => $u->id, $removed);
-        $workspace->members()->detach($removedIds);
+
+        foreach ($removedIds as $id) {
+            $workspace->members()->updateExistingPivot($id, ['status' => 'kicked']);
+        }
 
         foreach ($removed as $target) {
             broadcast(new WorkspaceMemberRemoved($workspace, $target));
@@ -373,12 +394,15 @@ class WorkspaceService
 
     public function list(User $user): Collection
     {
-        return $user->workspaces()->orderBy('name')->get();
+        return $user->workspaces()
+            ->wherePivot('status', '!=', 'kicked')
+            ->orderBy('name')
+            ->get();
     }
 
     private function isManager(Workspace $workspace, User $user): bool
     {
-        $role = $workspace->members()->where('user_id', $user->id)->first()?->pivot->role;
+        $role = $workspace->activeMembers()->where('user_id', $user->id)->first()?->pivot->role;
 
         return in_array($role, ['owner', 'admin'], true);
     }
