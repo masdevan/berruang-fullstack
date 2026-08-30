@@ -271,6 +271,7 @@ class ChatService
 
     public function addContact(User $user, string $username): array
     {
+        $username = ltrim(trim($username), '@');
         $target = $username !== '' ? User::where('username', $username)->first() : null;
 
         if (! $target) {

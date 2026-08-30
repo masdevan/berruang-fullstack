@@ -40,7 +40,7 @@
     </x-modal>
     <x-modal id="add-user-modal" title="Add user">
         <div class="relative">
-            <input type="text" id="add-user-input" placeholder="Username" autocomplete="off" data-autofocus
+            <input type="text" id="add-user-input" placeholder="Username or @username" autocomplete="off" data-autofocus
                    class="w-full px-3 py-2 pr-8 bg-white/3 border border-white/6 text-sm text-white placeholder-white/20 focus:outline-none focus:border-[#E091A9]/50 rounded-lg">
             <span id="add-user-status" class="absolute right-2.5 top-1/2 -translate-y-1/2 hidden text-white/25"></span>
         </div>
@@ -50,12 +50,55 @@
             <button type="button" onclick="submitAddUser()" class="px-2.5 py-1.5 text-xs font-medium bg-[#E091A9] text-[#0A0A0A] rounded-lg hover:bg-[#E8A8BC] transition-colors cursor-pointer">Add</button>
         </div>
     </x-modal>
-    <x-modal id="create-workspace-modal" title="Create workspace">
-        <div class="relative">
-            <input type="text" id="workspace-name-input" placeholder="Workspace name" autocomplete="off" data-autofocus maxlength="100"
-                   class="w-full px-3 py-2 bg-white/3 border border-white/6 text-sm text-white placeholder-white/20 focus:outline-none focus:border-[#E091A9]/50 rounded-lg">
+    <x-modal id="create-workspace-modal" title="Create workspace" maxWidth="max-w-md">
+        <div class="space-y-4 max-h-[75vh] overflow-y-auto pr-1">
+            <div>
+                <p class="text-[10px] font-medium text-white/35 uppercase tracking-wider mb-1.5">Workspace icon</p>
+                <div class="flex items-center gap-3">
+                    <div class="relative shrink-0 w-12 h-12">
+                        <span id="create-ws-avatar-fallback" class="w-full h-full rounded-full bg-[#E091A9]/15 flex items-center justify-center text-sm font-medium text-[#E091A9]">W</span>
+                        <img id="create-ws-avatar" alt="" class="hidden absolute inset-0 w-full h-full rounded-full object-cover">
+                    </div>
+                    <button type="button" onclick="openAvatarModal()" class="px-2.5 py-1.5 rounded-sm bg-white/5 hover:bg-white/10 text-[10px] font-medium text-white/60 hover:text-white transition-colors cursor-pointer">Change picture</button>
+                </div>
+            </div>
+            <div>
+                <p class="text-[10px] font-medium text-white/35 uppercase tracking-wider mb-1.5">Name</p>
+                <input type="text" id="workspace-name-input" placeholder="Workspace name" autocomplete="off" data-autofocus maxlength="100"
+                       class="w-full px-3 py-2 bg-white/3 border border-white/6 text-sm text-white placeholder-white/20 focus:outline-none focus:border-[#E091A9]/50 rounded-lg">
+            </div>
+            <div>
+                <p class="text-[10px] font-medium text-white/35 uppercase tracking-wider mb-1.5">Code</p>
+                <div class="relative">
+                    <input type="text" id="create-ws-code" maxlength="8" autocomplete="off" placeholder="XXXXXXXX (leave empty for random)"
+                           oninput="this.value = this.value.toUpperCase().replace(/[^A-Z0-9]/g, '')"
+                           class="w-full px-3 py-2 pr-10 tracking-[0.25em] text-center text-sm bg-white/3 border border-white/6 text-white placeholder-white/20 focus:outline-none focus:border-[#E091A9]/50 rounded-lg">
+                    <button type="button" onclick="rollCreateWorkspaceCode()" class="absolute right-2 top-1/2 -translate-y-1/2 text-white/30 hover:text-white/70 transition-colors cursor-pointer" title="Random code">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" class="w-4 h-4"><path stroke-linecap="round" stroke-linejoin="round" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0l3.181 3.183a8.25 8.25 0 0013.803-3.7M4.031 9.865a8.25 8.25 0 0113.803-3.7l3.181 3.182m0-4.991v4.99"/></svg>
+                    </button>
+                </div>
+            </div>
+            <div>
+                <p class="text-[10px] font-medium text-white/35 uppercase tracking-wider mb-1.5">Invite members</p>
+                <div class="flex gap-1.5">
+                    <input type="text" id="create-ws-invite-input" placeholder="Username, @username, or email" autocomplete="off"
+                           class="flex-1 px-3 py-2 bg-white/3 border border-white/6 text-sm text-white placeholder-white/20 focus:outline-none focus:border-[#E091A9]/50 rounded-lg">
+                    <button type="button" onclick="addCreateWorkspaceInvite()" class="px-2.5 py-1 rounded-sm bg-[#E091A9]/10 hover:bg-[#E091A9]/20 text-[#E091A9] text-[10px] font-medium transition-colors cursor-pointer">Add</button>
+                </div>
+                <button type="button" id="create-ws-contacts-toggle" onclick="toggleCreateWsContacts()"
+                        class="mt-1.5 inline-flex items-center gap-1 px-2.5 py-1 rounded-sm border border-white/10 text-[10px] font-medium text-white/60 hover:text-white hover:border-white/20 transition-colors cursor-pointer">
+                    <x-icons.contact class="w-3 h-3 text-[#E091A9]/70" /> Select from contacts
+                </button>
+                <div id="create-ws-contacts-list" class="hidden mt-2 max-h-48 overflow-y-auto space-y-1 border border-white/6 rounded-sm p-1.5"></div>
+                <div id="create-ws-invites-list" class="flex flex-wrap gap-1.5 mt-2"></div>
+            </div>
+            <div>
+                <p class="text-[10px] font-medium text-white/35 uppercase tracking-wider mb-1.5">About</p>
+                <textarea id="create-ws-bio" rows="3" maxlength="500" placeholder="What is this workspace about?"
+                          class="w-full px-3 py-2.5 bg-white/3 border border-white/6 text-xs text-white placeholder-white/20 focus:outline-none focus:border-[#E091A9]/50 rounded-lg resize-none"></textarea>
+            </div>
+            <p id="create-workspace-error" class="hidden text-[10px] text-red-400"></p>
         </div>
-        <p id="create-workspace-error" class="hidden text-[10px] text-red-400 mt-2"></p>
         <div class="flex justify-end gap-2 mt-3">
             <button type="button" onclick="closeModal('create-workspace-modal')" class="px-2.5 py-1.5 text-xs font-medium text-white/60 hover:text-white transition-colors cursor-pointer">Cancel</button>
             <button type="button" onclick="submitCreateWorkspace()" class="px-2.5 py-1.5 text-xs font-medium bg-[#E091A9] text-[#0A0A0A] rounded-lg hover:bg-[#E8A8BC] transition-colors cursor-pointer">Create</button>
@@ -75,7 +118,7 @@
     </x-modal>
     <x-modal id="add-workspace-member-modal" title="Add member">
         <div class="relative">
-            <input type="text" id="add-workspace-member-input" placeholder="Username or email" autocomplete="off" data-autofocus
+            <input type="text" id="add-workspace-member-input" placeholder="Username, @username, or email" autocomplete="off" data-autofocus
                    class="w-full px-3 py-2 bg-white/3 border border-white/6 text-sm text-white placeholder-white/20 focus:outline-none focus:border-[#E091A9]/50 rounded-lg">
         </div>
         <p id="add-workspace-member-error" class="hidden text-[10px] text-red-400 mt-2"></p>

@@ -28,6 +28,53 @@ class ContactTest extends TestCase
         $this->assertTrue($me->contacts()->where('contact_user_id', $target->id)->exists());
     }
 
+    public function test_contacts_options_returns_contacts_json(): void
+    {
+        $me = $this->actingUser();
+        $a = User::factory()->create(['name' => 'Alice Wonder', 'username' => 'alice']);
+        $b = User::factory()->create(['name' => 'Budi Santoso', 'username' => 'budi']);
+
+        $me->contacts()->attach([$a->id, $b->id]);
+
+        $options = $this->actingAs($me)->getJson('/contacts/options')
+            ->assertOk()
+            ->json();
+
+        expect($options)->toHaveCount(2);
+        expect($options[0]['username'])->toBe('alice');
+        expect($options[0]['name'])->toBe('Alice Wonder');
+        expect($options[0]['has_avatar'])->toBeFalse();
+        expect($options[1]['username'])->toBe('budi');
+    }
+
+    public function test_contacts_options_only_returns_own_contacts(): void
+    {
+        $me = $this->actingUser();
+        $stranger = User::factory()->create(['username' => 'orang']);
+        $stranger2 = User::factory()->create(['username' => 'orang2']);
+
+        $stranger->contacts()->attach($stranger2->id);
+
+        $options = $this->actingAs($me)->getJson('/contacts/options')
+            ->assertOk()
+            ->json();
+
+        expect($options)->toHaveCount(0);
+    }
+
+    public function test_add_user_accepts_at_prefix_and_check_username(): void
+    {
+        $me = $this->actingUser();
+        $target = User::factory()->create(['username' => 'alice']);
+
+        $this->actingAs($me)->postJson('/contacts', ['username' => '@alice'])
+            ->assertOk();
+
+        $this->assertTrue($me->contacts()->where('contact_user_id', $target->id)->exists());
+
+        $this->getJson('/check-username/@alice')->assertJsonPath('taken', true);
+    }
+
     public function test_add_user_rejects_self_not_found_and_duplicates(): void
     {
         $me = $this->actingUser();

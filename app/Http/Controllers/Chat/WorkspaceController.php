@@ -15,9 +15,27 @@ class WorkspaceController extends Controller
     {
         $request->validate([
             'name' => ['required', 'string', 'max:100'],
+            'code' => ['nullable', 'string', 'max:8', 'regex:/^[A-Z0-9]+$/i'],
+            'bio' => ['nullable', 'string', 'max:500'],
+            'avatar' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:2048'],
+            'invites' => ['nullable', 'array'],
+            'invites.*' => ['string', 'max:255'],
         ]);
 
-        $workspace = $this->workspaces->create($request->user(), $request->name);
+        $result = $this->workspaces->createWithDetails(
+            $request->user(),
+            $request->name,
+            $request->input('code'),
+            $request->input('bio'),
+            $request->file('avatar'),
+            $request->input('invites', []),
+        );
+
+        if (! $result['ok']) {
+            return response()->json(['message' => $result['error']], 422);
+        }
+
+        $workspace = $result['workspace'];
 
         return response()->json([
             'id' => $workspace->id,

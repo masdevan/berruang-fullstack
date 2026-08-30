@@ -28,6 +28,7 @@ Route::middleware(['auth', 'verified', 'onboarded'])->group(function () {
     Route::get('/profile', [AccountController::class, 'index'])->name('profile');
 
     Route::get('/contacts', [ContactController::class, 'index'])->name('contacts.index');
+    Route::get('/contacts/options', [ContactController::class, 'options'])->name('contacts.options');
     Route::post('/contacts', [ContactController::class, 'store'])->name('contacts.store');
     Route::patch('/contacts/{id}', [ContactController::class, 'updateNames'])->name('contacts.update-names');
     Route::get('/messages/thread', [MessageController::class, 'index'])->name('messages.index');

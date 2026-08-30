@@ -44,6 +44,75 @@ class WorkspaceTest extends TestCase
             ->assertStatus(422);
     }
 
+    public function test_creating_a_workspace_with_custom_code(): void
+    {
+        $me = User::factory()->create();
+
+        $this->actingAs($me)->postJson('/workspaces', ['name' => 'Tim Dev', 'code' => 'ABCDEF12'])
+            ->assertOk()
+            ->assertJsonPath('code', 'ABCDEF12');
+
+        expect(Workspace::where('code', 'ABCDEF12')->exists())->toBeTrue();
+    }
+
+    public function test_creating_a_workspace_with_taken_code_is_rejected(): void
+    {
+        $me = User::factory()->create();
+        app(WorkspaceService::class)->create($me, 'Tim Lain');
+
+        $existing = Workspace::first();
+
+        $this->actingAs($me)->postJson('/workspaces', ['name' => 'Tim Baru', 'code' => $existing->code])
+            ->assertStatus(422)
+            ->assertJsonPath('message', 'That code is already taken.');
+    }
+
+    public function test_creating_a_workspace_with_invites_sends_pending_invitations(): void
+    {
+        $me = User::factory()->create();
+        $invitee = User::factory()->create(['username' => 'budi']);
+
+        $this->actingAs($me)->postJson('/workspaces', [
+            'name' => 'Tim Dev',
+            'bio' => 'Tim pengembangan',
+            'invites' => ['budi'],
+        ])->assertOk();
+
+        $workspace = Workspace::where('name', 'Tim Dev')->first();
+
+        expect($workspace->bio)->toBe('Tim pengembangan');
+        expect($workspace->members()->where('user_id', $invitee->id)->first()->pivot->status)->toBe('pending');
+    }
+
+    public function test_creating_a_workspace_rejects_unknown_invite(): void
+    {
+        $me = User::factory()->create();
+
+        $this->actingAs($me)->postJson('/workspaces', [
+            'name' => 'Tim Dev',
+            'invites' => ['nobody'],
+        ])->assertStatus(422)
+            ->assertJsonPath('message', "User 'nobody' not found.");
+
+        expect(Workspace::count())->toBe(0);
+    }
+
+    public function test_creating_a_workspace_with_avatar(): void
+    {
+        Storage::fake('public');
+        $me = User::factory()->create();
+
+        $this->actingAs($me)->postJson('/workspaces', [
+            'name' => 'Tim Dev',
+            'avatar' => UploadedFile::fake()->image('logo.jpg', 200, 200),
+        ])->assertOk();
+
+        $workspace = Workspace::first();
+
+        expect($workspace->avatar)->not->toBeNull();
+        Storage::disk('public')->assertExists($workspace->avatar);
+    }
+
     public function test_joining_a_workspace_by_code_is_case_insensitive(): void
     {
         $owner = User::factory()->create();
@@ -260,6 +329,34 @@ class WorkspaceTest extends TestCase
         expect($pivot->pivot->status)->toBe('pending');
         expect($pivot->pivot->inviter_id)->toBe($owner->id);
         expect($invitee->workspaces()->where('workspace_id', $workspace->id)->first()->pivot->status)->toBe('pending');
+    }
+
+    public function test_invite_accepts_at_prefix(): void
+    {
+        $owner = User::factory()->create();
+        $invitee = User::factory()->create(['username' => 'budi']);
+        $workspace = app(WorkspaceService::class)->create($owner, 'Tim Dev');
+
+        $this->actingAs($owner)->postJson('/workspaces/'.$workspace->code.'/members', ['identifier' => '@budi'])
+            ->assertOk()
+            ->assertJsonPath('ok', true);
+
+        expect($workspace->members()->where('user_id', $invitee->id)->first()->pivot->status)->toBe('pending');
+    }
+
+    public function test_creating_workspace_invite_accepts_at_prefix(): void
+    {
+        $owner = User::factory()->create();
+        $invitee = User::factory()->create(['username' => 'budi']);
+
+        $this->actingAs($owner)->postJson('/workspaces', [
+            'name' => 'Tim Dev',
+            'invites' => ['@budi'],
+        ])->assertOk();
+
+        $workspace = Workspace::where('name', 'Tim Dev')->first();
+
+        expect($workspace->members()->where('user_id', $invitee->id)->first()->pivot->status)->toBe('pending');
     }
 
     public function test_members_endpoint_excludes_pending_invitees(): void

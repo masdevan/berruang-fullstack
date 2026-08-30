@@ -18,10 +18,10 @@ class WorkspaceService
 
     private const CODE_CHARS = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
 
-    public function create(User $owner, string $name): Workspace
+    public function create(User $owner, string $name, ?string $code = null): Workspace
     {
         $workspace = Workspace::create([
-            'code' => $this->generateCode(),
+            'code' => $code ?: $this->generateCode(),
             'name' => trim($name),
             'owner_id' => $owner->id,
         ]);
@@ -29,6 +29,50 @@ class WorkspaceService
         $workspace->members()->attach($owner->id, ['role' => 'owner']);
 
         return $workspace;
+    }
+
+    public function createWithDetails(User $owner, string $name, ?string $code, ?string $bio, ?UploadedFile $avatar, array $identifiers): array
+    {
+        $finalCode = null;
+        if ($code !== null && trim($code) !== '') {
+            $candidate = strtoupper(trim($code));
+            if (! preg_match('/^[A-Z0-9]{8}$/', $candidate)) {
+                return ['ok' => false, 'error' => 'Code must be 8 uppercase letters or numbers.'];
+            }
+            if (Workspace::where('code', $candidate)->exists()) {
+                return ['ok' => false, 'error' => 'That code is already taken.'];
+            }
+            $finalCode = $candidate;
+        }
+
+        $targets = [];
+        foreach (array_values(array_filter(array_map('trim', $identifiers))) as $identifier) {
+            $identifier = ltrim($identifier, '@');
+            $target = User::where('username', $identifier)->orWhere('email', $identifier)->first();
+            if (! $target) {
+                return ['ok' => false, 'error' => "User '{$identifier}' not found."];
+            }
+            if ($target->id === $owner->id) {
+                return ['ok' => false, 'error' => 'You cannot invite yourself.'];
+            }
+            $targets[] = $target;
+        }
+
+        $workspace = $this->create($owner, $name, $finalCode);
+
+        $workspace->update([
+            'bio' => $bio !== null && trim($bio) !== '' ? trim($bio) : null,
+        ]);
+
+        if ($avatar) {
+            $this->updateAvatar($workspace, $avatar);
+        }
+
+        foreach ($targets as $target) {
+            $this->invite($owner, $workspace->code, $target->username);
+        }
+
+        return ['ok' => true, 'workspace' => $workspace];
     }
 
     public function join(User $user, string $code): array
@@ -179,6 +223,7 @@ class WorkspaceService
 
     public function invite(User $actor, string $code, string $identifier): array
     {
+        $identifier = ltrim(trim($identifier), '@');
         $workspace = Workspace::where('code', strtoupper(trim($code)))->first();
 
         if (! $workspace) {

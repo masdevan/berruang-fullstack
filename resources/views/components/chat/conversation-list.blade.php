@@ -82,7 +82,7 @@
             <x-icons.contact class="w-3.5 h-3.5 text-[#E091A9]/70 shrink-0" />
             Add user
         </button>
-        <button type="button" onclick="openModal('create-workspace-modal')" class="w-full flex items-center gap-2 px-2.5 py-2 rounded hover:bg-white/5 transition-colors cursor-pointer text-xs text-white/80">
+        <button type="button" onclick="openCreateWorkspaceModal()" class="w-full flex items-center gap-2 px-2.5 py-2 rounded hover:bg-white/5 transition-colors cursor-pointer text-xs text-white/80">
             <x-icons.workspace class="w-3.5 h-3.5 text-[#E091A9]/70 shrink-0" />
             Create workspace
         </button>

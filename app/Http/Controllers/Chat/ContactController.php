@@ -16,7 +16,23 @@ class ContactController extends Controller
 
     public function checkUsername(string $username): JsonResponse
     {
+        $username = ltrim(trim($username), '@');
+
         return response()->json(['taken' => User::where('username', $username)->exists()]);
+    }
+
+    public function options(Request $request): JsonResponse
+    {
+        return response()->json($request->user()->contacts()
+            ->orderBy('first_name')
+            ->get()
+            ->map(fn (User $u) => [
+                'id' => $u->id,
+                'name' => $u->name,
+                'username' => $u->username,
+                'avatar' => $u->avatar ? $u->avatarUrl(36) : $u->initials(),
+                'has_avatar' => (bool) $u->avatar,
+            ]));
     }
 
     public function index(Request $request): JsonResponse

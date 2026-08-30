@@ -1,6 +1,6 @@
 import { setCurrentChat } from './bubbles.js';
 import { setRightbarVisible, setRightbarHasChat } from './sidebar.js';
-import { initAvatarPicker } from '../avatar-picker.js';
+import { initAvatarPicker, setAvatarTarget } from '../avatar-picker.js';
 
 function workspaceError(id, message) {
     const el = document.getElementById(id);
@@ -174,15 +174,17 @@ function setWsConfigAvatar(url) {
     }
 }
 
+function onWorkspaceConfigAvatarUpload(blob) {
+    wsAvatarFile = blob;
+    const img = document.getElementById('ws-config-avatar');
+    if (img) img.classList.remove('hidden');
+    const fallback = document.getElementById('ws-config-avatar-fallback');
+    if (fallback) fallback.classList.add('hidden');
+}
+
 initAvatarPicker({
     previewId: 'ws-config-avatar',
-    onUpload: function (blob) {
-        wsAvatarFile = blob;
-        const img = document.getElementById('ws-config-avatar');
-        if (img) img.classList.remove('hidden');
-        const fallback = document.getElementById('ws-config-avatar-fallback');
-        if (fallback) fallback.classList.add('hidden');
-    },
+    onUpload: onWorkspaceConfigAvatarUpload,
 });
 
 window.openWorkspaceConfig = function () {
@@ -191,6 +193,7 @@ window.openWorkspaceConfig = function () {
     const codeInput = document.getElementById('ws-config-code');
     const error = document.getElementById('ws-config-error');
     if (!panel || !bio || !codeInput) return;
+    setAvatarTarget('ws-config-avatar', onWorkspaceConfigAvatarUpload);
     bio.value = currentWsConfig.bio || '';
     codeInput.value = currentWsConfig.code;
     wsAvatarFile = null;
@@ -956,6 +959,150 @@ window.openWorkspaceBio = function () {
     openModal('bio-modal');
 };
 
+let createWsAvatarFile = null;
+let createWsInvites = [];
+
+function onCreateWorkspaceAvatarUpload(blob) {
+    createWsAvatarFile = blob;
+    const img = document.getElementById('create-ws-avatar');
+    if (img) img.classList.remove('hidden');
+    const fallback = document.getElementById('create-ws-avatar-fallback');
+    if (fallback) fallback.classList.add('hidden');
+}
+
+function resetCreateWorkspaceForm() {
+    const name = document.getElementById('workspace-name-input');
+    const code = document.getElementById('create-ws-code');
+    const bio = document.getElementById('create-ws-bio');
+    const inviteInput = document.getElementById('create-ws-invite-input');
+    if (name) name.value = '';
+    if (code) code.value = '';
+    if (bio) bio.value = '';
+    if (inviteInput) inviteInput.value = '';
+    createWsAvatarFile = null;
+    createWsInvites = [];
+    renderCreateInvites();
+    const img = document.getElementById('create-ws-avatar');
+    if (img) img.classList.add('hidden');
+    const fallback = document.getElementById('create-ws-avatar-fallback');
+    if (fallback) fallback.classList.remove('hidden');
+    const contactsList = document.getElementById('create-ws-contacts-list');
+    if (contactsList) contactsList.classList.add('hidden');
+    const contactsToggle = document.getElementById('create-ws-contacts-toggle');
+    if (contactsToggle) contactsToggle.textContent = 'Select from contacts';
+    renderCreateWsContacts();
+}
+
+window.openCreateWorkspaceModal = function () {
+    resetCreateWorkspaceForm();
+    workspaceError('create-workspace-error', '');
+    setAvatarTarget('create-ws-avatar', onCreateWorkspaceAvatarUpload);
+    openModal('create-workspace-modal');
+};
+
+window.rollCreateWorkspaceCode = function () {
+    const input = document.getElementById('create-ws-code');
+    if (!input) return;
+    const CHARS = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+    let code = '';
+    for (let i = 0; i < 8; i++) {
+        code += CHARS[Math.floor(Math.random() * CHARS.length)];
+    }
+    input.value = code;
+};
+
+function renderCreateInvites() {
+    const list = document.getElementById('create-ws-invites-list');
+    if (!list) return;
+    list.innerHTML = createWsInvites.map(function (idf, i) {
+        return '<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-white/5 text-[10px] text-white/70">' + escapeHtml(idf)
+            + '<button type="button" onclick="removeCreateWorkspaceInvite(' + i + ')" class="text-white/40 hover:text-white transition-colors cursor-pointer" title="Remove">&times;</button></span>';
+    }).join('');
+}
+
+window.addCreateWorkspaceInvite = function () {
+    const input = document.getElementById('create-ws-invite-input');
+    if (!input) return;
+    const identifier = input.value.trim();
+    if (!identifier || createWsInvites.includes(identifier)) return;
+    createWsInvites.push(identifier);
+    input.value = '';
+    renderCreateInvites();
+    renderCreateWsContacts();
+    input.focus();
+};
+
+window.removeCreateWorkspaceInvite = function (index) {
+    createWsInvites.splice(index, 1);
+    renderCreateInvites();
+    renderCreateWsContacts();
+};
+
+let createWsContacts = null;
+
+window.toggleCreateWsContacts = function () {
+    const list = document.getElementById('create-ws-contacts-list');
+    const toggle = document.getElementById('create-ws-contacts-toggle');
+    if (!list) return;
+    const opening = list.classList.contains('hidden');
+    list.classList.toggle('hidden', !opening);
+    if (toggle) toggle.textContent = opening ? 'Hide contacts' : 'Select from contacts';
+    if (opening && createWsContacts === null) {
+        fetch('/contacts/options')
+            .then(function (response) { return response.json(); })
+            .then(function (contacts) {
+                createWsContacts = contacts || [];
+                renderCreateWsContacts();
+            })
+            .catch(function () { createWsContacts = []; });
+    }
+    renderCreateWsContacts();
+};
+
+function renderCreateWsContacts() {
+    const list = document.getElementById('create-ws-contacts-list');
+    if (!list || createWsContacts === null) return;
+    if (!createWsContacts.length) {
+        list.innerHTML = '<p class="text-[10px] text-white/30 text-center py-2">No contacts yet.</p>';
+        return;
+    }
+    list.innerHTML = createWsContacts.map(function (c) {
+        const checked = createWsInvites.includes(c.username);
+        const avatar = c.has_avatar
+            ? '<img src="' + c.avatar + '" alt="" class="w-7 h-7 rounded-full object-cover">'
+            : '<div class="w-7 h-7 rounded-full bg-white/8 flex items-center justify-center text-[9px] font-medium text-white/60">' + escapeHtml(c.avatar) + '</div>';
+        return '<button type="button" data-username="' + escapeHtml(c.username) + '" onclick="toggleCreateWsContact(this.dataset.username)" class="w-full flex items-center gap-2 px-2 py-1.5 rounded hover:bg-white/5 transition-colors cursor-pointer text-left">'
+            + '<span class="shrink-0 w-4 h-4 rounded-sm border flex items-center justify-center ' + (checked ? 'bg-[#E091A9] border-[#E091A9]' : 'border-white/20') + '">'
+            + (checked ? '<svg viewBox="0 0 12 8" fill="none" stroke="currentColor" stroke-width="1.8" class="w-2.5 h-2.5 text-[#0A0A0A]"><path stroke-linecap="round" stroke-linejoin="round" d="M1 4.5L4.5 8L11 1"/></svg>' : '')
+            + '</span>'
+            + avatar
+            + '<span class="flex-1 min-w-0"><span class="block text-[11px] font-medium text-white/80 truncate">' + escapeHtml(c.name) + '</span>'
+            + '<span class="block text-[10px] text-white/30 truncate">@' + escapeHtml(c.username) + '</span></span>'
+            + '</button>';
+    }).join('');
+}
+
+window.toggleCreateWsContact = function (username) {
+    const idx = createWsInvites.indexOf(username);
+    if (idx >= 0) {
+        createWsInvites.splice(idx, 1);
+    } else {
+        createWsInvites.push(username);
+    }
+    renderCreateInvites();
+    renderCreateWsContacts();
+};
+
+const createWsInviteInput = document.getElementById('create-ws-invite-input');
+if (createWsInviteInput) {
+    createWsInviteInput.addEventListener('keydown', function (e) {
+        if (e.key === 'Enter') {
+            e.preventDefault();
+            window.addCreateWorkspaceInvite();
+        }
+    });
+}
+
 window.submitCreateWorkspace = function () {
     const input = document.getElementById('workspace-name-input');
     const name = input.value.trim();
@@ -964,10 +1111,20 @@ window.submitCreateWorkspace = function () {
         return;
     }
     workspaceError('create-workspace-error', '');
+    const form = new FormData();
+    form.append('name', name);
+    const codeInput = document.getElementById('create-ws-code');
+    if (codeInput && codeInput.value.trim()) form.append('code', codeInput.value.trim());
+    const bio = document.getElementById('create-ws-bio');
+    if (bio && bio.value.trim()) form.append('bio', bio.value.trim());
+    if (createWsAvatarFile) form.append('avatar', createWsAvatarFile);
+    createWsInvites.forEach(function (identifier) {
+        form.append('invites[]', identifier);
+    });
     fetch('/workspaces', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content },
-        body: JSON.stringify({ name }),
+        headers: { 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content },
+        body: form,
     })
         .then(function (response) { return response.json().then(function (data) { return { ok: response.ok, data: data }; }); })
         .then(function ({ ok, data }) {
@@ -976,9 +1133,11 @@ window.submitCreateWorkspace = function () {
                 return;
             }
             closeModal('create-workspace-modal');
-            input.value = '';
+            resetCreateWorkspaceForm();
             replaceWorkspaceList(data.html);
             switchTab('workspace');
+            const row = data.code ? document.querySelector('[data-workspace="' + data.code + '"]') : null;
+            if (row) window.openWorkspace(row, row.dataset.name, data.code, row.dataset.created);
         })
         .catch(function () {
             workspaceError('create-workspace-error', 'Something went wrong. Please try again.');

@@ -20,8 +20,16 @@ export function fadeIn(modal) {
     modal.animate([{ opacity: 0 }, { opacity: 1 }], { duration: 150, easing: 'ease-out' });
 }
 
+let avatarPreview = null;
+let avatarOnUpload = null;
+
+export function setAvatarTarget(previewId, onUpload) {
+    avatarPreview = document.getElementById(previewId);
+    avatarOnUpload = onUpload;
+}
+
 export function initAvatarPicker({ previewId = 'avatar-preview', onUpload }) {
-    const avatarPreview = document.getElementById(previewId);
+    setAvatarTarget(previewId, onUpload);
     const avatarModal = document.getElementById('avatar-modal');
     const cameraModal = document.getElementById('camera-modal');
     const cameraVideo = document.getElementById('camera-video');
@@ -105,9 +113,9 @@ export function initAvatarPicker({ previewId = 'avatar-preview', onUpload }) {
             return;
         }
 
-        avatarPreview.src = URL.createObjectURL(compressedBlob);
+        if (avatarPreview) avatarPreview.src = URL.createObjectURL(compressedBlob);
         cancelCrop();
-        onUpload(compressedBlob);
+        if (avatarOnUpload) avatarOnUpload(compressedBlob);
     };
 
     window.previewAvatar = function (input) {
