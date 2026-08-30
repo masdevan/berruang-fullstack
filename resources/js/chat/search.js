@@ -18,9 +18,10 @@ window.filterLists = function () {
     const input = document.getElementById('search-input');
     const val = input.value.toLowerCase().trim();
     const isWorkspace = !document.getElementById('tab-pane-workspace').classList.contains('hidden');
-    const selector = isWorkspace ? '[data-workspace]' : '[data-conversation]';
-    document.querySelectorAll(selector).forEach(el => {
-        el.style.display = val ? (el.dataset.conversation || el.dataset.workspace || '').includes(val) ? '' : 'none' : '';
+    const selector = isWorkspace ? '#workspace-list [data-workspace]' : '#tab-pane-chat [data-conversation]';
+    document.querySelectorAll(selector).forEach(function (el) {
+        const haystack = isWorkspace ? el.textContent.toLowerCase() : (el.dataset.conversation || '');
+        el.style.display = val ? (haystack.includes(val) ? '' : 'none') : '';
     });
 
     if (searchSpinnerTimer) {

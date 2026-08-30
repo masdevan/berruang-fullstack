@@ -20,6 +20,8 @@ window.switchTab = function (tab) {
 
     const input = document.getElementById('search-input');
     if (input) input.placeholder = isChat ? 'Search conversations...' : 'Search workspaces...';
+
+    if (window.filterLists) window.filterLists();
 };
 
 window.toggleLeft = function () {
