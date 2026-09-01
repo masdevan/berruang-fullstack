@@ -1,4 +1,4 @@
-<div class="px-3 pt-1.5 pb-2.5 bg-[#0A0A0A]" id="chat-input-bar">
+<div class="px-3 pt-1.5 pb-[calc(0.625rem+env(safe-area-inset-bottom))] bg-[#0A0A0A]" id="chat-input-bar">
     <div id="attach-preview-bar" class="hidden gap-1.5 overflow-x-hidden pt-1.5 pr-2 pb-1.5 select-none"></div>
     <form class="flex items-end gap-1 bg-white/3 rounded-2xl px-1.5 py-1 focus-within:bg-white/5 transition-all" id="chat-form">
         <div class="relative shrink-0">
@@ -39,7 +39,7 @@
             </div>
         </div>
         <input type="file" id="attach-file-input" class="hidden" multiple>
-        <textarea id="message-input" placeholder="Type a message..." rows="1" class="flex-1 px-1.5 py-1.5 bg-transparent text-xs text-white placeholder-white/20 resize-none overflow-y-auto max-h-30 outline-none" style="scrollbar-width: thin; scrollbar-color: rgba(255,255,255,0.08) transparent;"></textarea>
+        <textarea id="message-input" placeholder="Type a message..." rows="1" enterkeyhint="send" class="flex-1 px-1.5 py-1.5 bg-transparent text-xs text-white placeholder-white/20 resize-none overflow-y-auto max-h-30 outline-none" style="scrollbar-width: thin; scrollbar-color: rgba(255,255,255,0.08) transparent;"></textarea>
         <button type="submit" class="shrink-0 w-8 h-8 rounded-full text-[#E091A9] hover:text-[#E8A8BC] flex items-center justify-center transition-all active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer" id="send-btn">
             <x-icons.send class="w-4 h-4 ml-0.5" />
         </button>

@@ -3,20 +3,23 @@
 @section('title', 'Profile')
 
 @section('content')
-    <div id="sidebar-left" class="shrink-0 overflow-hidden w-full md:w-80 md:block">
+    <div id="sidebar-left" class="shrink-0 overflow-hidden hidden md:block md:w-80">
         <x-chat.conversation-list :users="$users" :workspaces="$workspaces" />
     </div>
     <div class="hidden md:block w-1 shrink-0 cursor-col-resize bg-transparent hover:bg-[#E091A9]/20 transition-colors" id="resize-left" title="Drag to resize"></div>
-    <div class="flex-1 flex-col hidden md:flex min-w-0 min-h-0">
+    <div class="flex-1 flex-col flex min-w-0 min-h-0">
         <div class="flex items-center gap-2 px-4 h-13.25 border-b border-white/6 bg-[#0A0A0A]">
-            <button onclick="toggleLeft()" class="text-white/30 hover:text-white/60 transition-colors cursor-pointer shrink-0" title="Toggle sidebar">
+            <button onclick="history.back()" class="md:hidden text-white/60 hover:text-white transition-colors cursor-pointer shrink-0" title="Back">
+                <x-icons.chevron-left class="w-5 h-5" />
+            </button>
+            <button onclick="toggleLeft()" class="hidden md:block text-white/30 hover:text-white/60 transition-colors cursor-pointer shrink-0" title="Toggle sidebar">
                 <x-icons.dots-grid />
             </button>
             <p class="text-xs font-medium">Profile</p>
         </div>
         <div class="flex-1 overflow-y-auto">
-            <div class="max-w-md mx-auto w-full px-6 py-10">
-                <form method="POST" action="{{ route('profile.account') }}" enctype="multipart/form-data" class="mt-8" id="account-form" data-original-username="{{ auth()->user()->username }}">
+            <div class="max-w-md mx-auto w-full px-4 py-6 md:px-6 md:py-10">
+                <form method="POST" action="{{ route('profile.account') }}" enctype="multipart/form-data" class="mt-4 md:mt-8" id="account-form" data-original-username="{{ auth()->user()->username }}">
                     @csrf
                     <div class="flex items-center gap-4">
                         <div class="relative shrink-0">

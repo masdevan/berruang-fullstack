@@ -1,7 +1,10 @@
 <div class="flex-1 min-w-0 flex-col hidden md:flex min-h-0" id="message-area">
     <div id="chat-workspace" class="flex-1 min-w-0 flex-col hidden min-h-0">
         <div class="flex items-center gap-2 px-4 py-3 border-b border-white/6 bg-[#0A0A0A]">
-        <button onclick="toggleLeft()" class="text-white/30 hover:text-white/60 transition-colors cursor-pointer shrink-0" title="Toggle sidebar">
+        <button onclick="goBackToConversations()" class="md:hidden text-white/60 hover:text-white transition-colors cursor-pointer shrink-0" title="Back">
+            <x-icons.chevron-left class="w-5 h-5" />
+        </button>
+        <button onclick="toggleLeft()" class="hidden md:block text-white/30 hover:text-white/60 transition-colors cursor-pointer shrink-0" title="Toggle sidebar">
             <x-icons.dots-grid />
         </button>
         <div id="chat-header-info" class="flex items-center gap-2 min-w-0">

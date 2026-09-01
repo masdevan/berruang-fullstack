@@ -92,7 +92,7 @@
             Join workspace
         </button>
     </div>
-    <button id="fab-btn" type="button" onclick="toggleFabMenu(event)" class="absolute bottom-4 left-4 z-20 w-10 h-10 rounded-full bg-[#E091A9] text-[#0A0A0A] flex items-center justify-center shadow-lg hover:bg-[#E8A8BC] transition-all duration-200 cursor-pointer" title="Add">
+    <button id="fab-btn" type="button" onclick="toggleFabMenu(event)" class="absolute bottom-[calc(1rem+env(safe-area-inset-bottom))] left-[calc(1rem+env(safe-area-inset-left))] z-20 w-10 h-10 rounded-full bg-[#E091A9] text-[#0A0A0A] flex items-center justify-center shadow-lg hover:bg-[#E8A8BC] transition-all duration-200 cursor-pointer" title="Add">
         <x-icons.plus class="w-4 h-4 transition-transform duration-200" />
     </button>
 </div>

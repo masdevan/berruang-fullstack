@@ -9,6 +9,7 @@ import { makeResizable, setRightbarVisible } from './chat/sidebar.js';
 import { showSectionInfo, hideSectionInfo } from './chat/section-info.js';
 import { recalcUnreadTotal } from './chat/unread.js';
 import { applyAllDrafts } from './chat/draft.js';
+import { MOBILE_BREAKPOINT } from './chat/constants.js';
 
 document.addEventListener('DOMContentLoaded', function () {
     recalcUnreadTotal();
@@ -64,9 +65,14 @@ document.addEventListener('DOMContentLoaded', function () {
         }, { root: contactsSentinel.parentElement }).observe(contactsSentinel);
     }
 
+    const hoverable = window.matchMedia('(hover: hover)').matches;
     document.querySelectorAll('.section-info-btn').forEach(function (btn) {
-        btn.addEventListener('mouseenter', function () { showSectionInfo(this); });
-        btn.addEventListener('mouseleave', hideSectionInfo);
+        if (hoverable) {
+            btn.addEventListener('mouseenter', function () { showSectionInfo(this); });
+            btn.addEventListener('mouseleave', hideSectionInfo);
+        } else {
+            btn.addEventListener('click', function () { window.toggleSectionInfo(this); });
+        }
     });
 
     document.addEventListener('click', function (e) {
@@ -91,5 +97,10 @@ document.addEventListener('DOMContentLoaded', function () {
             document.getElementById('sidebar-left').style.width = '';
             document.getElementById('sidebar-right').style.width = '';
         }
+    });
+
+    window.addEventListener('popstate', function () {
+        if (window.innerWidth >= MOBILE_BREAKPOINT) return;
+        backToConversations();
     });
 });

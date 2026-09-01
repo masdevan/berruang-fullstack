@@ -2,7 +2,8 @@
 <html lang="{{ str_replace('_', '-', app()->getLocale()) }}">
 <head>
     <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+    <meta name="theme-color" content="#0A0A0A">
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <title>@yield('title', config('app.name'))</title>
 
@@ -18,11 +19,11 @@
 
     @vite(['resources/css/app.css', 'resources/js/chat.js'])
 </head>
-<body class="font-sans antialiased bg-[#0A0A0A] text-white h-screen overflow-hidden js-loading" data-user-id="{{ auth()->id() ?? '' }}">
+<body class="font-sans antialiased bg-[#0A0A0A] text-white h-dvh overflow-hidden js-loading touch-manipulation" data-user-id="{{ auth()->id() ?? '' }}">
     <div id="top-loader" class="fixed top-0 left-0 right-0 h-0.5 z-100 pointer-events-none overflow-hidden">
         <div id="top-loader-bar" class="h-full bg-[#E091A9] rounded-r-full transition-[width] duration-700 ease-out" style="width: 0%"></div>
     </div>
-    <div class="flex h-screen">
+    <div class="flex h-dvh">
         @yield('content')
     </div>
     <x-modal id="add-user-names-modal" title="Set contact name" maxWidth="max-w-sm">

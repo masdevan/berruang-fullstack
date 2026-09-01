@@ -36,6 +36,18 @@ window.toggleLeft = function () {
     setTimeout(() => el.style.transition = '', 200);
 };
 
+window.closeRightbar = function () {
+    if (window.innerWidth < MOBILE_BREAKPOINT) {
+        const el = document.getElementById('sidebar-right');
+        if (el) {
+            el.style.width = '';
+            el.classList.add('translate-x-full');
+        }
+        return;
+    }
+    setRightbarVisible(false);
+};
+
 window.toggleRight = function () {
     const el = document.getElementById('sidebar-right');
     if (!el) return;
@@ -80,6 +92,12 @@ window.backToConversations = function () {
     document.getElementById('sidebar-right').classList.add('translate-x-full');
 };
 
+window.goBackToConversations = function () {
+    if (window.innerWidth >= MOBILE_BREAKPOINT) return;
+    backToConversations();
+    history.replaceState({}, '', '/messages');
+};
+
 window.openConversation = function (name, avatar, status, about, customName, realName, username, hasAvatar) {
 
     const headerAvatar = document.getElementById('chat-header-avatar');
@@ -105,6 +123,10 @@ window.openConversation = function (name, avatar, status, about, customName, rea
         list.style.width = '';
         area.classList.remove('hidden');
         area.classList.add('flex');
+
+        if (!new URLSearchParams(window.location.search).get('chat')) {
+            history.pushState({ chat: username }, '', '?chat=' + encodeURIComponent(username));
+        }
     }
 
     const AVATAR_IMG = hasAvatar

@@ -1,4 +1,8 @@
 <div id="rightbar-root" class="h-full border-l border-white/6 bg-[#0F0F0F] relative overflow-hidden flex flex-col">
+    <button type="button" onclick="closeRightbar()" title="Close"
+            class="md:hidden absolute top-[calc(0.75rem+env(safe-area-inset-top))] right-[calc(0.75rem+env(safe-area-inset-right))] z-30 w-8 h-8 flex items-center justify-center text-white/40 hover:text-white transition-colors cursor-pointer">
+        <x-icons.x class="w-4 h-4" />
+    </button>
     <div id="rightbar-empty" class="hidden absolute inset-0 z-10 flex-col items-center justify-center gap-2 px-8 text-center bg-[#0F0F0F]">
         <x-icons.ghost class="w-9 h-9 text-white/15" />
         <p class="text-[11px] text-white/20">Pick a conversation</p>
@@ -118,8 +122,8 @@
     </div>
     <div class="flex-1 overflow-hidden flex flex-col">
         <div id="rightbar-profile" class="p-4 text-center border-b border-white/6">
-            <div class="relative w-12 h-12 mx-auto">
-                <span id="rightbar-avatar" class="w-full h-full rounded-full bg-white/8 flex items-center justify-center text-sm font-medium text-white/60 block">AP</span>
+            <div class="relative w-16 h-16 md:w-12 md:h-12 mx-auto">
+                <span id="rightbar-avatar" class="w-full h-full rounded-full bg-white/8 flex items-center justify-center text-base md:text-sm font-medium text-white/60 block">AP</span>
                 <div id="rightbar-online-dot" class="absolute -top-0.5 -right-0.5 w-3 h-3 rounded-full border-2 border-[#0F0F0F] bg-white/20"></div>
             </div>
             <span id="rightbar-unsaved-badge" onclick="openSaveContactModal()" title="Save contact" class="unsaved-badge hidden flex items-center justify-center w-14 mx-auto mt-2 text-[8px] font-medium text-white/35 bg-white/8 rounded-full px-2 py-0.5 cursor-pointer hover:bg-green-500 hover:text-[#0A0A0A] transition-colors">unsaved</span>

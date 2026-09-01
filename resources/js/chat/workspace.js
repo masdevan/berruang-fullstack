@@ -1,6 +1,7 @@
 import { setCurrentChat } from './bubbles.js';
 import { setRightbarVisible, setRightbarHasChat } from './sidebar.js';
 import { initAvatarPicker, setAvatarTarget } from '../avatar-picker.js';
+import { MOBILE_BREAKPOINT } from './constants.js';
 
 function workspaceError(id, message) {
     const el = document.getElementById(id);
@@ -27,6 +28,13 @@ window.openWorkspace = function (el, name, code, created) {
         window.location.href = '/messages?ws=' + encodeURIComponent(code);
         return;
     }
+    if (window.leaveWorkspaceChat) window.leaveWorkspaceChat();
+
+    const chatInput = document.getElementById('message-input');
+    if (chatInput) {
+        chatInput.value = '';
+        chatInput.style.height = 'auto';
+    }
 
     document.querySelectorAll('#workspace-list [data-workspace]').forEach(function (item) {
         item.classList.remove('bg-white/5');
@@ -43,6 +51,20 @@ window.openWorkspace = function (el, name, code, created) {
     workspace.classList.add('flex');
     noChat.classList.add('hidden');
     noChat.classList.remove('flex');
+
+    if (window.innerWidth < MOBILE_BREAKPOINT) {
+        const list = document.getElementById('sidebar-left');
+        const area = document.getElementById('message-area');
+        if (list && area) {
+            list.classList.add('hidden');
+            list.style.width = '';
+            area.classList.remove('hidden');
+            area.classList.add('flex');
+        }
+        if (!new URLSearchParams(window.location.search).get('ws')) {
+            history.pushState({ ws: code }, '', '?ws=' + encodeURIComponent(code));
+        }
+    }
 
     const headerName = document.getElementById('chat-header-name');
     const headerAvatar = document.getElementById('chat-header-avatar');
@@ -382,6 +404,9 @@ function renderWorkspaceMembers(members) {
             + '</div>'
             + '<p class="text-[10px] text-white/30 truncate mt-0.5">@' + escapeHtml(m.username) + '</p>'
             + '</div>'
+            + (!m.is_me && !bulkMode ? '<button type="button" onclick="openMemberContextMenu(event, ' + m.id + ')" class="shrink-0 w-7 h-7 flex items-center justify-center rounded-sm text-white/30 hover:text-white hover:bg-white/5 transition-colors cursor-pointer" title="More">'
+                + '<svg viewBox="0 0 24 24" fill="currentColor" class="w-4 h-4"><circle cx="12" cy="5" r="1.6"/><circle cx="12" cy="12" r="1.6"/><circle cx="12" cy="19" r="1.6"/></svg>'
+                + '</button>' : '')
             + '</div>';
     }).join('');
     const me = members.find(function (m) { return m.is_me; });
@@ -789,6 +814,13 @@ function closeWorkspaceView() {
     if (rightbarEmpty) {
         rightbarEmpty.classList.remove('hidden');
         rightbarEmpty.classList.add('flex');
+    }
+    if (window.innerWidth < MOBILE_BREAKPOINT) {
+        if (history.state && history.state.ws === currentWsCode) {
+            history.back();
+        } else {
+            backToConversations();
+        }
     }
 }
 
