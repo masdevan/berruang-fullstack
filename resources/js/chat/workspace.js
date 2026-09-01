@@ -113,11 +113,12 @@ window.openWorkspace = function (el, name, code, created) {
     currentWsCode = code;
     loadWorkspaceMembers(code);
 
-    const workspaceTabs = document.getElementById('workspace-tabs');
-    if (workspaceTabs) {
-        workspaceTabs.classList.remove('hidden');
-        workspaceTabs.classList.add('flex');
-    }
+    // hide sub header (workspace-tabs)
+    // const workspaceTabs = document.getElementById('workspace-tabs');
+    // if (workspaceTabs) {
+    //     workspaceTabs.classList.remove('hidden');
+    //     workspaceTabs.classList.add('flex');
+    // }
 
     const container = document.getElementById('messages-container');
     if (container) {
