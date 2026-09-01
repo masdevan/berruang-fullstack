@@ -18,6 +18,7 @@ function replaceWorkspaceList(html) {
     if (container) container.innerHTML = html;
     const empty = document.getElementById('workspace-empty');
     if (empty) empty.classList.toggle('hidden', html.trim().length > 0);
+    if (window.recalcWsUnreadTotal) window.recalcWsUnreadTotal();
 }
 
 window.openWorkspace = function (el, name, code, created) {
@@ -120,14 +121,13 @@ window.openWorkspace = function (el, name, code, created) {
 
     const container = document.getElementById('messages-container');
     if (container) {
-        container.innerHTML = '<div class="flex flex-col items-center justify-center h-full gap-2.5">'
-            + '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" class="w-9 h-9 text-white/15"><path stroke-linecap="round" stroke-linejoin="round" d="m12.83 2.18a2 2 0 0 0-1.66 0L2.6 6.08a1 1 0 0 0 0 1.83l8.58 3.91a2 2 0 0 0 1.66 0l8.58-3.9a1 1 0 0 0 0-1.83Z"/><path stroke-linecap="round" stroke-linejoin="round" d="m22 17.65-9.17 4.16a2 2 0 0 1-1.66 0L2 17.65"/><path stroke-linecap="round" stroke-linejoin="round" d="m22 12.65-9.17 4.16a2 2 0 0 1-1.66 0L2 12.65"/></svg>'
-            + '<p class="text-xs font-medium text-white/40">' + name + '</p>'
-            + '<p class="text-[10px] tracking-widest text-white/25">Code: ' + code + '</p>'
-            + '<p class="text-[10px] text-white/20">Created ' + (created || '') + '</p>'
-            + '</div>';
+        container.innerHTML = '';
         container.scrollTop = 0;
     }
+    window.currentWorkspaceCode = code;
+    const inputBar = document.getElementById('chat-input-bar');
+    if (inputBar) inputBar.classList.remove('hidden');
+    if (window.loadWorkspaceHistory) window.loadWorkspaceHistory(code);
 };
 
 window.switchWorkspaceRightbarTab = function (kind) {
@@ -345,6 +345,10 @@ function renderWorkspaceMembers(members) {
     }
     empty.classList.add('hidden');
     empty.classList.remove('flex');
+    window.wsReadPositions = {};
+    members.forEach(function (m) {
+        window.wsReadPositions[m.id] = m.last_read_message_id || 0;
+    });
     const canManage = currentWsRole === 'owner' || currentWsRole === 'admin';
     const ROLE_CLASS = {
         owner: 'text-yellow-400 bg-yellow-400/10',
@@ -758,6 +762,7 @@ function leaveWorkspace(successorId) {
 }
 
 function closeWorkspaceView() {
+    if (window.leaveWorkspaceChat) window.leaveWorkspaceChat();
     setCurrentChat(null);
     const workspace = document.getElementById('chat-workspace');
     const noChat = document.getElementById('no-chat');
@@ -794,6 +799,7 @@ window.removeWorkspaceRow = function (code) {
     if (container && empty) {
         empty.classList.toggle('hidden', container.children.length > 0);
     }
+    if (window.recalcWsUnreadTotal) window.recalcWsUnreadTotal();
     if (currentWsCode === code) closeWorkspaceView();
 };
 
@@ -851,6 +857,7 @@ window.addPendingWorkspace = function (data) {
     container.insertAdjacentHTML('afterbegin', pendingWorkspaceRow(data));
     const empty = document.getElementById('workspace-empty');
     if (empty) empty.classList.add('hidden');
+    if (window.recalcWsUnreadTotal) window.recalcWsUnreadTotal();
 };
 
 window.refreshWorkspaceMembers = function (code) {

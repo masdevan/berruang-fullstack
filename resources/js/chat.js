@@ -57,6 +57,10 @@ document.addEventListener('DOMContentLoaded', function () {
 
     form.addEventListener('submit', function (e) {
         e.preventDefault();
+        if (window.currentWorkspaceCode) {
+            window.wsSubmit && window.wsSubmit();
+            return;
+        }
         if (sending) return;
         const text = input.value.trim();
 
@@ -253,7 +257,13 @@ window.triggerAttach = function (kind) {
         ? 'image/*,video/*'
         : '.pdf,.txt,.zip,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.csv';
     input.onchange = function () {
-        Array.from(input.files).forEach(queueFile);
+        Array.from(input.files).forEach(function (f) {
+            if (window.currentWorkspaceCode) {
+                window.wsQueueFile && window.wsQueueFile(f);
+            } else {
+                queueFile(f);
+            }
+        });
         input.value = '';
     };
     input.click();
@@ -272,6 +282,7 @@ function queueFile(file) {
 window.renderAttachPreview = function () {
     const bar = document.getElementById('attach-preview-bar');
     if (!bar) return;
+    if (window.currentWorkspaceCode) return;
     const items = (pendingByChat[currentChatName] || []).filter(function (f) { return !f.sent; });
     if (!items.length) {
         bar.classList.add('hidden');

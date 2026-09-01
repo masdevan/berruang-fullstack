@@ -88,6 +88,8 @@ window.openConversation = function (name, avatar, status, about, customName, rea
         return;
     }
 
+    if (window.leaveWorkspaceChat) window.leaveWorkspaceChat();
+
     const workspace = document.getElementById('chat-workspace');
     const noChat = document.getElementById('no-chat');
     workspace.classList.remove('hidden');

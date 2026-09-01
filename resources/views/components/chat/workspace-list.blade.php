@@ -1,5 +1,14 @@
-@props(['workspaces' => collect()])
+@props(['workspaces' => collect(), 'meta' => []])
 @foreach ($workspaces as $workspace)
+    @php
+        $m = $meta[$workspace->id] ?? [];
+        $last = $m['last'] ?? '';
+        $time = $m['time'] ?? '';
+        $sender = $m['sender'] ?? '';
+        $unread = $m['unread'] ?? 0;
+        $sent = $m['sent'] ?? false;
+        $preview = $last === '' ? 'Code: '.$workspace->code : ($sent ? $last : $sender.' : '.$last);
+    @endphp
     @if (($workspace->pivot->status ?? 'member') === 'pending')
         <div data-workspace="{{ $workspace->code }}" class="flex items-center gap-2.5 px-3 py-2.5">
             @if ($workspace->avatar)
@@ -28,10 +37,15 @@
             <div class="flex-1 min-w-0">
                 <div class="flex items-center justify-between">
                     <p class="text-xs font-medium truncate text-white/80">{{ $workspace->name }}</p>
-                    <p class="text-[10px] text-white/30 shrink-0 ml-2">{{ $workspace->created_at->format('H:i') }}</p>
+                    <p class="ws-time text-[10px] text-white/30 shrink-0 ml-2">{{ $time ?: $workspace->created_at->format('H:i') }}</p>
                 </div>
                 <div class="flex items-center justify-between mt-0.5">
-                    <p class="text-[11px] text-white/35 truncate">Code: <span class="tracking-widest text-white/50">{{ $workspace->code }}</span></p>
+                    <p class="ws-last text-[11px] truncate {{ $unread ? 'text-white/60' : 'text-white/35' }}">{{ $preview }}</p>
+                    @if ($unread)
+                        <span class="ws-unread shrink-0 ml-2 min-w-3.75 h-3.75 rounded-full bg-[#E091A9] text-[#0A0A0A] text-[7px] font-semibold flex items-center justify-center px-1 leading-none">{{ $unread }}</span>
+                    @else
+                        <span class="ws-unread hidden shrink-0 ml-2 min-w-3.75 h-3.75 rounded-full bg-[#E091A9] text-[#0A0A0A] text-[7px] font-semibold flex items-center justify-center px-1 leading-none"></span>
+                    @endif
                 </div>
             </div>
         </div>

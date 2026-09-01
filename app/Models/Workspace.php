@@ -45,7 +45,7 @@ class Workspace extends Model
     {
         return $this->belongsToMany(User::class, 'workspace_user')
             ->using(WorkspaceUser::class)
-            ->withPivot(['role', 'status', 'inviter_id'])
+            ->withPivot(['role', 'status', 'inviter_id', 'last_read_message_id'])
             ->withTimestamps();
     }
 

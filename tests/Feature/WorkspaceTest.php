@@ -3,8 +3,12 @@
 namespace Tests\Feature;
 
 use App\Events\WorkspaceMembersChanged;
+use App\Events\WorkspaceMessageSent;
+use App\Events\WorkspaceMessagesRead;
+use App\Events\WorkspaceTyping;
 use App\Models\User;
 use App\Models\Workspace;
+use App\Models\WorkspaceMessage;
 use App\Services\WorkspaceService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
@@ -776,5 +780,244 @@ class WorkspaceTest extends TestCase
         $this->actingAs($co)->postJson('/workspaces/'.$workspace->code.'/configure', ['bio' => 'ubah'])
             ->assertStatus(422)
             ->assertJsonPath('message', 'Only the owner or an admin can configure this workspace.');
+    }
+
+    public function test_member_can_send_workspace_message(): void
+    {
+        Event::fake([WorkspaceMessageSent::class]);
+
+        $owner = User::factory()->create();
+        $member = User::factory()->create();
+        $workspace = app(WorkspaceService::class)->create($owner, 'Tim Dev');
+        app(WorkspaceService::class)->join($member, $workspace->code);
+
+        $this->actingAs($member)->postJson('/workspaces/'.$workspace->code.'/messages', ['body' => 'Halo semua'])
+            ->assertOk()
+            ->assertJsonPath('ok', true);
+
+        $message = WorkspaceMessage::first();
+
+        expect($message)->not->toBeNull();
+        expect($message->body)->toBe('Halo semua');
+        expect($message->type)->toBe('text');
+        expect($message->sender_id)->toBe($member->id);
+        expect($message->workspace_id)->toBe($workspace->id);
+
+        Event::assertDispatched(WorkspaceMessageSent::class);
+    }
+
+    public function test_non_member_cannot_send_workspace_message(): void
+    {
+        $owner = User::factory()->create();
+        $stranger = User::factory()->create();
+        $workspace = app(WorkspaceService::class)->create($owner, 'Tim Dev');
+
+        $this->actingAs($stranger)->postJson('/workspaces/'.$workspace->code.'/messages', ['body' => 'Halo'])
+            ->assertStatus(422);
+
+        expect(WorkspaceMessage::count())->toBe(0);
+    }
+
+    public function test_workspace_message_rejects_unknown_file_type(): void
+    {
+        Storage::fake('public');
+        $owner = User::factory()->create();
+        $member = User::factory()->create();
+        $workspace = app(WorkspaceService::class)->create($owner, 'Tim Dev');
+        app(WorkspaceService::class)->join($member, $workspace->code);
+
+        $this->actingAs($member)->postJson('/workspaces/'.$workspace->code.'/messages', [
+            'file' => UploadedFile::fake()->create('virus.exe', 100, 'application/x-msdownload'),
+        ])->assertStatus(422)
+            ->assertJsonPath('message', 'File type not allowed.');
+    }
+
+    public function test_workspace_image_message_stores_file_and_preview(): void
+    {
+        Storage::fake('public');
+        $owner = User::factory()->create();
+        $member = User::factory()->create();
+        $workspace = app(WorkspaceService::class)->create($owner, 'Tim Dev');
+        app(WorkspaceService::class)->join($member, $workspace->code);
+
+        $this->actingAs($member)->postJson('/workspaces/'.$workspace->code.'/messages', [
+            'file' => $this->largeImageUpload(),
+        ])->assertOk();
+
+        $message = WorkspaceMessage::first();
+
+        expect($message->type)->toBe('image');
+        expect($message->file_path)->not->toBeNull();
+        expect($message->preview_path)->not->toBeNull();
+        expect($message->width)->toBe(1600);
+        expect($message->height)->toBe(1200);
+        Storage::disk('public')->assertExists($message->file_path);
+    }
+
+    public function test_workspace_message_history_is_ordered_with_pagination(): void
+    {
+        $owner = User::factory()->create();
+        $member = User::factory()->create();
+        $workspace = app(WorkspaceService::class)->create($owner, 'Tim Dev');
+        app(WorkspaceService::class)->join($member, $workspace->code);
+
+        for ($i = 1; $i <= 30; $i++) {
+            WorkspaceMessage::create([
+                'workspace_id' => $workspace->id,
+                'sender_id' => $owner->id,
+                'body' => 'Pesan '.$i,
+                'type' => 'text',
+            ]);
+        }
+
+        $page = $this->actingAs($member)->getJson('/workspaces/'.$workspace->code.'/messages')
+            ->assertOk()
+            ->json();
+
+        expect($page['has_more'])->toBeTrue();
+        expect($page['messages'])->toHaveCount(25);
+        expect($page['messages'][0]['body'])->toBe('Pesan 6');
+        expect($page['messages'][24]['body'])->toBe('Pesan 30');
+
+        $older = $this->actingAs($member)->getJson('/workspaces/'.$workspace->code.'/messages?before='.$page['messages'][0]['id'])
+            ->assertOk()
+            ->json();
+
+        expect($older['messages'])->toHaveCount(5);
+        expect($older['messages'][0]['body'])->toBe('Pesan 1');
+        expect($older['has_more'])->toBeFalse();
+    }
+
+    public function test_non_member_cannot_read_workspace_messages(): void
+    {
+        $owner = User::factory()->create();
+        $stranger = User::factory()->create();
+        $workspace = app(WorkspaceService::class)->create($owner, 'Tim Dev');
+
+        $this->actingAs($stranger)->getJson('/workspaces/'.$workspace->code.'/messages')
+            ->assertStatus(404);
+    }
+
+    public function test_mark_read_and_list_meta_track_unread(): void
+    {
+        $owner = User::factory()->create();
+        $member = User::factory()->create();
+        $workspace = app(WorkspaceService::class)->create($owner, 'Tim Dev');
+        app(WorkspaceService::class)->join($member, $workspace->code);
+
+        $m1 = WorkspaceMessage::create(['workspace_id' => $workspace->id, 'sender_id' => $owner->id, 'body' => 'A', 'type' => 'text']);
+        $m2 = WorkspaceMessage::create(['workspace_id' => $workspace->id, 'sender_id' => $owner->id, 'body' => 'B', 'type' => 'text']);
+
+        app(WorkspaceService::class)->markRead($member, $workspace->code);
+
+        expect($workspace->members()->where('user_id', $member->id)->first()->pivot->last_read_message_id)->toBe($m2->id);
+
+        $meta = app(WorkspaceService::class)->listMeta($member, app(WorkspaceService::class)->list($member));
+
+        expect($meta[$workspace->id]['unread'])->toBe(0);
+        expect($meta[$workspace->id]['last'])->toBe('B');
+        expect($meta[$workspace->id]['sent'])->toBeFalse();
+
+        $m3 = WorkspaceMessage::create(['workspace_id' => $workspace->id, 'sender_id' => $owner->id, 'body' => 'C', 'type' => 'text']);
+
+        $meta = app(WorkspaceService::class)->listMeta($member, app(WorkspaceService::class)->list($member));
+
+        expect($meta[$workspace->id]['unread'])->toBe(1);
+        expect($meta[$workspace->id]['last'])->toBe('C');
+        expect($meta[$workspace->id]['time'])->not->toBe('');
+    }
+
+    public function test_messages_page_renders_workspace_preview_and_unread(): void
+    {
+        $owner = User::factory()->create(['name' => 'Boss Owner']);
+        $member = User::factory()->create();
+        $workspace = app(WorkspaceService::class)->create($owner, 'Tim Dev');
+        app(WorkspaceService::class)->join($member, $workspace->code);
+        WorkspaceMessage::create(['workspace_id' => $workspace->id, 'sender_id' => $owner->id, 'body' => 'Halo tim', 'type' => 'text']);
+
+        $html = $this->actingAs($member)->get('/messages')->getContent();
+
+        expect($html)->toContain('Boss Owner : Halo tim');
+        expect($html)->toContain('ws-unread');
+        expect($html)->toContain('ws-unread-total');
+    }
+
+    public function test_member_typing_broadcasts_and_non_member_rejected(): void
+    {
+        Event::fake([WorkspaceTyping::class]);
+
+        $owner = User::factory()->create();
+        $member = User::factory()->create();
+        $stranger = User::factory()->create();
+        $workspace = app(WorkspaceService::class)->create($owner, 'Tim Dev');
+        app(WorkspaceService::class)->join($member, $workspace->code);
+
+        $this->actingAs($member)->postJson('/workspaces/'.$workspace->code.'/typing', ['typing' => true])
+            ->assertOk();
+
+        Event::assertDispatched(WorkspaceTyping::class, fn ($event) => $event->workspace->id === $workspace->id && $event->typing === true);
+
+        $this->actingAs($stranger)->postJson('/workspaces/'.$workspace->code.'/typing', ['typing' => true])
+            ->assertStatus(422);
+    }
+
+    public function test_workspace_message_read_flag_tracks_all_readers(): void
+    {
+        Event::fake([WorkspaceMessagesRead::class]);
+
+        $owner = User::factory()->create();
+        $member = User::factory()->create();
+        $workspace = app(WorkspaceService::class)->create($owner, 'Tim Dev');
+        app(WorkspaceService::class)->join($member, $workspace->code);
+
+        $this->actingAs($owner)->postJson('/workspaces/'.$workspace->code.'/messages', ['body' => 'Halo'])
+            ->assertOk();
+
+        $history = $this->actingAs($owner)->getJson('/workspaces/'.$workspace->code.'/messages')->json();
+
+        expect($history['messages'][0]['read'])->toBeFalse();
+
+        app(WorkspaceService::class)->markRead($member, $workspace->code);
+
+        Event::assertDispatched(WorkspaceMessagesRead::class, fn ($event) => $event->workspace->id === $workspace->id && $event->readerId === $member->id);
+
+        $history = $this->actingAs($owner)->getJson('/workspaces/'.$workspace->code.'/messages')->json();
+
+        expect($history['messages'][0]['read'])->toBeTrue();
+    }
+
+    public function test_members_payload_includes_last_read_message_id(): void
+    {
+        $owner = User::factory()->create();
+        $member = User::factory()->create();
+        $workspace = app(WorkspaceService::class)->create($owner, 'Tim Dev');
+        app(WorkspaceService::class)->join($member, $workspace->code);
+        WorkspaceMessage::create(['workspace_id' => $workspace->id, 'sender_id' => $owner->id, 'body' => 'A', 'type' => 'text']);
+
+        $members = $this->actingAs($owner)->getJson('/workspaces/'.$workspace->code.'/members')->json();
+
+        expect($members[0]['last_read_message_id'])->toBe(0);
+        expect($members[1]['last_read_message_id'])->toBe(0);
+
+        app(WorkspaceService::class)->markRead($member, $workspace->code);
+
+        $members = $this->actingAs($owner)->getJson('/workspaces/'.$workspace->code.'/members')->json();
+
+        expect($members[1]['last_read_message_id'])->toBeGreaterThan(0);
+    }
+
+    private function largeImageUpload(): UploadedFile
+    {
+        $tmp = tempnam(sys_get_temp_dir(), 'wsimg');
+        $img = imagecreatetruecolor(1600, 1200);
+        for ($x = 0; $x < 1600; $x++) {
+            for ($y = 0; $y < 1200; $y++) {
+                imagesetpixel($img, $x, $y, imagecolorallocate($img, $x % 255, $y % 255, 128));
+            }
+        }
+        imagejpeg($img, $tmp, 90);
+        imagedestroy($img);
+
+        return new UploadedFile($tmp, 'foto.jpg', 'image/jpeg', null, true);
     }
 }

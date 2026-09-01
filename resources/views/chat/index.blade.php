@@ -4,7 +4,7 @@
 
 @section('content')
     <div id="sidebar-left" class="shrink-0 overflow-hidden w-full md:w-80 md:block">
-        <x-chat.conversation-list :users="$users" :meta="$meta ?? []" :drafts="$drafts ?? []" :workspaces="$workspaces ?? collect()" />
+        <x-chat.conversation-list :users="$users" :meta="$meta ?? []" :drafts="$drafts ?? []" :workspaces="$workspaces ?? collect()" :workspace-meta="$workspaceMeta ?? []" />
     </div>
     <div class="hidden md:block w-1 shrink-0 cursor-col-resize bg-transparent hover:bg-[#E091A9]/20 transition-colors" id="resize-left" title="Drag to resize"></div>
     <x-chat.message-area />

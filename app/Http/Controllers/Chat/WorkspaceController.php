@@ -3,9 +3,11 @@
 namespace App\Http\Controllers\Chat;
 
 use App\Http\Controllers\Controller;
+use App\Models\WorkspaceMessage;
 use App\Services\WorkspaceService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Validation\Rule;
 
 class WorkspaceController extends Controller
 {
@@ -168,6 +170,65 @@ class WorkspaceController extends Controller
         ]);
     }
 
+    public function messages(Request $request, string $code): JsonResponse
+    {
+        $result = $this->workspaces->messages(
+            $request->user(),
+            $code,
+            (int) $request->input('after'),
+            (int) $request->input('before'),
+        );
+
+        if ($result === null) {
+            return response()->json(['message' => 'Workspace not found.'], 404);
+        }
+
+        return response()->json($result);
+    }
+
+    public function sendMessage(Request $request, string $code): JsonResponse
+    {
+        $request->validate([
+            'body' => ['required_without:file', 'nullable', 'string', 'max:5000'],
+            'type' => ['nullable', 'string', Rule::in(WorkspaceMessage::TYPES)],
+            'file' => ['nullable', 'file', 'max:20480'],
+        ]);
+
+        $result = $this->workspaces->storeMessage(
+            $request->user(),
+            $code,
+            $request->body,
+            $request->file('file'),
+            $request->type,
+        );
+
+        if (! $result['ok']) {
+            return response()->json(['message' => $result['error']], 422);
+        }
+
+        return response()->json(['ok' => true, 'id' => $result['message']->id]);
+    }
+
+    public function markRead(Request $request, string $code): JsonResponse
+    {
+        $this->workspaces->markRead($request->user(), $code);
+
+        return response()->json(['ok' => true]);
+    }
+
+    public function typing(Request $request, string $code): JsonResponse
+    {
+        $request->validate([
+            'typing' => ['required', 'boolean'],
+        ]);
+
+        if (! $this->workspaces->broadcastTyping($request->user(), $code, (bool) $request->typing)) {
+            return response()->json(['message' => 'You are not a member of this workspace.'], 422);
+        }
+
+        return response()->json(['ok' => true]);
+    }
+
     public function configure(Request $request, string $code): JsonResponse
     {
         $request->validate([
@@ -198,8 +259,11 @@ class WorkspaceController extends Controller
 
     private function listHtml($user): string
     {
+        $workspaces = $this->workspaces->list($user);
+
         return view('components.chat.workspace-list', [
-            'workspaces' => $this->workspaces->list($user),
+            'workspaces' => $workspaces,
+            'meta' => $this->workspaces->listMeta($user, $workspaces),
         ])->render();
     }
 }

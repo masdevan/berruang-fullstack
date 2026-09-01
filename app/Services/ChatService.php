@@ -18,7 +18,7 @@ class ChatService
 {
     private const HISTORY_LIMIT = 25;
 
-    private const DOCUMENT_MIMES = [
+    public const DOCUMENT_MIMES = [
         'application/pdf', 'text/plain', 'application/zip',
         'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
         'application/vnd.ms-excel', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
@@ -26,7 +26,7 @@ class ChatService
         'text/csv',
     ];
 
-    private const ALLOWED_MEDIA_MIMES = [
+    public const ALLOWED_MEDIA_MIMES = [
         'image/jpeg', 'image/png', 'image/gif', 'image/webp', 'image/svg+xml',
         'video/mp4', 'video/webm', 'video/ogg', 'video/quicktime',
     ];

@@ -103,7 +103,7 @@ class User extends Authenticatable implements MustVerifyEmail
     {
         return $this->belongsToMany(Workspace::class, 'workspace_user')
             ->using(WorkspaceUser::class)
-            ->withPivot(['role', 'status', 'inviter_id'])
+            ->withPivot(['role', 'status', 'inviter_id', 'last_read_message_id'])
             ->withTimestamps();
     }
 }

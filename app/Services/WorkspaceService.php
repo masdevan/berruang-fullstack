@@ -6,8 +6,12 @@ use App\Events\WorkspaceInvitation;
 use App\Events\WorkspaceInviteResponse;
 use App\Events\WorkspaceMemberRemoved;
 use App\Events\WorkspaceMembersChanged;
+use App\Events\WorkspaceMessageSent;
+use App\Events\WorkspaceMessagesRead;
+use App\Events\WorkspaceTyping;
 use App\Models\User;
 use App\Models\Workspace;
+use App\Models\WorkspaceMessage;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Storage;
@@ -215,6 +219,7 @@ class WorkspaceService
                 'is_me' => $u->id === $viewer->id,
                 'bio' => $u->bio ?? '',
                 'joined' => $u->pivot->created_at?->format('d M Y') ?? '',
+                'last_read_message_id' => (int) ($u->pivot->last_read_message_id ?? 0),
             ])
             ->all();
 
@@ -451,6 +456,198 @@ class WorkspaceService
             ->wherePivot('status', '!=', 'kicked')
             ->orderBy('name')
             ->get();
+    }
+
+    public function listMeta(User $user, Collection $workspaces): array
+    {
+        $meta = [];
+        foreach ($workspaces as $workspace) {
+            $last = WorkspaceMessage::with('sender')
+                ->where('workspace_id', $workspace->id)
+                ->latest('id')
+                ->first();
+
+            $unread = 0;
+            $lastRead = $workspace->pivot->last_read_message_id;
+            if ($last) {
+                $unread = WorkspaceMessage::where('workspace_id', $workspace->id)
+                    ->where('id', '>', (int) ($lastRead ?? 0))
+                    ->count();
+            }
+
+            $meta[$workspace->id] = [
+                'last' => $last ? $this->messageLabel($last) : '',
+                'time' => $last ? $last->created_at->format('H:i') : '',
+                'sender' => $last ? $last->sender->name : '',
+                'unread' => (int) $unread,
+                'sent' => $last ? $last->sender_id === $user->id : false,
+            ];
+        }
+
+        return $meta;
+    }
+
+    public function messages(User $viewer, string $code, int $after = 0, int $before = 0): ?array
+    {
+        $workspace = Workspace::where('code', strtoupper(trim($code)))->first();
+
+        if (! $workspace || ! $workspace->activeMembers()->where('user_id', $viewer->id)->exists()) {
+            return null;
+        }
+
+        $query = WorkspaceMessage::with(['sender', 'workspace'])->where('workspace_id', $workspace->id);
+
+        if ($after > 0) {
+            $messages = $query->where('id', '>', $after)->orderBy('id')->get();
+
+            return ['messages' => $messages->map(fn (WorkspaceMessage $m) => $this->messagePayload($m, $viewer))->all(), 'has_more' => false];
+        }
+
+        if ($before > 0) {
+            $query->where('id', '<', $before);
+        }
+
+        $batch = $query->orderByDesc('id')->limit(26)->get()->reverse()->values();
+        $hasMore = $batch->count() > 25;
+        $messages = $hasMore ? $batch->slice(-25)->values() : $batch;
+
+        return [
+            'messages' => $messages->map(fn (WorkspaceMessage $m) => $this->messagePayload($m, $viewer))->all(),
+            'has_more' => $hasMore,
+        ];
+    }
+
+    public function storeMessage(User $sender, string $code, ?string $body, ?UploadedFile $file, ?string $type): array
+    {
+        $workspace = Workspace::where('code', strtoupper(trim($code)))->first();
+
+        if (! $workspace || ! $workspace->activeMembers()->where('user_id', $sender->id)->exists()) {
+            return ['ok' => false, 'error' => 'You are not a member of this workspace.'];
+        }
+
+        $resolvedType = $type ?: ($file ? 'document' : 'text');
+        $mime = null;
+
+        if ($file) {
+            $mime = $file->getMimeType();
+            $resolvedType = str_starts_with($mime, 'image/') ? 'image' : (str_starts_with($mime, 'video/') ? 'video' : 'document');
+
+            if (! in_array($mime, array_merge(ChatService::ALLOWED_MEDIA_MIMES, ChatService::DOCUMENT_MIMES), true)) {
+                return ['ok' => false, 'error' => 'File type not allowed.'];
+            }
+        }
+
+        $dimensions = null;
+        if ($file && $resolvedType === 'image') {
+            $size = @getimagesize($file->getRealPath());
+            if (is_array($size)) {
+                $dimensions = ['width' => $size[0], 'height' => $size[1]];
+            }
+        }
+
+        $filePath = $file
+            ? $file->storeAs('uploads', ($resolvedType === 'document' ? uniqid().'-' : '').$file->getClientOriginalName(), 'public')
+            : null;
+
+        $previewPath = null;
+        if ($file && $resolvedType === 'image' && $dimensions && $mime !== 'image/svg+xml') {
+            $previewPath = app(ChatService::class)->previewPathFor($filePath);
+            if (! app(ChatService::class)->createImagePreview($file->getRealPath(), $mime, 10 * 1024, $previewPath)) {
+                $previewPath = null;
+            }
+        }
+
+        $message = WorkspaceMessage::create([
+            'workspace_id' => $workspace->id,
+            'sender_id' => $sender->id,
+            'body' => $body ?: ($file ? $file->getClientOriginalName() : ''),
+            'type' => $resolvedType,
+            'file_path' => $filePath,
+            'preview_path' => $previewPath,
+            ...($dimensions ?? []),
+        ]);
+
+        broadcast(new WorkspaceMessageSent($message));
+
+        return ['ok' => true, 'message' => $message];
+    }
+
+    public function markRead(User $user, string $code): void
+    {
+        $workspace = Workspace::where('code', strtoupper(trim($code)))->first();
+
+        if (! $workspace || ! $workspace->members()->where('user_id', $user->id)->exists()) {
+            return;
+        }
+
+        $max = WorkspaceMessage::where('workspace_id', $workspace->id)->max('id');
+
+        if ($max) {
+            $workspace->members()->updateExistingPivot($user->id, ['last_read_message_id' => $max]);
+            broadcast(new WorkspaceMessagesRead($workspace, $user->id, (int) $max));
+        }
+    }
+
+    public function broadcastTyping(User $sender, string $code, bool $typing): bool
+    {
+        $workspace = Workspace::where('code', strtoupper(trim($code)))->first();
+
+        if (! $workspace || ! $workspace->activeMembers()->where('user_id', $sender->id)->exists()) {
+            return false;
+        }
+
+        broadcast(new WorkspaceTyping($workspace, $sender->id, $sender->username, $sender->name, $typing));
+
+        return true;
+    }
+
+    private function messageLabel(WorkspaceMessage $m): string
+    {
+        return match ($m->type) {
+            'image' => 'Photo',
+            'video' => 'Video',
+            'document' => 'Document',
+            default => $m->body,
+        };
+    }
+
+    private function messagePayload(WorkspaceMessage $m, User $viewer): array
+    {
+        $data = [
+            'id' => $m->id,
+            'body' => $m->body,
+            'time' => $m->created_at->format('H:i'),
+            'from' => $m->sender_id === $viewer->id ? 'me' : 'other',
+            'type' => $m->type,
+            'sender_name' => $m->sender->name,
+            'sender_username' => $m->sender->username,
+            'file' => $m->file_path
+                ? [
+                    'url' => $m->fileUrl(),
+                    'preview_url' => $m->preview_path ? asset('storage/'.$m->preview_path) : null,
+                    'name' => $m->fileName(),
+                    'width' => $m->width,
+                    'height' => $m->height,
+                ]
+                : null,
+        ];
+
+        if ($data['from'] === 'me') {
+            $data['read'] = $this->isReadByAll($m->workspace, $m);
+        }
+
+        return $data;
+    }
+
+    private function isReadByAll(Workspace $workspace, WorkspaceMessage $m): bool
+    {
+        $others = $workspace->activeMembers()->where('users.id', '!=', $m->sender_id)->get();
+
+        if ($others->isEmpty()) {
+            return true;
+        }
+
+        return $others->every(fn (User $u) => (int) $u->pivot->last_read_message_id >= $m->id);
     }
 
     private function isManager(Workspace $workspace, User $user): bool

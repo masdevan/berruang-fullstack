@@ -36,7 +36,35 @@ export function addSharedMedia(msg, username) {
     };
     if (msg.type !== 'document' && !isDup(list.media)) list.media.unshift(msg);
     if (!isDup(list.files)) list.files.unshift(msg);
-    renderSharedMedia();
+    if (username.startsWith('ws:')) renderWsSharedMedia(username.slice(3));
+    else renderSharedMedia();
+}
+
+export function renderWsSharedMedia(code) {
+    const list = sharedByChat['ws:' + code];
+    const mediaList = document.getElementById('ws-shared-media-list');
+    const filesList = document.getElementById('ws-shared-files-list');
+    if (!mediaList || !filesList) return;
+
+    const mediaAll = list ? list.media : [];
+    const filesAll = list ? list.files : [];
+
+    toggleEmpty('ws-shared-media-empty', mediaAll.length);
+    toggleEmpty('ws-shared-files-empty', filesAll.length);
+
+    mediaList.classList.toggle('hidden', mediaAll.length === 0);
+    mediaList.classList.toggle('grid', mediaAll.length > 0);
+    mediaList.innerHTML = mediaAll.map(mediaItemHtml).join('');
+
+    filesList.classList.toggle('hidden', filesAll.length === 0);
+    filesList.innerHTML = filesAll.map(fileItemHtml).join('');
+
+    const mediaViewBtn = document.getElementById('ws-shared-media-viewall');
+    const filesViewBtn = document.getElementById('ws-shared-files-viewall');
+    if (mediaViewBtn) mediaViewBtn.classList.toggle('hidden', mediaAll.length === 0);
+    if (filesViewBtn) filesViewBtn.classList.toggle('hidden', filesAll.length === 0);
+
+    if (currentViewKind) renderView(currentViewKind);
 }
 
 export function renderSharedMedia() {

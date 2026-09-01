@@ -25,20 +25,26 @@
         </div>
         <div id="ws-rb-general-pane" class="flex-1 overflow-y-auto">
             <div class="p-3 border-b border-white/6">
-                <x-chat.section-label title="Shared Media" info="Images and videos shared in this workspace." />
-                <div class="empty-state flex flex-col items-center justify-center gap-2 py-8 text-center">
+                <x-chat.section-label title="Shared Media" info="Images and videos shared in this workspace.">
+                    <button type="button" id="ws-shared-media-viewall" onclick="openSharedView('media')" class="hidden text-[9px] font-medium text-[#E091A9] hover:text-[#E8A8BC] transition-colors cursor-pointer">View all</button>
+                </x-chat.section-label>
+                <div id="ws-shared-media-empty" class="empty-state flex flex-col items-center justify-center gap-2 py-8 text-center">
                     <x-icons.ghost class="w-8 h-8 text-white/15" />
                     <p class="text-[11px] text-white/20">No shared media yet</p>
                     <p class="text-[10px] text-white/10">Photos and videos will appear here</p>
                 </div>
+                <div id="ws-shared-media-list" class="hidden grid grid-cols-3 gap-1.5 pt-2"></div>
             </div>
             <div class="px-3 pt-3 pb-2">
-                <x-chat.section-label title="Shared Files" info="All files shared in this workspace." />
-                <div class="empty-state flex flex-col items-center justify-center gap-2 py-8 text-center">
+                <x-chat.section-label title="Shared Files" info="All files shared in this workspace.">
+                    <button type="button" id="ws-shared-files-viewall" onclick="openSharedView('files')" class="hidden text-[9px] font-medium text-[#E091A9] hover:text-[#E8A8BC] transition-colors cursor-pointer">View all</button>
+                </x-chat.section-label>
+                <div id="ws-shared-files-empty" class="empty-state flex flex-col items-center justify-center gap-2 py-8 text-center">
                     <x-icons.ghost class="w-8 h-8 text-white/15" />
                     <p class="text-[11px] text-white/20">No shared files yet</p>
                     <p class="text-[10px] text-white/10">All attachments will appear here</p>
                 </div>
+                <div id="ws-shared-files-list" class="hidden pt-2 space-y-1.5"></div>
             </div>
         </div>
         <div id="ws-rb-members-pane" class="hidden flex-1 flex-col min-h-0">

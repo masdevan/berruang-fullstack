@@ -16,12 +16,14 @@ class ChatController extends Controller
     public function index()
     {
         $users = auth()->user()->contacts()->orderBy('first_name')->limit(20)->get();
+        $workspaces = $this->workspaces->list(auth()->user());
 
         return view('chat.index', [
             'users' => $users,
             'meta' => $this->chat->conversationMeta(auth()->user(), $users),
             'drafts' => $this->chat->drafts(),
-            'workspaces' => $this->workspaces->list(auth()->user()),
+            'workspaces' => $workspaces,
+            'workspaceMeta' => $this->workspaces->listMeta(auth()->user(), $workspaces),
         ]);
     }
 }

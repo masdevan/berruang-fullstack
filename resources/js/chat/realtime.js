@@ -52,6 +52,15 @@ if (userId) {
         })
         .listen('WorkspaceMemberRemoved', function (e) {
             if (window.removeWorkspaceRow) window.removeWorkspaceRow(e.workspace_code);
+        })
+        .listen('WorkspaceMessageSent', function (e) {
+            if (window.appendWsMessage) window.appendWsMessage(e);
+        })
+        .listen('WorkspaceTyping', function (e) {
+            setWsTyping(e.workspace_code, e.username, e.name, e.typing);
+        })
+        .listen('WorkspaceMessagesRead', function (e) {
+            if (window.onWsMemberRead) window.onWsMemberRead(e.reader_user_id, e.last_read_message_id, e.workspace_code);
         });
 }
 
@@ -61,6 +70,7 @@ const HEADER_DOT = { online: 'bg-green-400', idle: 'bg-yellow-400', offline: 'bg
 const LABEL = { online: 'Online', idle: 'Idle', offline: 'Offline' };
 
 const typingUsers = {};
+const wsTypingUsers = {};
 
 export function setTyping(username, typing) {
     if (typing) {
@@ -165,12 +175,73 @@ presence.listen('UserStatusChanged', function (e) {
     setStatus(e.username, e.status);
 });
 
+function setWsTyping(code, username, name, typing) {
+    const key = 'ws:' + code + ':' + username;
+    if (typing) {
+        wsTypingUsers[key] = { ts: Date.now(), name: name };
+    } else {
+        delete wsTypingUsers[key];
+    }
+    renderWsTyping(code);
+}
+
+function wsTypingNames(code) {
+    const names = [];
+    Object.keys(wsTypingUsers).forEach(function (k) {
+        if (!k.startsWith('ws:' + code + ':')) return;
+        if (Date.now() - wsTypingUsers[k].ts > 4000) {
+            delete wsTypingUsers[k];
+            return;
+        }
+        names.push(wsTypingUsers[k].name);
+    });
+    return names;
+}
+
+function renderWsTyping(code) {
+    const names = wsTypingNames(code);
+    if (window.currentWorkspaceCode === code) {
+        const el = document.getElementById('chat-header-status');
+        if (el) {
+            if (names.length) {
+                el.className = 'flex items-center gap-1 text-[10px] leading-none text-[#E091A9]/80 mt-1';
+                el.innerHTML = '<span class="italic">' + names.join(', ') + (names.length > 1 ? ' are' : ' is') + ' typing…</span>';
+            } else {
+                el.className = 'flex items-center gap-1 text-[10px] leading-none text-white/30 mt-1';
+                el.innerHTML = '<span class="tracking-widest">' + code + '</span>';
+            }
+        }
+    }
+    const row = document.querySelector('[data-workspace="' + code + '"]');
+    const preview = row && row.querySelector('.ws-last');
+    if (preview) {
+        if (names.length) {
+            if (preview.dataset.originalLast === undefined) preview.dataset.originalLast = preview.textContent;
+            preview.textContent = names.join(', ') + (names.length > 1 ? ' are typing…' : ' is typing…');
+            preview.classList.add('text-[#E091A9]/80', 'italic');
+        } else {
+            if (preview.dataset.originalLast !== undefined) {
+                preview.textContent = preview.dataset.originalLast;
+                delete preview.dataset.originalLast;
+            }
+            preview.classList.remove('text-[#E091A9]/80', 'italic');
+        }
+    }
+}
+
 setInterval(function () {
     const now = Date.now();
     Object.keys(typingUsers).forEach(function (u) {
         if (now - typingUsers[u] > 4000) {
             delete typingUsers[u];
             renderTyping(u);
+        }
+    });
+    Object.keys(wsTypingUsers).forEach(function (k) {
+        if (now - wsTypingUsers[k].ts > 4000) {
+            const parts = k.split(':');
+            delete wsTypingUsers[k];
+            renderWsTyping(parts[1]);
         }
     });
 }, 2000);
