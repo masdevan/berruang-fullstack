@@ -22,14 +22,6 @@
         <x-auth.button>Sign in</x-auth.button>
     </form>
 
-    <div class="mt-4">
-        <a href="{{ route('auth.google') }}"
-           class="w-full flex items-center justify-center gap-2.5 py-2.5 px-4 bg-white/3 border border-white/6 text-sm text-white/70 font-medium hover:bg-white/6 hover:text-white active:scale-98 transition-all duration-150 cursor-pointer rounded-lg">
-            <x-icons.google />
-            Google
-        </a>
-    </div>
-
     <p class="text-sm text-white/25 text-center mt-5">
         Don't have an account?
         <a href="{{ route('register') }}" class="text-white/50 hover:text-[#E091A9] transition-colors">Create one</a>
