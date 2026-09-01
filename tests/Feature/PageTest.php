@@ -39,6 +39,13 @@ class PageTest extends TestCase
             ->assertJson(['taken' => false]);
     }
 
+    public function test_landing_page_is_public(): void
+    {
+        $this->get('/landing')
+            ->assertOk()
+            ->assertSee('Get started');
+    }
+
     public function test_auth_google_redirects_to_login(): void
     {
         $this->get('/auth/google')

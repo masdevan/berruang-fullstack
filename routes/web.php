@@ -20,6 +20,8 @@ use Illuminate\Support\Facades\Route;
 
 Route::get('/', [HomeController::class, 'index']);
 
+Route::view('/landing', 'landing')->name('landing');
+
 Route::get('check-username/{username}', [ContactController::class, 'checkUsername']);
 
 Route::middleware(['auth', 'verified', 'onboarded'])->group(function () {

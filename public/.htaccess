@@ -22,4 +22,7 @@
     RewriteCond %{REQUEST_FILENAME} !-d
     RewriteCond %{REQUEST_FILENAME} !-f
     RewriteRule ^ index.php [L]
+
+    # /landing matches a real directory (public/landing) — route it to the app anyway
+    RewriteRule ^landing/?$ index.php [L]
 </IfModule>
